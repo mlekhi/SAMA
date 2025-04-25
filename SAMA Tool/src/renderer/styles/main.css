@@ -1,31 +1,118 @@
-/* @import './base.css';
+/* Base Variables and Reset */
+:root {
+  /* Colors */
+  --ev-c-white: #ffffff;
+  --ev-c-white-soft: #f8f8f8;
+  --ev-c-white-mute: #f2f2f2;
+  --ev-c-black: #1b1b1f;
+  --ev-c-black-soft: #222222;
+  --ev-c-black-mute: #282828;
+  --ev-c-gray-1: #515c67;
+  --ev-c-gray-2: #414853;
+  --ev-c-gray-3: #32363f;
+  --ev-c-text-1: rgba(255, 255, 245, 0.86);
+  --ev-c-text-2: rgba(235, 235, 245, 0.6);
+  --ev-c-text-3: rgba(235, 235, 245, 0.38);
 
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background-image: url('./wavy-lines.svg');
-  background-size: cover;
-  user-select: none;
+  /* Theme Colors */
+  --color-background: var(--ev-c-black);
+  --color-background-soft: var(--ev-c-black-soft);
+  --color-background-mute: var(--ev-c-black-mute);
+  --color-text: var(--ev-c-text-1);
+
+  /* Button Colors */
+  --ev-button-alt-border: transparent;
+  --ev-button-alt-text: var(--ev-c-text-1);
+  --ev-button-alt-bg: var(--ev-c-gray-3);
+  --ev-button-alt-hover-border: transparent;
+  --ev-button-alt-hover-text: var(--ev-c-text-1);
+  --ev-button-alt-hover-bg: var(--ev-c-gray-2);
 }
 
+/* Base Styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.6;
+  font-family: 'Space Grotesk', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, .MuiTypography-h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h2, .MuiTypography-h2 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h3, .MuiTypography-h3 {
+  font-weight: 600;
+}
+
+h4, .MuiTypography-h4 {
+  font-weight: 500;
+}
+
+h5, .MuiTypography-h5 {
+  font-weight: 500;
+}
+
+h6, .MuiTypography-h6 {
+  font-weight: 500;
+}
+
+body, .MuiTypography-body1 {
+  font-weight: 400;
+}
+
+.MuiTypography-body2 {
+  font-weight: 400;
+}
+
+.MuiTypography-caption {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.MuiTypography-button {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Material-UI Overrides */
+.MuiTypography-root,
+.MuiButton-root,
+.MuiListItemText-primary,
+.MuiInputBase-root {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+/* Code Blocks */
 code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 85%;
   font-weight: 600;
   padding: 3px 5px;
   border-radius: 2px;
   background-color: var(--color-background-mute);
-  font-family:
-    ui-monospace,
-    SFMono-Regular,
-    SF Mono,
-    Menlo,
-    Consolas,
-    Liberation Mono,
-    monospace;
-  font-size: 85%;
 }
 
+/* Layout */
 #root {
   display: flex;
   align-items: center;
@@ -34,6 +121,7 @@ code {
   margin-bottom: 80px;
 }
 
+/* Components */
 .logo {
   margin-bottom: 20px;
   -webkit-user-drag: none;
@@ -80,6 +168,7 @@ code {
   font-weight: 700;
 }
 
+/* Actions */
 .actions {
   display: flex;
   padding-top: 32px;
@@ -116,6 +205,7 @@ code {
   background-color: var(--ev-button-alt-hover-bg);
 }
 
+/* Versions */
 .versions {
   position: absolute;
   bottom: 30px;
@@ -138,11 +228,13 @@ code {
   font-size: 14px;
   line-height: 14px;
   opacity: 0.8;
-  &:last-child {
-    border: none;
-  }
 }
 
+.versions li:last-child {
+  border: none;
+}
+
+/* Responsive Design */
 @media (max-width: 720px) {
   .text {
     font-size: 20px;
@@ -160,4 +252,4 @@ code {
   .actions {
     display: none;
   }
-} */
+} 

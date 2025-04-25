@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {TextField, Button, InputAdornment, FormControl, Box, Grid2, Typography, CircularProgress, Alert} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import Search from "./components/Search";
-import Map from "./components/Map";
+import Search from '@components/Search';
+import Map from '@components/Map';
 
 
 function GeoAndEconomy() {

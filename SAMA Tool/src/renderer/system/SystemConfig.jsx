@@ -23,10 +23,10 @@ import {
     ListItemButton
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import PVIcon from './assets/PV.svg';
-import DGIcon from './assets/DG.svg';
-import WTIcon from './assets/WT.svg';
-import BattIcon from './assets/Batt.svg';
+import PVIcon from '@assets/PV.svg';
+import DGIcon from '@assets/DG.svg';
+import WTIcon from '@assets/WT.svg';
+import BattIcon from '@assets/Batt.svg';
 
 
 
