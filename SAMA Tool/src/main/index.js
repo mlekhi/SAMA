@@ -116,7 +116,7 @@ app.on('window-all-closed', () => {
 //   try {
 //     const response = await axios.get('https://holidayapi.com/v1/holidays', {
 //       params: {
-//         key: '***REMOVED***', // Your API key
+//         key: '9dcc1985-6e08-4820-a535-370f403cc1de', // Your API key
 //         country,
 //         year: '2023',
 //         public: true, // Only public holidays

@@ -13,11 +13,21 @@ from datetime import datetime
 import os
 import pandas as pd
 from sama_python.Results import output_logs
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 # CORS(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Get API keys from environment variables
+NREL_API_KEY = os.getenv('NREL_API_KEY')
+HOLIDAY_API_KEY = os.getenv('HOLIDAY_API_KEY')
+
+if not NREL_API_KEY or not HOLIDAY_API_KEY:
+    raise ValueError("API keys not found in environment variables. Please check your .env file.")
 
 @app.route("/mapAPI")
 def mapAPIFetch():
@@ -26,7 +36,7 @@ def mapAPIFetch():
 
     
     email = "dbharga@uwo.ca"
-    api_key = '***REMOVED***' #os.getenv('NREL_API_KEY')
+    api_key = NREL_API_KEY  # Use environment variable
     # first do a general data query to check what regions are available
     nsrdb_data_query_url = f'https://developer.nrel.gov/api/solar/nsrdb_data_query.json?api_key={api_key}&wkt=POINT({latitude}+{longitude})'
     dq_response = requests.get(nsrdb_data_query_url)
@@ -576,7 +586,7 @@ def fetch_holidays():
         country = request.args.get('country')
         year = '2024' 
         
-        api_key = '***REMOVED***'  
+        api_key = HOLIDAY_API_KEY  # Use environment variable
         url = 'https://holidayapi.com/v1/holidays'
 
         params = {
