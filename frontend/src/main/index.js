@@ -48,35 +48,11 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-
-  let pythonPath;
-  if (process.platform === 'win32') {
-    // Windows
-    pythonPath = path.join(__dirname, '../../../backend/venv/Scripts/python.exe');
-  } else {
-    // macOS or Linux
-    pythonPath = path.join(__dirname, '../../../backend/venv/bin/python');
-  }
-  
-  // const pythonPath = path.join(__dirname, '../../../backend/venv/Scripts/python.exe'); // Windows path 
-  // const pythonPath = path.join(__dirname, '../../../backend/venv/bin/python'); // Mac path
-  const backendScript = path.join(__dirname, '../../../backend/app.py');
-  const pythonProcess = spawn(pythonPath, [backendScript]);
-  
-
-  pythonProcess.stdout.on("data", (data) => {
-    console.log(`Python BackendL ${data}`);
-  });
-
-  pythonProcess.stderr.on("data", (data) => {
-    console.error(`Python Error: ${data}`)
-  });
-
+  // Remove backend spawning logic
   electronApp.setAppUserModelId('com.electron');
 
-
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.electron');
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
