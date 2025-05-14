@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
     Box,
@@ -24,6 +24,8 @@ import {
 function GridInfo() {
 
     const navigate = useNavigate();
+    const [defaults, setDefaults] = useState(null);
+    const [errors, setErrors] = useState({});
 
     // State for the main dropdown selection
     const [isGridConnected, setIsGridConnected] = useState("");
@@ -53,28 +55,18 @@ function GridInfo() {
     const [year, setYear] = useState('2023');
     const [holidays, setHolidays] = useState([]);
 
-    const [annualExpense, setAnnualExpense] = useState(0);
-    const [saleTaxPrecentage, setSaleTaxPrecentage] = useState(0);
-    const [gridAdjust, setGridAdjust] = useState(0);
-    const [yearlyEscRate, setYearlyEscRate] = useState(2);
-    const [annualCredits, setAnnualCredits] = useState(0);
-    const [netMetering, setNetMetering] = useState(0);
-    const [monthlyFixedCharge, setMonthlyFixedCharge] = useState(10);
-    const [sellCapacity, setSellCapacity] = useState(6);
-    const [purchaseCapacity, setPurchaseCapacity] = useState(20);
+    // Initialize state with empty values
+    const [annualExpense, setAnnualExpense] = useState('');
+    const [saleTaxPrecentage, setSaleTaxPrecentage] = useState('');
+    const [gridAdjust, setGridAdjust] = useState('');
+    const [yearlyEscRate, setYearlyEscRate] = useState('');
+    const [annualCredits, setAnnualCredits] = useState('');
+    const [netMetering, setNetMetering] = useState('');
+    const [monthlyFixedCharge, setMonthlyFixedCharge] = useState('');
+    const [sellCapacity, setSellCapacity] = useState('');
+    const [purchaseCapacity, setPurchaseCapacity] = useState('');
 
-    //selling to the grid
-    const [compensation, setCompensation] = useState("one-to-one");
-
-    // Handle changes to the summer months checklist
-    const handleMonthChange = (month) => {
-        setSummerMonths((prevMonths) => ({
-            ...prevMonths,
-            [month]: !prevMonths[month]
-        }));
-    };
-
-    // State for utility prices based on the structure
+    // Initialize prices state with empty values
     const [prices, setPrices] = useState({
         flatPrice: "",
         summerPrice: "",
@@ -93,7 +85,6 @@ function GridInfo() {
             November: "",
             December: "",
         },
-        // Time of Use state
         timeOfUse: {
             summerPeakRate: "",
             summerMidPeakRate: "",
@@ -146,8 +137,7 @@ function GridInfo() {
             November: { lowTierPrice: "", lowTierMaxLoad: "", mediumTierPrice: "", mediumTierMaxLoad: "", highTierPrice: "", highTierMaxLoad: "" },
             December: { lowTierPrice: "", lowTierMaxLoad: "", mediumTierPrice: "", mediumTierMaxLoad: "", highTierPrice: "", highTierMaxLoad: "" },
         },
-        flatComp: 0.049,
-
+        flatComp: "",
         monthlyComp: {
             January: "",
             February: "",
@@ -163,6 +153,52 @@ function GridInfo() {
             December: "",
         },
     });
+
+    //selling to the grid
+    const [compensation, setCompensation] = useState("one-to-one");
+
+    useEffect(() => {
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults');
+                if (!response.ok) throw new Error('Failed to fetch defaults');
+                const data = await response.json();
+                setDefaults(data);
+                
+                // Set default values from backend
+                setAnnualExpense(data.grid_annual_expense?.toString() || '');
+                setSaleTaxPrecentage(data.grid_sale_tax?.toString() || '');
+                setGridAdjust(data.grid_adjustment?.toString() || '');
+                setYearlyEscRate(data.grid_yearly_esc_rate?.toString() || '');
+                setAnnualCredits(data.grid_annual_credits?.toString() || '');
+                setNetMetering(data.grid_net_metering?.toString() || '');
+                setMonthlyFixedCharge(data.grid_monthly_fixed_charge?.toString() || '');
+                setSellCapacity(data.grid_sell_capacity?.toString() || '');
+                setPurchaseCapacity(data.grid_purchase_capacity?.toString() || '');
+                
+                // Set default prices
+                setPrices(prev => ({
+                    ...prev,
+                    flatPrice: data.grid_flat_price?.toString() || '',
+                    summerPrice: data.grid_summer_price?.toString() || '',
+                    winterPrice: data.grid_winter_price?.toString() || '',
+                    flatComp: data.grid_flat_comp?.toString() || '',
+                    // Add other price defaults as needed
+                }));
+            } catch (error) {
+                console.error('Error fetching defaults:', error);
+            }
+        };
+        fetchDefaults();
+    }, []);
+
+    // Handle changes to the summer months checklist
+    const handleMonthChange = (month) => {
+        setSummerMonths((prevMonths) => ({
+            ...prevMonths,
+            [month]: !prevMonths[month]
+        }));
+    };
 
     // Handle changes to the utility structure
     const handleUtilityStructureChange = (event) => {
