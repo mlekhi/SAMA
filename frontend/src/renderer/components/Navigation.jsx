@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { HashRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Drawer, 
   List, 
@@ -10,7 +10,9 @@ import {
   Typography,
   Box,
   Divider,
-  useTheme
+  useTheme,
+  Tooltip,
+  LinearProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -26,7 +28,9 @@ import {
   SolarPower as SolarIcon,
   WindPower as WindIcon,
   Power as PowerIcon,
-  ElectricBolt as ElectricIcon
+  ElectricBolt as ElectricIcon,
+  CheckCircle as CheckCircleIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 
 // System Pages
@@ -51,6 +55,63 @@ import ResultsTimeSeries from '@components/results/ResultsTimeSeries';
 import Faq from '@pages/Faq';
 
 const DRAWER_WIDTH = 280;
+
+const steps = [
+  {
+    label: 'Geography & Economy',
+    path: '/',
+    icon: PlaceIcon,
+    required: true
+  },
+  {
+    label: 'System Configuration',
+    path: '/system',
+    icon: SettingsIcon,
+    required: true
+  },
+  {
+    label: 'PV System',
+    path: '/pv',
+    icon: SolarIcon,
+    required: true
+  },
+  {
+    label: 'Inverter',
+    path: '/inverter',
+    icon: ElectricIcon,
+    required: true
+  },
+  {
+    label: 'Diesel Generator',
+    path: '/dg',
+    icon: PowerIcon,
+    required: false
+  },
+  {
+    label: 'Battery',
+    path: '/bat',
+    icon: BatteryIcon,
+    required: false
+  },
+  {
+    label: 'Wind Turbine',
+    path: '/wt',
+    icon: WindIcon,
+    required: false
+  },
+  {
+    label: 'Grid Information',
+    path: '/grid',
+    icon: GridIcon,
+    required: false
+  },
+  {
+    label: 'Optimization',
+    path: '/optim',
+    icon: BuildIcon,
+    required: true
+  }
+];
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
   width: DRAWER_WIDTH,
@@ -100,169 +161,124 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   letterSpacing: '0.05em',
 }));
 
-export default function Navigation() {
+const NavigationContent = () => {
   const theme = useTheme();
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [completedSteps, setCompletedSteps] = useState({});
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const handleDropdownToggle = (index) => {
-    setOpenDropdown(openDropdown === index ? null : index);
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const stepIndex = steps.findIndex(step => step.path === currentPath);
+    if (stepIndex !== -1) {
+      setCurrentStep(stepIndex);
+    }
+  }, [location]);
+
+  const handleStepClick = (stepIndex) => {
+    // Check if all previous required steps are completed
+    const canAccess = steps.slice(0, stepIndex).every((step, index) => {
+      if (step.required) {
+        return completedSteps[index] === true;
+      }
+      return true;
+    });
+
+    if (canAccess) {
+      navigate(steps[stepIndex].path);
+    }
+  };
+
+  const markStepComplete = (stepIndex) => {
+    setCompletedSteps(prev => ({
+      ...prev,
+      [stepIndex]: true
+    }));
+  };
+
+  const getStepStatus = (index) => {
+    if (index < currentStep) {
+      return completedSteps[index] ? 'completed' : 'locked';
+    }
+    if (index === currentStep) {
+      return 'current';
+    }
+    return 'locked';
+  };
+
+  const calculateProgress = () => {
+    const requiredSteps = steps.filter(step => step.required);
+    const completedRequiredSteps = requiredSteps.filter((_, index) => completedSteps[index]);
+    return (completedRequiredSteps.length / requiredSteps.length) * 100;
   };
 
   return (
+    <>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          SAMA Tool
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={calculateProgress()} 
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+        </Box>
+      </Box>
+      <Divider />
+      
+      <List component="nav" sx={{ p: 1 }}>
+        <SectionTitle>Configuration Steps</SectionTitle>
+        
+        {steps.map((step, index) => {
+          const status = getStepStatus(index);
+          const Icon = step.icon;
+          
+          return (
+            <Tooltip 
+              key={step.path}
+              title={status === 'locked' ? 'Complete previous required steps first' : ''}
+              placement="right"
+            >
+              <Box>
+                <StyledListItem
+                  button
+                  onClick={() => handleStepClick(index)}
+                  sx={{
+                    opacity: status === 'locked' ? 0.5 : 1,
+                    cursor: status === 'locked' ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <ListItemIcon>
+                    {status === 'completed' ? (
+                      <CheckCircleIcon color="success" />
+                    ) : status === 'locked' ? (
+                      <LockIcon color="disabled" />
+                    ) : (
+                      <Icon />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={step.label}
+                    secondary={step.required ? 'Required' : 'Optional'}
+                  />
+                </StyledListItem>
+              </Box>
+            </Tooltip>
+          );
+        })}
+      </List>
+    </>
+  );
+};
+
+export default function Navigation() {
+  return (
     <Router>
       <StyledDrawer variant="permanent" anchor="left">
-        <Box sx={{ p: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            SAMA Tool
-          </Typography>
-        </Box>
-        <Divider />
-        
-        <List component="nav" sx={{ p: 1 }}>
-          <SectionTitle>System Configuration</SectionTitle>
-          
-          <StyledNavLink to="/">
-            <StyledListItem>
-              <ListItemIcon>
-                <PlaceIcon />
-              </ListItemIcon>
-              <ListItemText primary="Geography & Economy" />
-            </StyledListItem>
-          </StyledNavLink>
-
-          <StyledNavLink to="/system">
-            <StyledListItem>
-              <ListItemIcon>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="System Config" />
-            </StyledListItem>
-          </StyledNavLink>
-
-          <StyledNavLink to="/grid">
-            <StyledListItem>
-              <ListItemIcon>
-                <GridIcon />
-              </ListItemIcon>
-              <ListItemText primary="Grid Information" />
-            </StyledListItem>
-          </StyledNavLink>
-
-          <StyledNavLink to="/optim">
-            <StyledListItem>
-              <ListItemIcon>
-                <BuildIcon />
-              </ListItemIcon>
-              <ListItemText primary="Optimization" />
-            </StyledListItem>
-          </StyledNavLink>
-
-          <SectionTitle>Components</SectionTitle>
-          
-          <StyledListItem 
-            button 
-            onClick={() => handleDropdownToggle(0)}
-          >
-            <ListItemIcon>
-              <ElectricIcon />
-            </ListItemIcon>
-            <ListItemText primary="Component Info" />
-            {openDropdown === 0 ? <ExpandLess /> : <ExpandMore />}
-          </StyledListItem>
-          
-          <Collapse in={openDropdown === 0} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <StyledNavLink to="/bat">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <BatteryIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Battery Bank" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/inverter">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <ElectricIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Inverter" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/pv">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <SolarIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Photovoltaic" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/wt">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <WindIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Wind Turbine" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/dg">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <PowerIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Diesel Generator" />
-                </StyledListItem>
-              </StyledNavLink>
-            </List>
-          </Collapse>
-
-          <SectionTitle>Results</SectionTitle>
-          
-          <StyledListItem 
-            button 
-            onClick={() => handleDropdownToggle(1)}
-          >
-            <ListItemIcon>
-              <DownloadIcon />
-            </ListItemIcon>
-            <ListItemText primary="Results" />
-            {openDropdown === 1 ? <ExpandLess /> : <ExpandMore />}
-          </StyledListItem>
-          
-          <Collapse in={openDropdown === 1} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <StyledNavLink to="/summary">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemText primary="Summary" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/timeseries">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemText primary="Time Series" />
-                </StyledListItem>
-              </StyledNavLink>
-              
-              <StyledNavLink to="/graphs">
-                <StyledListItem sx={{ pl: 4 }}>
-                  <ListItemText primary="Graphs" />
-                </StyledListItem>
-              </StyledNavLink>
-            </List>
-          </Collapse>
-
-          <StyledNavLink to="/faq">
-            <StyledListItem>
-              <ListItemIcon>
-                <HelpCenterIcon />
-              </ListItemIcon>
-              <ListItemText primary="FAQ" />
-            </StyledListItem>
-          </StyledNavLink>
-        </List>
+        <NavigationContent />
       </StyledDrawer>
 
       <Box component="main" sx={{ flexGrow: 1, ml: `${DRAWER_WIDTH}px` }}>
