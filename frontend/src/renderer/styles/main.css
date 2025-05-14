@@ -1,4 +1,4 @@
-/* Base Variables and Reset */
+/* Base Variables */
 :root {
   /* Colors */
   --ev-c-white: #ffffff;
@@ -19,14 +19,6 @@
   --color-background-soft: var(--ev-c-black-soft);
   --color-background-mute: var(--ev-c-black-mute);
   --color-text: var(--ev-c-text-1);
-
-  /* Button Colors */
-  --ev-button-alt-border: transparent;
-  --ev-button-alt-text: var(--ev-c-text-1);
-  --ev-button-alt-bg: var(--ev-c-gray-3);
-  --ev-button-alt-hover-border: transparent;
-  --ev-button-alt-hover-text: var(--ev-c-text-1);
-  --ev-button-alt-hover-bg: var(--ev-c-gray-2);
 }
 
 /* Base Styles */
@@ -100,16 +92,6 @@ body, .MuiTypography-body1 {
 .MuiListItemText-primary,
 .MuiInputBase-root {
   font-family: 'Space Grotesk', sans-serif !important;
-}
-
-/* Code Blocks */
-code {
-  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-  font-size: 85%;
-  font-weight: 600;
-  padding: 3px 5px;
-  border-radius: 2px;
-  background-color: var(--color-background-mute);
 }
 
 /* Layout */
