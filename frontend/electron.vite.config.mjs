@@ -20,6 +20,7 @@ export default defineConfig({
         '@system': resolve(__dirname, './src/renderer/system'),
         '@pages': resolve(__dirname, './src/renderer/pages'),
         '@styles': resolve(__dirname, './src/renderer/styles'),
+        '@utils': resolve(__dirname, './src/renderer/utils'),
       }
     },
     plugins: [react()]

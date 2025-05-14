@@ -3,15 +3,9 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    simulations = db.relationship('Simulation', backref='user', lazy=True)
-
 class WindTurbine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Technical Parameters
     h_hub = db.Column(db.Float, default=17.0)  # Hub height (m)
@@ -30,7 +24,7 @@ class WindTurbine(db.Model):
 
 class ChargeController(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     C_CH = db.Column(db.Float, default=200.0)  # Capital cost of charge controller ($)
     R_CH = db.Column(db.Float, default=200.0)  # Replacement cost of charge controller ($)
@@ -38,7 +32,7 @@ class ChargeController(db.Model):
 
 class GridSelling(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     sellStructure = db.Column(db.Integer, default=3)  # Selling structure type (1=Flat, 2=Monthly, 3=1:1)
     flat_compensation = db.Column(db.Float, default=0.049)  # Flat compensation rate ($/kWh)
@@ -47,7 +41,7 @@ class GridSelling(db.Model):
 
 class GeographyEconomy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Economic Parameters
     n_ir_rate = db.Column(db.Float, default=5.5)  # Nominal discount rate (%)
@@ -57,7 +51,7 @@ class GeographyEconomy(db.Model):
 
 class SystemConfiguration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     LPSP_max_rate = db.Column(db.Float, default=0.0999999)  # Maximum loss of power supply probability (%)
     RE_min_rate = db.Column(db.Float, default=75.0)  # Minimum Renewable Energy Capacity percentage (%)
@@ -72,7 +66,7 @@ class SystemConfiguration(db.Model):
 
 class PhotovoltaicSystem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Technical Parameters
     fpv = db.Column(db.Float, default=0.9)  # PV derating factor (%)
@@ -103,7 +97,7 @@ class PhotovoltaicSystem(db.Model):
 
 class Inverter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Technical Parameters
     n_I = db.Column(db.Float, default=0.96)  # Inverter Efficiency (%)
@@ -117,7 +111,7 @@ class Inverter(db.Model):
 
 class DieselGenerator(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Diesel Generator fuel curve
     a = db.Column(db.Float, default=0.273)  # Slope (Liter/hr/kW output)
@@ -132,7 +126,7 @@ class DieselGenerator(db.Model):
 
 class Battery(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Technical Parameters
     SOC_min = db.Column(db.Float, default=0.1)  # Minimum state of charge (SoC) (%/100)
@@ -158,7 +152,7 @@ class Battery(db.Model):
 
 class Grid(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     # Grid Connection Parameters
     Grid = db.Column(db.Boolean, default=False)  # Is grid connected
@@ -179,7 +173,7 @@ class Grid(db.Model):
 
 class Optimization(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    simulation_id = db.Column(db.Integer, db.ForeignKey('simulation.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
     
     MaxIt = db.Column(db.Integer, default=200)  # Maximum Number of Iterations
     nPop = db.Column(db.Integer, default=50)  # Population Size (Swarm Size)
@@ -188,48 +182,45 @@ class Optimization(db.Model):
     c1 = db.Column(db.Float, default=2.0)  # Personal Learning Coefficient
     c2 = db.Column(db.Float, default=2.0)  # Global Learning Coefficient
 
-class Simulation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
+# This class tracks basic session data
+class SessionData(db.Model):
+    session_id = db.Column(db.String(100), primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Input parameters
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    system_capacity = db.Column(db.Float)
-    azimuth = db.Column(db.Float)
-    tilt = db.Column(db.Float)
-    array_type = db.Column(db.Integer)
-    module_type = db.Column(db.Integer)
-    losses = db.Column(db.Float)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    system_capacity = db.Column(db.Float, nullable=True)
+    azimuth = db.Column(db.Float, nullable=True)
+    tilt = db.Column(db.Float, nullable=True)
+    array_type = db.Column(db.Integer, nullable=True)
+    module_type = db.Column(db.Integer, nullable=True)
+    losses = db.Column(db.Float, nullable=True)
     
     # Results
-    ac_monthly = db.Column(db.JSON)  # Monthly AC output
-    solrad_monthly = db.Column(db.JSON)  # Monthly solar radiation
-    dc_monthly = db.Column(db.JSON)  # Monthly DC output
-    poa_monthly = db.Column(db.JSON)  # Monthly plane of array irradiance
-    
-    # Relationships
-    wind_turbine = db.relationship('WindTurbine', backref='simulation', uselist=False)
-    charge_controller = db.relationship('ChargeController', backref='simulation', uselist=False)
-    grid_selling = db.relationship('GridSelling', backref='simulation', uselist=False)
-    geography_economy = db.relationship('GeographyEconomy', backref='simulation', uselist=False)
-    system_config = db.relationship('SystemConfiguration', backref='simulation', uselist=False)
-    pv_system = db.relationship('PhotovoltaicSystem', backref='simulation', uselist=False)
-    inverter = db.relationship('Inverter', backref='simulation', uselist=False)
-    diesel_generator = db.relationship('DieselGenerator', backref='simulation', uselist=False)
-    battery = db.relationship('Battery', backref='simulation', uselist=False)
-    grid = db.relationship('Grid', backref='simulation', uselist=False)
-    optimization = db.relationship('Optimization', backref='simulation', uselist=False)
-    
+    ac_monthly = db.Column(db.JSON, nullable=True)  # Monthly AC output
+    solrad_monthly = db.Column(db.JSON, nullable=True)  # Monthly solar radiation
+    dc_monthly = db.Column(db.JSON, nullable=True)  # Monthly DC output
+    poa_monthly = db.Column(db.JSON, nullable=True)  # Monthly plane of array irradiance
+
     def to_dict(self):
+        """Convert session data to dictionary with component lookups"""
+        # Get all components for this session
+        wind_turbine = WindTurbine.query.filter_by(session_id=self.session_id).first()
+        charge_controller = ChargeController.query.filter_by(session_id=self.session_id).first()
+        grid_selling = GridSelling.query.filter_by(session_id=self.session_id).first()
+        geography_economy = GeographyEconomy.query.filter_by(session_id=self.session_id).first()
+        system_config = SystemConfiguration.query.filter_by(session_id=self.session_id).first()
+        pv_system = PhotovoltaicSystem.query.filter_by(session_id=self.session_id).first()
+        inverter = Inverter.query.filter_by(session_id=self.session_id).first()
+        diesel_generator = DieselGenerator.query.filter_by(session_id=self.session_id).first()
+        battery = Battery.query.filter_by(session_id=self.session_id).first()
+        grid = Grid.query.filter_by(session_id=self.session_id).first()
+        optimization = Optimization.query.filter_by(session_id=self.session_id).first()
+        
         return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
+            'session_id': self.session_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'latitude': self.latitude,
@@ -246,123 +237,123 @@ class Simulation(db.Model):
                 'dc_monthly': self.dc_monthly,
                 'poa_monthly': self.poa_monthly
             },
-            'wind_turbine': self.wind_turbine and {
-                'h_hub': self.wind_turbine.h_hub,
-                'h0': self.wind_turbine.h0,
-                'nw': self.wind_turbine.nw,
-                'v_cut_out': self.wind_turbine.v_cut_out,
-                'v_cut_in': self.wind_turbine.v_cut_in,
-                'v_rated': self.wind_turbine.v_rated,
-                'alfa_wind_turbine': self.wind_turbine.alfa_wind_turbine,
-                'L_WT': self.wind_turbine.L_WT,
-                'C_WT': self.wind_turbine.C_WT,
-                'R_WT': self.wind_turbine.R_WT,
-                'MO_WT': self.wind_turbine.MO_WT
+            'wind_turbine': wind_turbine and {
+                'h_hub': wind_turbine.h_hub,
+                'h0': wind_turbine.h0,
+                'nw': wind_turbine.nw,
+                'v_cut_out': wind_turbine.v_cut_out,
+                'v_cut_in': wind_turbine.v_cut_in,
+                'v_rated': wind_turbine.v_rated,
+                'alfa_wind_turbine': wind_turbine.alfa_wind_turbine,
+                'L_WT': wind_turbine.L_WT,
+                'C_WT': wind_turbine.C_WT,
+                'R_WT': wind_turbine.R_WT,
+                'MO_WT': wind_turbine.MO_WT
             },
-            'charge_controller': self.charge_controller and {
-                'C_CH': self.charge_controller.C_CH,
-                'R_CH': self.charge_controller.R_CH,
-                'MO_CH': self.charge_controller.MO_CH
+            'charge_controller': charge_controller and {
+                'C_CH': charge_controller.C_CH,
+                'R_CH': charge_controller.R_CH,
+                'MO_CH': charge_controller.MO_CH
             },
-            'grid_selling': self.grid_selling and {
-                'sellStructure': self.grid_selling.sellStructure,
-                'flat_compensation': self.grid_selling.flat_compensation,
-                'monthly_sell_prices': self.grid_selling.monthly_sell_prices,
-                'one_to_one_compensation': self.grid_selling.one_to_one_compensation
+            'grid_selling': grid_selling and {
+                'sellStructure': grid_selling.sellStructure,
+                'flat_compensation': grid_selling.flat_compensation,
+                'monthly_sell_prices': grid_selling.monthly_sell_prices,
+                'one_to_one_compensation': grid_selling.one_to_one_compensation
             },
-            'geography_economy': self.geography_economy and {
-                'n_ir_rate': self.geography_economy.n_ir_rate,
-                'e_ir_rate': self.geography_economy.e_ir_rate,
-                'Tax_rate': self.geography_economy.Tax_rate,
-                'RE_incentives_rate': self.geography_economy.RE_incentives_rate
+            'geography_economy': geography_economy and {
+                'n_ir_rate': geography_economy.n_ir_rate,
+                'e_ir_rate': geography_economy.e_ir_rate,
+                'Tax_rate': geography_economy.Tax_rate,
+                'RE_incentives_rate': geography_economy.RE_incentives_rate
             },
-            'system_config': self.system_config and {
-                'LPSP_max_rate': self.system_config.LPSP_max_rate,
-                'RE_min_rate': self.system_config.RE_min_rate,
-                'PV': self.system_config.PV,
-                'WT': self.system_config.WT,
-                'DG': self.system_config.DG,
-                'Bat': self.system_config.Bat,
-                'Lead_acid': self.system_config.Lead_acid,
-                'Li_ion': self.system_config.Li_ion
+            'system_config': system_config and {
+                'LPSP_max_rate': system_config.LPSP_max_rate,
+                'RE_min_rate': system_config.RE_min_rate,
+                'PV': system_config.PV,
+                'WT': system_config.WT,
+                'DG': system_config.DG,
+                'Bat': system_config.Bat,
+                'Lead_acid': system_config.Lead_acid,
+                'Li_ion': system_config.Li_ion
             },
-            'pv_system': self.pv_system and {
-                'fpv': self.pv_system.fpv,
-                'Tcof': self.pv_system.Tcof,
-                'Tref': self.pv_system.Tref,
-                'Tc_noct': self.pv_system.Tc_noct,
-                'Ta_noct': self.pv_system.Ta_noct,
-                'G_noct': self.pv_system.G_noct,
-                'n_PV': self.pv_system.n_PV,
-                'Gref': self.pv_system.Gref,
-                'L_PV': self.pv_system.L_PV,
-                'C_PV': self.pv_system.C_PV,
-                'R_PV': self.pv_system.R_PV,
-                'MO_PV': self.pv_system.MO_PV,
-                'Installation_cost': self.pv_system.Installation_cost,
-                'Overhead': self.pv_system.Overhead,
-                'Sales_and_marketing': self.pv_system.Sales_and_marketing,
-                'Permiting_and_Inspection': self.pv_system.Permiting_and_Inspection,
-                'Electrical_BoS': self.pv_system.Electrical_BoS,
-                'Structural_BoS': self.pv_system.Structural_BoS,
-                'Supply_Chain_costs': self.pv_system.Supply_Chain_costs,
-                'Profit_costs': self.pv_system.Profit_costs,
-                'Sales_tax': self.pv_system.Sales_tax
+            'pv_system': pv_system and {
+                'fpv': pv_system.fpv,
+                'Tcof': pv_system.Tcof,
+                'Tref': pv_system.Tref,
+                'Tc_noct': pv_system.Tc_noct,
+                'Ta_noct': pv_system.Ta_noct,
+                'G_noct': pv_system.G_noct,
+                'n_PV': pv_system.n_PV,
+                'Gref': pv_system.Gref,
+                'L_PV': pv_system.L_PV,
+                'C_PV': pv_system.C_PV,
+                'R_PV': pv_system.R_PV,
+                'MO_PV': pv_system.MO_PV,
+                'Installation_cost': pv_system.Installation_cost,
+                'Overhead': pv_system.Overhead,
+                'Sales_and_marketing': pv_system.Sales_and_marketing,
+                'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
+                'Electrical_BoS': pv_system.Electrical_BoS,
+                'Structural_BoS': pv_system.Structural_BoS,
+                'Supply_Chain_costs': pv_system.Supply_Chain_costs,
+                'Profit_costs': pv_system.Profit_costs,
+                'Sales_tax': pv_system.Sales_tax
             },
-            'inverter': self.inverter and {
-                'n_I': self.inverter.n_I,
-                'L_I': self.inverter.L_I,
-                'DC_AC_ratio': self.inverter.DC_AC_ratio,
-                'C_I': self.inverter.C_I,
-                'R_I': self.inverter.R_I,
-                'MO_I': self.inverter.MO_I
+            'inverter': inverter and {
+                'n_I': inverter.n_I,
+                'L_I': inverter.L_I,
+                'DC_AC_ratio': inverter.DC_AC_ratio,
+                'C_I': inverter.C_I,
+                'R_I': inverter.R_I,
+                'MO_I': inverter.MO_I
             },
-            'diesel_generator': self.diesel_generator and {
-                'a': self.diesel_generator.a,
-                'b': self.diesel_generator.b,
-                'C_DG': self.diesel_generator.C_DG,
-                'R_DG': self.diesel_generator.R_DG,
-                'MO_DG': self.diesel_generator.MO_DG,
-                'C_fuel': self.diesel_generator.C_fuel,
-                'C_fuel_adj_rate': self.diesel_generator.C_fuel_adj_rate
+            'diesel_generator': diesel_generator and {
+                'a': diesel_generator.a,
+                'b': diesel_generator.b,
+                'C_DG': diesel_generator.C_DG,
+                'R_DG': diesel_generator.R_DG,
+                'MO_DG': diesel_generator.MO_DG,
+                'C_fuel': diesel_generator.C_fuel,
+                'C_fuel_adj_rate': diesel_generator.C_fuel_adj_rate
             },
-            'battery': self.battery and {
-                'SOC_min': self.battery.SOC_min,
-                'SOC_max': self.battery.SOC_max,
-                'SOC_initial': self.battery.SOC_initial,
-                'self_discharge_rate': self.battery.self_discharge_rate,
-                'L_B': self.battery.L_B,
-                'Cnom_Leadacid': self.battery.Cnom_Leadacid,
-                'alfa_battery_leadacid': self.battery.alfa_battery_leadacid,
-                'c': self.battery.c,
-                'k': self.battery.k,
-                'Ich_max_leadacid': self.battery.Ich_max_leadacid,
-                'Vnom_leadacid': self.battery.Vnom_leadacid,
-                'ef_bat_leadacid': self.battery.ef_bat_leadacid,
-                'Q_lifetime_leadacid': self.battery.Q_lifetime_leadacid,
-                'Ich_max_Li_ion': self.battery.Ich_max_Li_ion,
-                'Idch_max_Li_ion': self.battery.Idch_max_Li_ion,
-                'alfa_battery_Li_ion': self.battery.alfa_battery_Li_ion
+            'battery': battery and {
+                'SOC_min': battery.SOC_min,
+                'SOC_max': battery.SOC_max,
+                'SOC_initial': battery.SOC_initial,
+                'self_discharge_rate': battery.self_discharge_rate,
+                'L_B': battery.L_B,
+                'Cnom_Leadacid': battery.Cnom_Leadacid,
+                'alfa_battery_leadacid': battery.alfa_battery_leadacid,
+                'c': battery.c,
+                'k': battery.k,
+                'Ich_max_leadacid': battery.Ich_max_leadacid,
+                'Vnom_leadacid': battery.Vnom_leadacid,
+                'ef_bat_leadacid': battery.ef_bat_leadacid,
+                'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
+                'Ich_max_Li_ion': battery.Ich_max_Li_ion,
+                'Idch_max_Li_ion': battery.Idch_max_Li_ion,
+                'alfa_battery_Li_ion': battery.alfa_battery_Li_ion
             },
-            'grid': self.grid and {
-                'Grid': self.grid.Grid,
-                'NEM': self.grid.NEM,
-                'Annual_expenses': self.grid.Annual_expenses,
-                'Grid_sale_tax_rate': self.grid.Grid_sale_tax_rate,
-                'Grid_Tax_amount': self.grid.Grid_Tax_amount,
-                'Grid_escalation_rate': self.grid.Grid_escalation_rate,
-                'Grid_credit': self.grid.Grid_credit,
-                'NEM_fee': self.grid.NEM_fee,
-                'SC_flat': self.grid.SC_flat,
-                'Pbuy_max': self.grid.Pbuy_max,
-                'Psell_max': self.grid.Psell_max
+            'grid': grid and {
+                'Grid': grid.Grid,
+                'NEM': grid.NEM,
+                'Annual_expenses': grid.Annual_expenses,
+                'Grid_sale_tax_rate': grid.Grid_sale_tax_rate,
+                'Grid_Tax_amount': grid.Grid_Tax_amount,
+                'Grid_escalation_rate': grid.Grid_escalation_rate,
+                'Grid_credit': grid.Grid_credit,
+                'NEM_fee': grid.NEM_fee,
+                'SC_flat': grid.SC_flat,
+                'Pbuy_max': grid.Pbuy_max,
+                'Psell_max': grid.Psell_max
             },
-            'optimization': self.optimization and {
-                'MaxIt': self.optimization.MaxIt,
-                'nPop': self.optimization.nPop,
-                'w': self.optimization.w,
-                'wdamp': self.optimization.wdamp,
-                'c1': self.optimization.c1,
-                'c2': self.optimization.c2
+            'optimization': optimization and {
+                'MaxIt': optimization.MaxIt,
+                'nPop': optimization.nPop,
+                'w': optimization.w,
+                'wdamp': optimization.wdamp,
+                'c1': optimization.c1,
+                'c2': optimization.c2
             }
         } 

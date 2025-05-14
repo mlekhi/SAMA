@@ -53,13 +53,20 @@ import ResultsTimeSeries from '@components/results/ResultsTimeSeries';
 
 // FAQ Page
 import Faq from '@pages/Faq';
+import Landing from '@pages/Landing';
 
 const DRAWER_WIDTH = 280;
 
 const steps = [
   {
-    label: 'Geography & Economy',
+    label: 'Start Assessment',
     path: '/',
+    icon: PlaceIcon,
+    required: true
+  },
+  {
+    label: 'Geography & Economy',
+    path: '/geo',
     icon: PlaceIcon,
     required: true
   },
@@ -283,7 +290,8 @@ export default function Navigation() {
 
       <Box component="main" sx={{ flexGrow: 1, ml: `${DRAWER_WIDTH}px` }}>
         <Routes>
-          <Route path="/" element={<GeoAndEconomy />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/geo" element={<GeoAndEconomy />} />
           <Route path="/system" element={<SystemConfig />} />
           <Route path="/grid" element={<GridInfo />} />
           <Route path="/optim" element={<OptimizationParams />} />

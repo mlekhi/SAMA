@@ -1,7 +1,7 @@
-from flask import Flask, Response, request, jsonify, send_from_directory
+from flask import Flask, Response, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 from config import Config
-from models import db, User, Simulation, GeographyEconomy, SystemConfiguration, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, Grid, Optimization, WindTurbine, ChargeController, GridSelling
+from models import db, SessionData, GeographyEconomy, SystemConfiguration, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, Grid, Optimization, WindTurbine, ChargeController, GridSelling
 import requests
 from datetime import datetime
 import json
@@ -11,6 +11,7 @@ import sama_python.pso as pso
 from math import ceil
 import os
 import logging
+import uuid
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -85,31 +86,39 @@ def create_app(config_class=Config):
             raise
 
     # API Routes
-    @app.route("/api/simulations", methods=["GET"])
-    def get_simulations():
+    @app.route("/api/sessions", methods=["GET"])
+    def get_sessions():
         try:
-            user_id = request.args.get("user_id", type=int)
-            if not user_id:
-                return jsonify({"error": "user_id is required"}), 400
+            # Get session_id from the request
+            session_id = request.args.get("session_id")
+            
+            if not session_id:
+                return jsonify({"error": "No session ID available"}), 400
                 
-            simulations = Simulation.query.filter_by(user_id=user_id).all()
-            return jsonify([sim.to_dict() for sim in simulations])
+            # Find session data by session_id (which is the primary key)
+            session_data = SessionData.query.get(session_id)
+            if not session_data:
+                return jsonify([])
+                
+            return jsonify([session_data.to_dict()])
         except Exception as e:
-            logger.error(f"Error fetching simulations: {str(e)}")
-            return jsonify({"error": "Failed to fetch simulations"}), 500
+            logger.error(f"Error fetching session data: {str(e)}")
+            return jsonify({"error": "Failed to fetch session data"}), 500
 
-    @app.route("/api/simulations", methods=["POST"])
-    def create_simulation():
+    @app.route("/api/sessions", methods=["POST"])
+    def create_session():
         try:
             data = request.get_json()
             if not data:
                 return jsonify({"error": "No data provided"}), 400
+                
+            # Use session ID from request or create a new one
+            session_id = data.get("session_id") or str(uuid.uuid4())
+            session["session_id"] = session_id
 
-            # Create new simulation
-            simulation = Simulation(
-                user_id=data["user_id"],
-                name=data.get("name", "New Simulation"),
-                description=data.get("description", ""),
+            # Create new session data
+            session_data = SessionData(
+                session_id=session_id,
                 latitude=data.get("latitude"),
                 longitude=data.get("longitude"),
                 system_capacity=data.get("system_capacity"),
@@ -120,38 +129,14 @@ def create_app(config_class=Config):
                 losses=data.get("losses")
             )
 
-            # Create related models
-            if "geography_economy" in data:
-                simulation.geography_economy = GeographyEconomy(**data["geography_economy"])
-            if "system_config" in data:
-                simulation.system_config = SystemConfiguration(**data["system_config"])
-            if "pv_system" in data:
-                simulation.pv_system = PhotovoltaicSystem(**data["pv_system"])
-            if "inverter" in data:
-                simulation.inverter = Inverter(**data["inverter"])
-            if "diesel_generator" in data:
-                simulation.diesel_generator = DieselGenerator(**data["diesel_generator"])
-            if "battery" in data:
-                simulation.battery = Battery(**data["battery"])
-            if "grid" in data:
-                simulation.grid = Grid(**data["grid"])
-            if "optimization" in data:
-                simulation.optimization = Optimization(**data["optimization"])
-            if "wind_turbine" in data:
-                simulation.wind_turbine = WindTurbine(**data["wind_turbine"])
-            if "charge_controller" in data:
-                simulation.charge_controller = ChargeController(**data["charge_controller"])
-            if "grid_selling" in data:
-                simulation.grid_selling = GridSelling(**data["grid_selling"])
-
-            db.session.add(simulation)
+            db.session.add(session_data)
             db.session.commit()
 
-            return jsonify(simulation.to_dict()), 201
+            return jsonify(session_data.to_dict()), 201
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error creating simulation: {str(e)}")
-            return jsonify({"error": "Failed to create simulation"}), 500
+            logger.error(f"Error creating session: {str(e)}")
+            return jsonify({"error": "Failed to create session"}), 500
 
     @app.route("/api/map", methods=["GET"])
     def mapAPIFetch():
@@ -193,58 +178,65 @@ def create_app(config_class=Config):
             logger.error(f"Error in mapAPIFetch: {str(e)}")
             return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
-    @app.route("/api/simulations/<int:simulation_id>", methods=["GET"])
-    def get_simulation(simulation_id):
+    @app.route("/api/sessions/<string:session_id>", methods=["GET"])
+    def get_session(session_id):
         try:
-            simulation = Simulation.query.get_or_404(simulation_id)
-            return jsonify(simulation.to_dict())
+            session_data = SessionData.query.get_or_404(session_id)
+            return jsonify(session_data.to_dict())
         except Exception as e:
-            logger.error(f"Error fetching simulation {simulation_id}: {str(e)}")
-            return jsonify({"error": "Failed to fetch simulation"}), 500
+            logger.error(f"Error fetching session {session_id}: {str(e)}")
+            return jsonify({"error": "Failed to fetch session"}), 500
 
-    @app.route("/api/simulations/<int:simulation_id>", methods=["PUT"])
-    def update_simulation(simulation_id):
+    @app.route("/api/sessions/<string:session_id>", methods=["PUT"])
+    def update_session(session_id):
         try:
-            simulation = Simulation.query.get_or_404(simulation_id)
+            session_data = SessionData.query.get_or_404(session_id)
             data = request.get_json()
             
             if not data:
                 return jsonify({"error": "No data provided"}), 400
             
-            # Update simulation fields
+            # Update session fields
             for key, value in data.items():
-                if hasattr(simulation, key):
-                    setattr(simulation, key, value)
+                if hasattr(session_data, key) and key != 'session_id':  # Don't update the primary key
+                    setattr(session_data, key, value)
             
-            # Update related models
-            for model_name in ['geography_economy', 'system_config', 'pv_system', 'inverter',
-                             'diesel_generator', 'battery', 'grid', 'optimization',
-                             'wind_turbine', 'charge_controller', 'grid_selling']:
-                if model_name in data:
-                    model = getattr(simulation, model_name)
-                    if model:
-                        for key, value in data[model_name].items():
-                            if hasattr(model, key):
-                                setattr(model, key, value)
+            # Update session timestamp
+            session_data.updated_at = datetime.utcnow()
             
             db.session.commit()
-            return jsonify(simulation.to_dict())
+            return jsonify(session_data.to_dict())
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error updating simulation {simulation_id}: {str(e)}")
-            return jsonify({"error": "Failed to update simulation"}), 500
+            logger.error(f"Error updating session {session_id}: {str(e)}")
+            return jsonify({"error": "Failed to update session"}), 500
 
-    @app.route("/api/simulations/<int:simulation_id>", methods=["DELETE"])
-    def delete_simulation(simulation_id):
+    @app.route("/api/sessions/<string:session_id>", methods=["DELETE"])
+    def delete_session(session_id):
         try:
-            simulation = Simulation.query.get_or_404(simulation_id)
-            db.session.delete(simulation)
+            session_data = SessionData.query.get_or_404(session_id)
+            
+            # Delete all associated components first
+            component_models = [
+                GeographyEconomy, SystemConfiguration, PhotovoltaicSystem, 
+                Inverter, DieselGenerator, Battery, Grid, Optimization,
+                WindTurbine, ChargeController, GridSelling
+            ]
+            
+            for model in component_models:
+                components = model.query.filter_by(session_id=session_id).all()
+                for component in components:
+                    db.session.delete(component)
+            
+            # Then delete the session data itself
+            db.session.delete(session_data)
             db.session.commit()
-            return jsonify({"message": "Simulation deleted successfully"})
+            
+            return jsonify({"message": "Session and all associated data deleted successfully"})
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error deleting simulation {simulation_id}: {str(e)}")
-            return jsonify({"error": "Failed to delete simulation"}), 500
+            logger.error(f"Error deleting session {session_id}: {str(e)}")
+            return jsonify({"error": "Failed to delete session"}), 500
 
     @app.route('/api/defaults', methods=['GET'])
     def get_defaults():
@@ -321,8 +313,14 @@ def create_app(config_class=Config):
             if not data:
                 return jsonify({"error": "No data provided"}), 400
 
+            # Check if session_id is provided
+            session_id = data.get('session_id')
+            if not session_id:
+                return jsonify({"error": "session_id is required"}), 400
+
             # Create a new GeographyEconomy instance
             geo_economy = GeographyEconomy(
+                session_id=session_id,
                 n_ir_rate=float(data.get('nomDiscRate', 0)),
                 e_ir_rate=float(data.get('expInfRate', 0)),
                 Tax_rate=float(data.get('equipSalePercent', 0)),
@@ -337,11 +335,107 @@ def create_app(config_class=Config):
                 "message": "Geography and Economy data saved successfully",
                 "id": geo_economy.id
             }), 201
-
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error saving geography and economy data: {str(e)}")
             return jsonify({"error": str(e)}), 500
+
+    # Initialize a new session
+    @app.route("/api/session/initialize", methods=["POST"])
+    def initialize_session():
+        try:
+            data = request.get_json() or {}
+            
+            # Create a new session with a unique ID
+            session_id = data.get("session_id") or str(uuid.uuid4())
+            session_data = SessionData(
+                session_id=session_id
+            )
+            
+            db.session.add(session_data)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'session_id': session_data.session_id
+            })
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error initializing session: {str(e)}")
+            return jsonify({"error": "Failed to initialize session", "details": str(e)}), 500
+
+    # Add a generic component route
+    @app.route("/api/component/<component_type>", methods=["POST"])
+    def save_component(component_type):
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+                
+            # Check if session_id is provided
+            session_id = data.get('session_id')
+            if not session_id:
+                return jsonify({"error": "session_id is required"}), 400
+                
+            # Map component_type to the appropriate model
+            component_models = {
+                'wind_turbine': WindTurbine,
+                'battery': Battery,
+                'grid': Grid,
+                'pv_system': PhotovoltaicSystem,
+                'inverter': Inverter,
+                'diesel_generator': DieselGenerator,
+                'charge_controller': ChargeController,
+                'grid_selling': GridSelling,
+                'geography_economy': GeographyEconomy,
+                'system_config': SystemConfiguration,
+                'optimization': Optimization
+            }
+            
+            if component_type not in component_models:
+                return jsonify({"error": f"Unknown component type: {component_type}"}), 400
+                
+            model_class = component_models[component_type]
+            
+            # Extract component data (remove session_id as it's handled separately)
+            component_data = {k: v for k, v in data.items() if k != 'session_id'}
+            
+            # Check if component already exists for this session
+            existing = model_class.query.filter_by(session_id=session_id).first()
+            
+            if existing:
+                # Update existing component
+                for key, value in component_data.items():
+                    if hasattr(existing, key):
+                        setattr(existing, key, value)
+                component = existing
+            else:
+                # Create new component
+                component = model_class(session_id=session_id, **component_data)
+                db.session.add(component)
+                
+            db.session.commit()
+            
+            return jsonify({
+                "message": f"{component_type} saved successfully",
+                "id": component.id,
+                "session_id": session_id
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error saving {component_type}: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+
+    # Special route to recreate database tables (REMOVE IN PRODUCTION)
+    @app.route("/api/reset_db", methods=["GET"])
+    def reset_db():
+        try:
+            db.drop_all()
+            db.create_all()
+            return jsonify({"message": "Database tables reset successfully"})
+        except Exception as e:
+            logger.error(f"Error resetting database: {str(e)}")
+            return jsonify({"error": "Failed to reset database", "details": str(e)}), 500
 
     return app
 

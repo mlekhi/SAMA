@@ -331,11 +331,58 @@ function GridInfo() {
         }));
     };
 
-    const handleNext = () => {
-        // then navigate to optim
-        sendGridInfo();
-        window.scrollTo(0, 0);
-        navigate('/optim');
+    const handleNext = async (e) => {
+        e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Get the session_id from localStorage
+            const session_id = localStorage.getItem('session_id');
+            if (!session_id) {
+                throw new Error("No session ID found. Please start from the Geography and Economy page.");
+            }
+
+            // Prepare the grid data with session_id
+            const gridData = {
+                session_id: session_id,
+                ...formData,
+                gridConnected,
+                useNetMetering,
+                adjustForSaleTax,
+                sellStructure: selectedSellStructure,
+                monthly_sell_prices: monthlySellPrices,
+                flat_compensation: parseFloat(flatCompensation),
+                one_to_one_compensation: selectedSellStructure === 3
+            };
+
+            const response = await fetch("http://127.0.0.1:5000/gridInfo", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(gridData)
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to save grid information.");
+            }
+
+            console.log("Grid Info Saved Successfully!");
+            window.scrollTo(0, 0);
+            navigate('/optim');
+
+        } catch (error) {
+            console.error('Error:', error);
+            setSnackbarOpen(true);
+            setSnackbarMessage("Error saving grid information. Please try again.");
+            setSnackbarSeverity("error");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handlePrev = () => {

@@ -99,38 +99,54 @@ function OptimizationParams() {
         navigate('/grid');
     };
 
-    const sendOptimizationParams = async () => {
+    const handleOptimize = async () => {
         if (!validateForm()) {
             return;
         }
 
         setLoading(true);
         try {
+            // Get the session_id from localStorage
+            const session_id = localStorage.getItem('session_id');
+            if (!session_id) {
+                throw new Error("No session ID found. Please start from the Geography and Economy page.");
+            }
+
+            // Add session_id to the form data
+            const optimData = {
+                session_id: session_id,
+                maxIt: parseInt(formData.maxIterations),
+                nPop: parseInt(formData.populationSize),
+                w: parseFloat(formData.inertiaWeight),
+                wdamp: parseFloat(formData.inertiaWeightDamping),
+                c1: parseFloat(formData.personalLearningCoeff),
+                c2: parseFloat(formData.globalLearningCoeff)
+            };
+
+            // First save optimization parameters
             const response = await fetch("http://127.0.0.1:5000/process/optim", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(optimData)
             });
 
             if (!response.ok) {
                 throw new Error("Failed to save optimization parameters");
             }
 
-            const result = await response.json();
-            console.log("Response from server:", result);
-
+            // Now submit the entire job for processing
             const submitResponse = await fetch("http://127.0.0.1:5000/submit/advanced", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json"
                 },
-                mode: 'cors',
+                body: JSON.stringify({ session_id })
             });
 
             if (!submitResponse.ok) {
-                throw new Error("Failed to submit advanced parameters");
+                throw new Error("Failed to submit job for processing");
             }
 
             window.scrollTo(0, 0);
@@ -284,7 +300,7 @@ function OptimizationParams() {
                             '&:hover': { backgroundColor: '#4A2D61' },
                             color: 'white',
                         }}
-                        onClick={sendOptimizationParams}
+                        onClick={handleOptimize}
                         disabled={loading}
                     >
                         {loading ? <CircularProgress color="white" size={24} /> : "Submit"}

@@ -246,17 +246,26 @@ function SystemConfig(){
     };
 
     const handleNext = async () => {
-        if (!validateForm()) {
-            setSnackbarOpen(true);
-            setErrorMessage("Please fill in all required fields correctly.");
+        if(!validateForm()) {
             return;
         }
 
         setLoading(true);
         try {
+            // Get the session_id from localStorage
+            const session_id = localStorage.getItem('session_id');
+            if (!session_id) {
+                throw new Error("No session ID found. Please start from the Geography and Economy page.");
+            }
+
+            // Prepare data with session_id
             const systemInfo = {
-                ...formData,
+                session_id: session_id,
+                lifetime: parseFloat(formData.lifetime),
+                maxPL: parseFloat(formData.maxPL),
+                minRenewEC: parseFloat(formData.minRenewEC),
                 hasHourly,
+                csvProvided: hasHourly && csvFile !== null,
                 hasMonthly,
                 monthlyData: hasMonthly ? monthlyData : null,
                 hasAnnual,

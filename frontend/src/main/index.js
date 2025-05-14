@@ -15,8 +15,10 @@ function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     title: 'SAMA',
-    width: 900,
-    height: 670,
+    width: 1200,
+    height: 800,
+    minWidth: 1000,
+    minHeight: 700,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
