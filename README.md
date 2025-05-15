@@ -54,6 +54,3 @@ The SAMA Tool is a web application designed to help users configure and optimize
 
 ## Contributing
 Contributions are welcome! Please fork the repository and submit a pull request with your changes.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
