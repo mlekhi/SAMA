@@ -7,9 +7,10 @@ import axios from "axios";
 import path from 'path';
 let pythonProcess;
 
-
-
-
+// Enable verbose logging
+app.commandLine.appendSwitch('enable-logging');
+app.commandLine.appendSwitch('v', '1');
+app.commandLine.appendSwitch('vmodule', 'console=1');
 
 function createWindow() {
   // Create the browser window.
@@ -24,9 +25,16 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      nodeIntegration: true,
+      contextIsolation: false
     }
   })
+
+  // Enable DevTools in development
+  if (is.dev) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

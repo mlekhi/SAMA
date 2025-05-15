@@ -18,17 +18,18 @@ import {
     Grid2,
     Radio,
     RadioGroup,
-    Alert
+    Alert,
+    Container
 } from "@mui/material";
 import FormInputField from '@components/form/FormInputField';
 import NextButton from '@components/form/NextButton';
 import { API_URL } from "@utils/config";
+import Navigation from '@components/Navigation';
 
 function GridInfo() {
 
     const navigate = useNavigate();
     const [defaults, setDefaults] = useState(null);
-    const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     // State for the main dropdown selection
@@ -335,35 +336,31 @@ function GridInfo() {
         }));
     };
 
-    const handleNext = async (e) => {
-        e.preventDefault();
-        if (!validateForm()) {
-            return;
-        }
-
-        setIsLoading(true);
-
+    const handleNext = async () => {
+        setLoading(true);
         try {
-            // Get the session_id from localStorage
             const session_id = localStorage.getItem('session_id');
             if (!session_id) {
                 throw new Error("No session ID found. Please start from the Geography and Economy page.");
             }
 
-            // Prepare the grid data with session_id
+            // Prepare the grid data
             const gridData = {
                 session_id: session_id,
-                ...formData,
-                gridConnected,
-                useNetMetering,
-                adjustForSaleTax,
-                sellStructure: selectedSellStructure,
-                monthly_sell_prices: monthlySellPrices,
-                flat_compensation: parseFloat(flatCompensation),
-                one_to_one_compensation: selectedSellStructure === 3
+                Grid: isGridConnected === 'Yes',
+                NEM: isNetMetered === 'Yes',
+                Annual_expenses: parseFloat(annualExpense),
+                Grid_sale_tax_rate: parseFloat(saleTaxPrecentage),
+                Grid_Tax_amount: parseFloat(gridAdjust),
+                Grid_escalation_rate: parseFloat(yearlyEscRate),
+                Grid_credit: parseFloat(annualCredits),
+                NEM_fee: parseFloat(netMetering),
+                SC_flat: parseFloat(monthlyFixedCharge),
+                Psell_max: parseFloat(sellCapacity),
+                Pbuy_max: parseFloat(purchaseCapacity)
             };
 
-            const response = await fetch(`${API_URL}/gridInfo`, {
+            const response = await fetch(`${API_URL}/api/component/grid`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -372,20 +369,23 @@ function GridInfo() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to save grid information.");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to save grid information");
             }
 
-            console.log("Grid Info Saved Successfully!");
-            window.scrollTo(0, 0);
-            navigate('/optim');
+            const result = await response.json();
+            localStorage.setItem("gridId", result.id);
 
+            window.scrollTo(0, 0);
+            navigate('/results');
         } catch (error) {
-            console.error('Error:', error);
-            setSnackbarOpen(true);
-            setSnackbarMessage("Error saving grid information. Please try again.");
-            setSnackbarSeverity("error");
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save your data. Please try again.'
+            });
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
@@ -495,131 +495,134 @@ function GridInfo() {
 
 
     return (
-        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
-            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+            <Navigation />
+            <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 6 }}>
+                <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                 <Typography variant="h4" gutterBottom>
                     Grid Information
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 4 }}>
+                    <Typography variant="body1" sx={{ mb: 4 }}>
                     <i>
-                        Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
+                            Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
                     </i>
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <FormControl>
-                        <Typography gutterBottom>Is your system connected to the grid?</Typography>
+                            <Typography gutterBottom>Is your system connected to the grid?</Typography>
                         <RadioGroup
                             value={isGridConnected}
-                            onChange={(e) => {
-                                setIsGridConnected(e.target.value);
-                                if (e.target.value === 'No') {
-                                    setIsNetMetered('No');
-                                }
-                            }}
-                        >
-                            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-                            <FormControlLabel value="No" control={<Radio />} label="No" />
+                                onChange={(e) => {
+                                    setIsGridConnected(e.target.value);
+                                    if (e.target.value === 'No') {
+                                        setIsNetMetered('No');
+                                    }
+                                }}
+                            >
+                                <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                                <FormControlLabel value="No" control={<Radio />} label="No" />
                         </RadioGroup>
                     </FormControl>
 
                     {isGridConnected === 'Yes' && (
                         <FormControl>
-                            <Typography gutterBottom>Is your system net metered?</Typography>
+                                <Typography gutterBottom>Is your system net metered?</Typography>
                             <RadioGroup
                                 value={isNetMetered}
                                 onChange={(e) => setIsNetMetered(e.target.value)}
                             >
-                                <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-                                <FormControlLabel value="No" control={<Radio />} label="No" />
+                                    <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                                    <FormControlLabel value="No" control={<Radio />} label="No" />
                             </RadioGroup>
                         </FormControl>
                     )}
 
-                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
+                        {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
                         <FormControl>
-                            <Typography gutterBottom>Select your utility structure:</Typography>
-                            <Select
-                                value={utilityStructure}
-                                onChange={(e) => setUtilityStructure(e.target.value)}
-                                sx={{ minWidth: 200 }}
-                            >
-                                <MenuItem value="tiered">Tiered</MenuItem>
-                                <MenuItem value="timeOfUse">Time of Use</MenuItem>
-                                <MenuItem value="realTime">Real Time</MenuItem>
-                            </Select>
-                        </FormControl>
-                    )}
+                                <Typography gutterBottom>Select your utility structure:</Typography>
+                                <Select
+                                    value={utilityStructure}
+                                    onChange={(e) => setUtilityStructure(e.target.value)}
+                                    sx={{ minWidth: 200 }}
+                                >
+                                    <MenuItem value="tiered">Tiered</MenuItem>
+                                    <MenuItem value="timeOfUse">Time of Use</MenuItem>
+                                    <MenuItem value="realTime">Real Time</MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
 
-                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && utilityStructure && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Typography gutterBottom>Enter your utility prices:</Typography>
-                            {getPriceFields(utilityStructure).map((field, index) => (
+                        {isGridConnected === 'Yes' && isNetMetered === 'Yes' && utilityStructure && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <Typography gutterBottom>Enter your utility prices:</Typography>
+                                {getPriceFields(utilityStructure).map((field, index) => (
+                                    <FormInputField
+                                        key={index}
+                                        label={field.label}
+                                        name={field.name}
+                                        value={prices[field.name] || ''}
+                                        onChange={(e) => handlePriceChange(field.name, e.target.value)}
+                                        error={!prices[field.name]}
+                                        helperText={!prices[field.name] ? 'Required' : ''}
+                                        endAdornment={field.unit}
+                                    />
+                                ))}
+                                </Box>
+                            )}
+
+                        {isGridConnected === 'Yes' && isNetMetered === 'No' && (
+                            <FormControl>
+                                <Typography gutterBottom>Enter your utility price:</Typography>
                                 <FormInputField
-                                    key={index}
-                                    label={field.label}
-                                    name={field.name}
-                                    value={prices[field.name] || ''}
-                                    onChange={(e) => handlePriceChange(field.name, e.target.value)}
-                                    error={!prices[field.name]}
-                                    helperText={!prices[field.name] ? 'Required' : ''}
-                                    endAdornment={field.unit}
+                                    label="Utility Price"
+                                    name="utilityPrice"
+                                    value={prices.utilityPrice || ''}
+                                    onChange={(e) => handlePriceChange('utilityPrice', e.target.value)}
+                                    error={!prices.utilityPrice}
+                                    helperText={!prices.utilityPrice ? 'Required' : ''}
+                                    endAdornment="$/kWh"
                                 />
-                            ))}
-                        </Box>
-                    )}
+                            </FormControl>
+                        )}
 
-                    {isGridConnected === 'Yes' && isNetMetered === 'No' && (
-                        <FormControl>
-                            <Typography gutterBottom>Enter your utility price:</Typography>
-                            <FormInputField
-                                label="Utility Price"
-                                name="utilityPrice"
-                                value={prices.utilityPrice || ''}
-                                onChange={(e) => handlePriceChange('utilityPrice', e.target.value)}
-                                error={!prices.utilityPrice}
-                                helperText={!prices.utilityPrice ? 'Required' : ''}
-                                endAdornment="$/kWh"
-                            />
-                        </FormControl>
-                    )}
+                        {isGridConnected === 'No' && isNetMetered === 'No' && (
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <NextButton
+                                    label="Submit"
+                                    onClick={handleNext}
+                                    loading={loading}
+                                    color="secondary"
+                                />
+                                </Box>
+                            )}
 
-                    {isGridConnected === 'No' && isNetMetered === 'No' && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <NextButton
-                                label="Next"
-                                onClick={handleNext}
-                                loading={loading}
-                                color="secondary"
-                            />
-                        </Box>
-                    )}
+                        {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <NextButton
+                                    label="Submit"
+                                    onClick={handleNext}
+                                    loading={loading}
+                                    disabled={!utilityStructure || getMissingFields(utilityStructure, prices).length > 0}
+                                    color="secondary"
+                                />
+                                </Box>
+                            )}
 
-                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <NextButton
-                                label="Next"
-                                onClick={handleNext}
-                                loading={loading}
-                                disabled={!utilityStructure || getMissingFields(utilityStructure, prices).length > 0}
-                                color="secondary"
-                            />
+                        {isGridConnected === 'Yes' && isNetMetered === 'No' && (
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <NextButton
+                                    label="Submit"
+                                    onClick={handleNext}
+                                    loading={loading}
+                                    color="secondary"
+                                />
+                                </Box>
+                            )}
                         </Box>
-                    )}
-
-                    {isGridConnected === 'Yes' && isNetMetered === 'No' && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <NextButton
-                                label="Next"
-                                onClick={handleNext}
-                                loading={loading}
-                                color="secondary"
-                            />
                         </Box>
-                    )}
-                </Box>
-            </Box>
-        </Box>
+            </Container>
+                                            </Box>
     );
 }
 

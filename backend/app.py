@@ -320,12 +320,15 @@ def create_app(config_class=Config):
     def save_component(component_type):
         try:
             data = request.get_json()
+            print(f"Received data for {component_type}: {data}")  # Print received data
             if not data:
+                print("No data provided in request")
                 return jsonify({"error": "No data provided"}), 400
                 
             # Check if session_id is provided
             session_id = data.get('session_id')
             if not session_id:
+                print("No session_id provided in request")
                 return jsonify({"error": "session_id is required"}), 400
                 
             # Map component_type to the appropriate model
@@ -344,9 +347,20 @@ def create_app(config_class=Config):
             }
             
             if component_type not in component_models:
+                print(f"Unknown component type: {component_type}")
                 return jsonify({"error": f"Unknown component type: {component_type}"}), 400
                 
             model_class = component_models[component_type]
+            
+            # Check if all necessary fields are present in the original data
+            required_fields = [column.name for column in model_class.__table__.columns if column.nullable is False]
+            print(f"Required fields for {component_type}: {required_fields}")
+            print(f"Received fields: {list(data.keys())}")
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"Missing required fields: {missing_fields}")
+                return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
             
             # Extract component data (remove session_id as it's handled separately)
             component_data = {k: v for k, v in data.items() if k != 'session_id'}
@@ -355,29 +369,64 @@ def create_app(config_class=Config):
             existing = model_class.query.filter_by(session_id=session_id).first()
             
             if existing:
+                print(f"Updating existing {component_type} for session {session_id}")
                 # Update existing component
                 for key, value in component_data.items():
                     if hasattr(existing, key):
                         setattr(existing, key, value)
                 component = existing
             else:
+                print(f"Creating new {component_type} for session {session_id}")
                 # Create new component
                 component = model_class(session_id=session_id, **component_data)
                 db.session.add(component)
                 
             db.session.commit()
             
-            return jsonify({
+            response = {
                 "message": f"{component_type} saved successfully",
-                "id": component.id,
                 "session_id": session_id
-            }), 201
+            }
+            print(f"Sending response: {response}")  # Print response
+            return jsonify(response), 201
         except Exception as e:
             db.session.rollback()
+            print(f"Error saving {component_type}: {str(e)}")
             logger.error(f"Error saving {component_type}: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
+
+
+
+    @app.route("/api/component/completed_models", methods=["GET"])
+    def get_completed_models():
+        try:
+            session_id = request.args.get("session_id")
+            if not session_id:
+                return jsonify({"error": "No session ID available"}), 400
+
+            # Query the database for completed models
+            completed_models = {
+                "wind_turbine": WindTurbine.query.filter_by(session_id=session_id).first() is not None,
+                "battery": Battery.query.filter_by(session_id=session_id).first() is not None,
+                "grid": Grid.query.filter_by(session_id=session_id).first() is not None,
+                "pv_system": PhotovoltaicSystem.query.filter_by(session_id=session_id).first() is not None,
+                "inverter": Inverter.query.filter_by(session_id=session_id).first() is not None,
+                "diesel_generator": DieselGenerator.query.filter_by(session_id=session_id).first() is not None,
+                "geography_economy": GeographyEconomy.query.filter_by(session_id=session_id).first() is not None,
+                "system_config": SystemConfiguration.query.filter_by(session_id=session_id).first() is not None,
+                "optimization": Optimization.query.filter_by(session_id=session_id).first() is not None
+            }
+
+            return jsonify(completed_models)
+        except Exception as e:
+            logger.error(f"Error fetching completed models: {str(e)}")
+            return jsonify({"error": "Failed to fetch completed models"}), 500
+
     return app
+
+
+
 
 # Create the application instance
 app = create_app()

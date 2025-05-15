@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Container } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import FormInputField from '@components/form/FormInputField'
 import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
+import Navigation from '@components/Navigation'
 
 function ComponentInfoInverter() {
     const navigate = useNavigate()
@@ -86,75 +87,78 @@ function ComponentInfoInverter() {
     }
 
     return (
-        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
-            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                <Typography variant="h4" gutterBottom>
-                    Component Information - Inverter
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 4 }}>
-                    <i>
-                        Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
-                    </i>
-                </Typography>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <Typography variant="h5" gutterBottom>
-                        Technical Information
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+            <Navigation />
+            <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 6 }}>
+                <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                    <Typography variant="h4" gutterBottom>
+                        Component Information - Inverter
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 4 }}>
+                        <i>
+                            Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
+                        </i>
                     </Typography>
 
-                    <FormInputField
-                        label="Inverter Efficiency"
-                        name="inverterEfficiency"
-                        value={myData.inverterEfficiency}
-                        onChange={handleChange}
-                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <Typography variant="h5" gutterBottom>
+                            Technical Information
+                        </Typography>
 
-                    <FormInputField
-                        label="Inverter Lifetime"
-                        name="inverterLifetime"
-                        value={myData.inverterLifetime}
-                        onChange={handleChange}
-                        endAdornment="years"
-                    />
-
-                    <Typography variant="h5" gutterBottom>
-                        Economic Information
-                    </Typography>
-
-                    <FormInputField
-                        label="Capital Cost"
-                        name="capitalCostInverter"
-                        value={myData.capitalCostInverter}
-                        onChange={handleChange}
-                        endAdornment="$/kW"
-                    />
-
-                    <FormInputField
-                        label="Replacement Cost"
-                        name="replacementCostInverter"
-                        value={myData.replacementCostInverter}
-                        onChange={handleChange}
-                        endAdornment="$/kW"
-                    />
-
-                    <FormInputField
-                        label="O&M Cost"
-                        name="OMCostInverter"
-                        value={myData.OMCostInverter}
-                        onChange={handleChange}
-                        endAdornment="$/kW/year"
-                    />
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                        <NextButton
-                            label="Next"
-                            onClick={handleNext}
-                            disabled={!isConfigLoaded}
-                            color="secondary"
+                        <FormInputField
+                            label="Inverter Efficiency"
+                            name="inverterEfficiency"
+                            value={myData.inverterEfficiency}
+                            onChange={handleChange}
                         />
+
+                        <FormInputField
+                            label="Inverter Lifetime"
+                            name="inverterLifetime"
+                            value={myData.inverterLifetime}
+                            onChange={handleChange}
+                            endAdornment="years"
+                        />
+
+                        <Typography variant="h5" gutterBottom>
+                            Economic Information
+                        </Typography>
+
+                        <FormInputField
+                            label="Capital Cost"
+                            name="capitalCostInverter"
+                            value={myData.capitalCostInverter}
+                            onChange={handleChange}
+                            endAdornment="$/kW"
+                        />
+
+                        <FormInputField
+                            label="Replacement Cost"
+                            name="replacementCostInverter"
+                            value={myData.replacementCostInverter}
+                            onChange={handleChange}
+                            endAdornment="$/kW"
+                        />
+
+                        <FormInputField
+                            label="O&M Cost"
+                            name="OMCostInverter"
+                            value={myData.OMCostInverter}
+                            onChange={handleChange}
+                            endAdornment="$/kW/year"
+                        />
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <NextButton
+                                label="Next"
+                                onClick={handleNext}
+                                disabled={!isConfigLoaded}
+                                color="secondary"
+                            />
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
+            </Container>
         </Box>
     )
 }

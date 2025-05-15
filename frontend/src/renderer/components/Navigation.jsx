@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Drawer, 
   List, 
@@ -32,6 +32,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Lock as LockIcon
 } from '@mui/icons-material';
+import { API_URL } from '@utils/config';
 
 // System Pages
 import GeoAndEconomy from '@system/GeoAndEconomy';
@@ -40,84 +41,47 @@ import GridInfo from '@system/GridInfo';
 import OptimizationParams from '@system/OptimizationParams';
 
 // Component Pages
-import ComponentInfoPV from '@system/ComponentInfoPV';
-import ComponentInfoBattery from '@system/ComponentInfoBattery';
-import ComponentInfoDG from '@system/ComponentInfoDG';
-import ComponentInfoInverter from '@system/ComponentInfoInverter';
-import ComponentInfoWindTurbine from '@system/ComponentInfoWindTurbine';
+// import ComponentInfoPV from '@system/Optional/ComponentInfoPV';
+// import ComponentInfoBattery from '@system/Optional/ComponentInfoBattery';
+// import ComponentInfoDG from '@system/Optional/ComponentInfoDG';
+// import ComponentInfoInverter from '@system/Optional/ComponentInfoInverter';
+// import ComponentInfoWindTurbine from '@system/Optional/ComponentInfoWindTurbine';
 
-// Results Pages
-import ResultsGraphs from '@components/results/ResultsGraphs';
-import ResultsSummary from '@components/results/ResultsSummary';
-import ResultsTimeSeries from '@components/results/ResultsTimeSeries';
+// // Results Pages
+// import ResultsGraphs from '@components/results/ResultsGraphs';
+// import ResultsSummary from '@components/results/ResultsSummary';
+// import ResultsTimeSeries from '@components/results/ResultsTimeSeries';
 
 // FAQ Page
 import Faq from '@pages/Faq';
-import Landing from '@pages/Landing';
 
 const DRAWER_WIDTH = 280;
 
 const steps = [
   {
-    label: 'Start Assessment',
-    path: '/',
-    icon: PlaceIcon,
-    required: true
-  },
-  {
     label: 'Geography & Economy',
     path: '/geo',
     icon: PlaceIcon,
-    required: true
+    completedKey: 'geography_economy',
   },
   {
     label: 'Optimization',
     path: '/optim',
     icon: BuildIcon,
-    required: true
-  },
-  {
-    label: 'Grid Information',
-    path: '/grid',
-    icon: GridIcon,
-    required: true
+    completedKey: 'optimization',
   },
   {
     label: 'System Configuration',
     path: '/system',
     icon: SettingsIcon,
-    required: true
+    completedKey: 'system_config',
   },
   {
-    label: 'PV System',
-    path: '/pv',
-    icon: SolarIcon,
-    required: false
+    label: 'Grid Information',
+    path: '/grid',
+    icon: GridIcon,
+    completedKey: 'grid',
   },
-  {
-    label: 'Inverter',
-    path: '/inverter',
-    icon: ElectricIcon,
-    required: true
-  },
-  {
-    label: 'Diesel Generator',
-    path: '/dg',
-    icon: PowerIcon,
-    required: false
-  },
-  {
-    label: 'Battery',
-    path: '/bat',
-    icon: BatteryIcon,
-    required: false
-  },
-  {
-    label: 'Wind Turbine',
-    path: '/wt',
-    icon: WindIcon,
-    required: false
-  }
 ];
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
@@ -172,28 +136,22 @@ const NavigationContent = () => {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [completedSteps, setCompletedSteps] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
-  const [maxCompletedStep, setMaxCompletedStep] = useState(0);
+  const [completedModels, setCompletedModels] = useState({});
 
   useEffect(() => {
     const fetchCompletedModels = async () => {
-      const sessionId = localStorage.getItem("session_id");
-      if (!sessionId) {
-        console.error("No session ID found");
-        return;
-      }
-
+      const sessionId = localStorage.getItem('session_id');
+      if (!sessionId) return;
       try {
         const response = await fetch(`${API_URL}/api/component/completed_models?session_id=${sessionId}`);
         if (!response.ok) throw new Error('Failed to fetch completed models');
         const data = await response.json();
-        setCompletedSteps(data);
+        setCompletedModels(data);
       } catch (error) {
         console.error('Error fetching completed models:', error);
       }
     };
-
     fetchCompletedModels();
   }, []);
 
@@ -202,42 +160,11 @@ const NavigationContent = () => {
     const stepIndex = steps.findIndex(step => step.path === currentPath);
     if (stepIndex !== -1) {
       setCurrentStep(stepIndex);
-      // Update max completed step if we're moving forward
-      if (stepIndex > maxCompletedStep) {
-        setMaxCompletedStep(stepIndex);
-      }
     }
-  }, [location, maxCompletedStep]);
+  }, [location]);
 
   const handleStepClick = (stepIndex) => {
-    const status = getStepStatus(stepIndex);
-    if (status !== 'locked') {
-      navigate(steps[stepIndex].path);
-    }
-  };
-
-  const getStepStatus = (index) => {
-    // If we've completed this step before, it's always accessible
-    if (index <= maxCompletedStep) {
-      return 'completed';
-    }
-    if (index === currentStep) {
-      return 'current';
-    }
-    // Check if all previous required steps are completed
-    const canAccess = steps.slice(0, index).every((step, idx) => {
-      if (step.required) {
-        return idx <= maxCompletedStep;
-      }
-      return true;
-    });
-    return canAccess ? 'available' : 'locked';
-  };
-
-  const calculateProgress = () => {
-    const requiredSteps = steps.filter(step => step.required);
-    const completedRequiredSteps = requiredSteps.filter((_, index) => completedSteps[index]);
-    return (completedRequiredSteps.length / requiredSteps.length) * 100;
+    navigate(steps[stepIndex].path);
   };
 
   return (
@@ -246,54 +173,45 @@ const NavigationContent = () => {
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           SAMA Tool
         </Typography>
-        <Box sx={{ mt: 2 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={calculateProgress()} 
-            sx={{ height: 8, borderRadius: 4 }}
-          />
-        </Box>
+        <NavLink
+          to="/faq"
+          style={({ isActive }) => ({
+            color: '#888',
+            fontSize: '0.95rem',
+            fontStyle: 'italic',
+            textDecoration: 'underline',
+            fontWeight: isActive ? 'bold' : 'normal',
+            transition: 'color 0.2s',
+          })}
+        >
+          FAQ & Help
+        </NavLink>
       </Box>
       <Divider />
-      
       <List component="nav" sx={{ p: 1 }}>
         <SectionTitle>Configuration Steps</SectionTitle>
-        
         {steps.map((step, index) => {
-          const status = getStepStatus(index);
           const Icon = step.icon;
-          
+          const isCompleted = completedModels[step.completedKey];
           return (
-            <Tooltip 
-              key={step.path}
-              title={status === 'locked' ? 'Complete previous required steps first' : ''}
-              placement="right"
-            >
-              <Box>
-                <StyledListItem
-                  button
-                  onClick={() => handleStepClick(index)}
-                  sx={{
-                    opacity: status === 'locked' ? 0.5 : 1,
-                    cursor: status === 'locked' ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  <ListItemIcon>
-                    {status === 'completed' ? (
-                      <CheckCircleIcon color="success" />
-                    ) : status === 'locked' ? (
-                      <LockIcon color="disabled" />
-                    ) : (
-                      <Icon />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={step.label}
-                    secondary={step.required ? 'Required' : 'Optional'}
-                  />
-                </StyledListItem>
-              </Box>
-            </Tooltip>
+            <Box key={step.path}>
+              <StyledListItem
+                button
+                onClick={() => handleStepClick(index)}
+              >
+                <ListItemIcon>
+                  {isCompleted ? (
+                    <CheckCircleIcon color="success" />
+                  ) : (
+                    <Icon />
+                  )}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={step.label}
+                  secondary={step.required ? 'Required' : 'Optional'}
+                />
+              </StyledListItem>
+            </Box>
           );
         })}
       </List>
@@ -303,29 +221,9 @@ const NavigationContent = () => {
 
 export default function Navigation() {
   return (
-    <Router>
-      <StyledDrawer variant="permanent" anchor="left">
-        <NavigationContent />
-      </StyledDrawer>
-
-      <Box component="main" sx={{ flexGrow: 1, ml: `${DRAWER_WIDTH}px` }}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/geo" element={<GeoAndEconomy />} />
-          <Route path="/system" element={<SystemConfig />} />
-          <Route path="/grid" element={<GridInfo />} />
-          <Route path="/optim" element={<OptimizationParams />} />
-          <Route path="/pv" element={<ComponentInfoPV />} />
-          <Route path="/bat" element={<ComponentInfoBattery />} />
-          <Route path="/dg" element={<ComponentInfoDG />} />
-          <Route path="/wt" element={<ComponentInfoWindTurbine />} />
-          <Route path="/inverter" element={<ComponentInfoInverter />} />
-          <Route path="/graphs" element={<ResultsGraphs />} />
-          <Route path="/summary" element={<ResultsSummary />} />
-          <Route path="/timeseries" element={<ResultsTimeSeries />} />
-          <Route path="/faq" element={<Faq />} />
-        </Routes>
-      </Box>
-    </Router>
+    <StyledDrawer variant="permanent" anchor="left">
+      <NavigationContent />
+      <Divider />
+    </StyledDrawer>
   );
 }

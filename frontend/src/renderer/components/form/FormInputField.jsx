@@ -6,8 +6,6 @@ function FormInputField({
   name, 
   value, 
   onChange, 
-  error, 
-  helperText, 
   isDefault,
   type = "number",
   endAdornment = "%",
@@ -25,8 +23,6 @@ function FormInputField({
         label={label}
         variant={variant}
         required={required}
-        error={!!error}
-        helperText={helperText}
         InputProps={{
           endAdornment: endAdornment ? <InputAdornment position="end">{endAdornment}</InputAdornment> : null,
           sx: isDefault ? { color: 'text.secondary' } : {}

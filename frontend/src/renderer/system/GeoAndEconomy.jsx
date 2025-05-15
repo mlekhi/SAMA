@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, Grid
+  Box, Typography, Grid, Container
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Search from '@components/Search';
@@ -9,13 +9,13 @@ import SystemButton from '@components/form/NextButton';
 import FormInputField from '@components/form/FormInputField';
 import ErrorMessage from '@components/form/ErrorMessage';
 import { API_URL } from "@utils/config"; 
+import Navigation from '@components/Navigation';
 
 function GeoAndEconomy() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectPosition, setSelectPosition] = useState(null);
   const [defaults, setDefaults] = useState(null);
-  const [errors, setErrors] = useState({});
   const [errorDialog, setErrorDialog] = useState({
     open: false,
     title: '',
@@ -94,37 +94,9 @@ function GeoAndEconomy() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setIsUsingDefaults(prev => ({ ...prev, [name]: false }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
-  };
-
-  const validateField = (name, value) => {
-    const num = parseFloat(value);
-    if (!value.trim()) return "This field is required";
-    if (isNaN(num)) return "Must be a valid number";
-    if (num < 0) return "Value cannot be negative";
-    return '';
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    Object.keys(formData).forEach(key => {
-      const error = validateField(key, formData[key]);
-      if (error) newErrors[key] = error;
-    });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = async () => {
-    if (!validateForm()) {
-      setErrorDialog({
-        open: true,
-        title: 'Validation Error',
-        message: 'Please fix the errors in the form before proceeding.'
-      });
-      return;
-    }
-
     if (!selectPosition) {
       setErrorDialog({
         open: true,
@@ -135,7 +107,6 @@ function GeoAndEconomy() {
     }
 
     setLoading(true);
-
     try {
       const sessionId = localStorage.getItem("session_id");
       if (!sessionId) {
@@ -151,8 +122,6 @@ function GeoAndEconomy() {
         RE_incentives_rate: parseFloat(formData.invTaxCredit)
       };
 
-      console.log('Sending geography and economy data:', geoEconomyData);
-
       const response = await fetch(`${API_URL}/api/component/geography_economy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,14 +134,9 @@ function GeoAndEconomy() {
       }
 
       const result = await response.json();
-      console.log('Geography and economy data saved successfully:', result);
-      
-      // Store the component ID for future reference
       localStorage.setItem("geoEconomyId", result.id);
-
-      navigate("/system");
+      navigate("/optim");
     } catch (err) {
-      console.error('Error saving geography and economy data:', err);
       setErrorDialog({
         open: true,
         title: 'Error Saving Data',
@@ -222,77 +186,71 @@ function GeoAndEconomy() {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, ml: '250px', maxWidth: '800px' }}>
-      <Typography variant="h5" gutterBottom>
-        Geography and Economy
-      </Typography>
-      <Typography variant="body2" color="text.secondary" mb={4}>
-        <i>Default values are loaded. Modify as needed for accuracy.</i>
-      </Typography>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+      <Navigation />
+      <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 6 }}>
+        <Typography variant="h5" gutterBottom>
+          Geography and Economy
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={4}>
+          <i>Default values are loaded. Modify as needed for accuracy.</i>
+        </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <Box>
-          <Search selectPosition={selectPosition} setSelectPosition={setSelectPosition} />
-          {errors.address && <Typography color="error">{errors.address}</Typography>}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Box>
+            <Search selectPosition={selectPosition} setSelectPosition={setSelectPosition} />
+          </Box>
+
+          <Box sx={{ height: 400 }}>
+            <Map selectPosition={selectPosition} />
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <FormInputField
+              label="Nominal Discount Rate"
+              name="nomDiscRate"
+              value={formData.nomDiscRate}
+              onChange={handleChange}
+              isDefault={isUsingDefaults.nomDiscRate}
+            />
+            <FormInputField
+              label="Expected Inflation Rate"
+              name="expInfRate"
+              value={formData.expInfRate}
+              onChange={handleChange}
+              isDefault={isUsingDefaults.expInfRate}
+            />
+            <FormInputField
+              label="Equipment Sale Tax Percentage"
+              name="equipSalePercent"
+              value={formData.equipSalePercent}
+              onChange={handleChange}
+              isDefault={isUsingDefaults.equipSalePercent}
+            />
+            <FormInputField
+              label="Investment Tax Credit (ITC)"
+              name="invTaxCredit"
+              value={formData.invTaxCredit}
+              onChange={handleChange}
+              isDefault={isUsingDefaults.invTaxCredit}
+            />
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
+            <SystemButton 
+              loading={loading}
+              onClick={handleNext}
+            />
+          </Box>
         </Box>
 
-        <Box sx={{ height: 400 }}>
-          <Map selectPosition={selectPosition} />
-        </Box>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <FormInputField
-            label="Nominal Discount Rate"
-            name="nomDiscRate"
-            value={formData.nomDiscRate}
-            onChange={handleChange}
-            error={errors.nomDiscRate}
-            helperText={errors.nomDiscRate}
-            isDefault={isUsingDefaults.nomDiscRate}
-          />
-          <FormInputField
-            label="Expected Inflation Rate"
-            name="expInfRate"
-            value={formData.expInfRate}
-            onChange={handleChange}
-            error={errors.expInfRate}
-            helperText={errors.expInfRate}
-            isDefault={isUsingDefaults.expInfRate}
-          />
-          <FormInputField
-            label="Equipment Sale Tax Percentage"
-            name="equipSalePercent"
-            value={formData.equipSalePercent}
-            onChange={handleChange}
-            error={errors.equipSalePercent}
-            helperText={errors.equipSalePercent}
-            isDefault={isUsingDefaults.equipSalePercent}
-          />
-          <FormInputField
-            label="Investment Tax Credit (ITC)"
-            name="invTaxCredit"
-            value={formData.invTaxCredit}
-            onChange={handleChange}
-            error={errors.invTaxCredit}
-            helperText={errors.invTaxCredit}
-            isDefault={isUsingDefaults.invTaxCredit}
-          />
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
-          <SystemButton 
-            loading={loading}
-            onClick={handleNext}
-          />
-        </Box>
-      </Box>
-
-      <ErrorMessage
-        open={errorDialog.open}
-        onClose={handleCloseError}
-        title={errorDialog.title}
-        message={errorDialog.message}
-      />
+        <ErrorMessage
+          open={errorDialog.open}
+          onClose={handleCloseError}
+          title={errorDialog.title}
+          message={errorDialog.message}
+        />
+      </Container>
     </Box>
   );
 }

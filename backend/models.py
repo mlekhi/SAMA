@@ -4,8 +4,7 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class WindTurbine(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Technical Parameters
     h_hub = db.Column(db.Float, default=17.0)  # Hub height (m)
@@ -23,16 +22,14 @@ class WindTurbine(db.Model):
     MO_WT = db.Column(db.Float, default=40.0)  # O&M cost of Wind Turbine ($/year/kw)
 
 class ChargeController(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     C_CH = db.Column(db.Float, default=200.0)  # Capital cost of charge controller ($)
     R_CH = db.Column(db.Float, default=200.0)  # Replacement cost of charge controller ($)
     MO_CH = db.Column(db.Float, default=0.0)  # O&M cost of charge controller ($/year)
 
 class GridSelling(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     sellStructure = db.Column(db.Integer, default=3)  # Selling structure type (1=Flat, 2=Monthly, 3=1:1)
     flat_compensation = db.Column(db.Float, default=0.049)  # Flat compensation rate ($/kWh)
@@ -40,8 +37,7 @@ class GridSelling(db.Model):
     one_to_one_compensation = db.Column(db.Boolean, default=True)  # Whether 1:1 compensation is used
 
 class GeographyEconomy(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Economic Parameters
     n_ir_rate = db.Column(db.Float, default=5.5)  # Nominal discount rate (%)
@@ -50,8 +46,7 @@ class GeographyEconomy(db.Model):
     RE_incentives_rate = db.Column(db.Float, default=0.0)  # Investment tax credit percentage (%)
 
 class SystemConfiguration(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     LPSP_max_rate = db.Column(db.Float, default=0.0999999)  # Maximum loss of power supply probability (%)
     RE_min_rate = db.Column(db.Float, default=75.0)  # Minimum Renewable Energy Capacity percentage (%)
@@ -65,8 +60,7 @@ class SystemConfiguration(db.Model):
     Li_ion = db.Column(db.Boolean, default=False)  # Li-ion battery type
 
 class PhotovoltaicSystem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Technical Parameters
     fpv = db.Column(db.Float, default=0.9)  # PV derating factor (%)
@@ -96,8 +90,7 @@ class PhotovoltaicSystem(db.Model):
     Sales_tax = db.Column(db.Float, default=80.0)  # Sales tax ($/kW)
 
 class Inverter(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Technical Parameters
     n_I = db.Column(db.Float, default=0.96)  # Inverter Efficiency (%)
@@ -110,8 +103,7 @@ class Inverter(db.Model):
     MO_I = db.Column(db.Float, default=3.4)  # O&M cost ($/kW/year)
 
 class DieselGenerator(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Diesel Generator fuel curve
     a = db.Column(db.Float, default=0.273)  # Slope (Liter/hr/kW output)
@@ -125,8 +117,7 @@ class DieselGenerator(db.Model):
     C_fuel_adj_rate = db.Column(db.Float, default=2.0)  # DG fuel cost yearly escalation rate (%)
 
 class Battery(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Technical Parameters
     SOC_min = db.Column(db.Float, default=0.1)  # Minimum state of charge (SoC) (%/100)
@@ -151,8 +142,7 @@ class Battery(db.Model):
     alfa_battery_Li_ion = db.Column(db.Float, default=1.0)  # Storage's maximum charge rate (A/Ah)
 
 class Grid(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     # Grid Connection Parameters
     Grid = db.Column(db.Boolean, default=False)  # Is grid connected
@@ -172,8 +162,7 @@ class Grid(db.Model):
     Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW)
 
 class Optimization(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(100), nullable=False)  # Direct session ID, no foreign key
+    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
     
     MaxIt = db.Column(db.Integer, default=200)  # Maximum Number of Iterations
     nPop = db.Column(db.Integer, default=50)  # Population Size (Swarm Size)
