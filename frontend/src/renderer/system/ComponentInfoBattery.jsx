@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import FormInputField from '@components/form/FormInputField'
 import NextButton from '@components/form/NextButton'
+import { API_URL } from "@utils/config"
 
 function ComponentInfoBattery() {
     const navigate = useNavigate()
@@ -49,7 +50,7 @@ function ComponentInfoBattery() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
                 
@@ -65,7 +66,7 @@ function ComponentInfoBattery() {
                 })
 
                 // Get system config
-                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configResponse = await fetch(`${API_URL}/get/routing`)
                 const configData = await configResponse.json()
                 setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
@@ -89,7 +90,7 @@ function ComponentInfoBattery() {
 
         try {
             console.log(Battery_Data)
-            const response = await fetch('http://127.0.0.1:5000/battery', {
+            const response = await fetch(`${API_URL}/battery`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -3,6 +3,7 @@ import { Box, Typography, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import FormInputField from '@components/form/FormInputField';
 import NextButton from '@components/form/NextButton';
+import { API_URL } from "@utils/config";
 
 function OptimizationParams() {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ function OptimizationParams() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults');
+                const response = await fetch(`${API_URL}/api/defaults`);
                 if (!response.ok) throw new Error('Failed to fetch defaults');
                 const data = await response.json();
                 setDefaults(data);
@@ -129,7 +130,7 @@ function OptimizationParams() {
             };
 
             // First save optimization parameters
-            const response = await fetch("http://127.0.0.1:5000/process/optim", {
+            const response = await fetch(`${API_URL}/process/optim`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -142,7 +143,7 @@ function OptimizationParams() {
             }
 
             // Now submit the entire job for processing
-            const submitResponse = await fetch("http://127.0.0.1:5000/submit/advanced", {
+            const submitResponse = await fetch(`${API_URL}/submit/advanced`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

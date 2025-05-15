@@ -25,6 +25,7 @@ import DGIcon from '@assets/DG.svg';
 import WTIcon from '@assets/WT.svg';
 import BattIcon from '@assets/Batt.svg';
 import FormInputField from '@components/form/FormInputField';
+import { API_URL } from "@utils/config";
 
 function SystemConfig(){
 
@@ -67,7 +68,7 @@ function SystemConfig(){
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults');
+                const response = await fetch(`${API_URL}/api/defaults`);
                 if (!response.ok) throw new Error('Failed to fetch defaults');
                 const data = await response.json();
                 setDefaults(data);
@@ -158,7 +159,7 @@ function SystemConfig(){
         formData.append("file", csvFile, "Eload.csv"); // Rename file before sending
         console.log("Uploading CSV File...");
         try {
-            const response = await fetch("http://127.0.0.1:5000/upload_csv", {
+            const response = await fetch(`${API_URL}/upload_csv`, {
                 method: "POST",
                 body: formData,
             });
@@ -266,7 +267,7 @@ function SystemConfig(){
                 batteryType,
             };
 
-            const response = await fetch("http://127.0.0.1:5000/systemConfig", {
+            const response = await fetch(`${API_URL}/systemConfig`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

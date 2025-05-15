@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import FormInputField from '@components/form/FormInputField'
 import NextButton from '@components/form/NextButton'
+import { API_URL } from "@utils/config"
 
 function ComponentInfoWindTurbine() {
     const navigate = useNavigate()
@@ -52,7 +53,7 @@ function ComponentInfoWindTurbine() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
                 
@@ -73,7 +74,7 @@ function ComponentInfoWindTurbine() {
                 })
 
                 // Get system config
-                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configResponse = await fetch(`${API_URL}/get/routing`)
                 const configData = await configResponse.json()
                 setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
@@ -102,7 +103,7 @@ function ComponentInfoWindTurbine() {
 
         try {
             console.log(WT_Data)
-            const response = await fetch('http://127.0.0.1:5000/wt', {
+            const response = await fetch(`${API_URL}/wt`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

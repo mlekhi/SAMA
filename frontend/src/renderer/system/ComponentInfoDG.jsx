@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import FormInputField from '@components/form/FormInputField'
 import NextButton from '@components/form/NextButton'
+import { API_URL } from "@utils/config"
 
 function ComponentInfoDG() {
     const navigate = useNavigate()
@@ -33,7 +34,7 @@ function ComponentInfoDG() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
                 
@@ -66,7 +67,7 @@ function ComponentInfoDG() {
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/dg', {
+            const response = await fetch(`${API_URL}/dg`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

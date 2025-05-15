@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, Alert, Grid
+  Box, Typography, Grid
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Search from '@components/Search';
 import Map from '@components/Map';
 import SystemButton from '@components/form/NextButton';
 import FormInputField from '@components/form/FormInputField';
+import ErrorMessage from '@components/form/ErrorMessage';
 import { API_URL } from "@utils/config"; 
 
 function GeoAndEconomy() {
@@ -15,6 +16,12 @@ function GeoAndEconomy() {
   const [selectPosition, setSelectPosition] = useState(null);
   const [defaults, setDefaults] = useState(null);
   const [errors, setErrors] = useState({});
+  const [errorDialog, setErrorDialog] = useState({
+    open: false,
+    title: '',
+    message: ''
+  });
+
   const [formData, setFormData] = useState({
     nomDiscRate: '',
     expInfRate: '',
@@ -29,20 +36,50 @@ function GeoAndEconomy() {
     invTaxCredit: true
   });
 
+  const [myData, setMyData] = useState({
+    latitude: '',
+    longitude: '',
+    discountRate: '',
+    projectLifetime: '',
+    capitalCost: '',
+    replacementCost: '',
+    OMCost: ''
+  });
+
+  const [selectedSystems, setSelectedSystems] = useState([]);
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+
   useEffect(() => {
     const fetchDefaults = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/defaults`);
-        const data = await res.json();
-        setDefaults(data);
-        setFormData({
-          nomDiscRate: data.nomDiscRate.toString(),
-          expInfRate: data.expInfRate.toString(),
-          equipSalePercent: data.equipSalePercent.toString(),
-          invTaxCredit: data.invTaxCredit.toString()
+        const sessionId = localStorage.getItem("session_id");
+        if (!sessionId) {
+          console.error("No session ID found");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/api/defaults`);
+        if (!response.ok) throw new Error('Failed to fetch defaults');
+        const data = await response.json();
+        
+        // Set form data with backend defaults
+        setMyData({
+          latitude: data.latitude?.toString() || '',
+          longitude: data.longitude?.toString() || '',
+          discountRate: data.discount_rate?.toString() || '',
+          projectLifetime: data.project_lifetime?.toString() || '',
+          capitalCost: '1000', // Default cost
+          replacementCost: '1000', // Default cost
+          OMCost: '10' // Default cost
         });
-      } catch (err) {
-        console.error("Failed to fetch defaults", err);
+
+        // Get system config
+        const configResponse = await fetch(`${API_URL}/get/routing`);
+        const configData = await configResponse.json();
+        setSelectedSystems(configData["Energy Systems"]);
+        setIsConfigLoaded(true);
+      } catch (error) {
+        console.error('Error fetching defaults:', error);
       }
     };
     fetchDefaults();
@@ -74,34 +111,95 @@ function GeoAndEconomy() {
   };
 
   const handleNext = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setErrorDialog({
+        open: true,
+        title: 'Validation Error',
+        message: 'Please fix the errors in the form before proceeding.'
+      });
+      return;
+    }
+
+    if (!selectPosition) {
+      setErrorDialog({
+        open: true,
+        title: 'Location Required',
+        message: 'Please select a location on the map before proceeding.'
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const initRes = await fetch(`${API_URL}/api/session/initialize`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
-      });
-
-      if (!initRes.ok) throw new Error("Session init failed");
-      const { session_id } = await initRes.json();
-      localStorage.setItem("session_id", session_id);
+      const sessionId = localStorage.getItem("session_id");
+      if (!sessionId) {
+        console.error("No session ID found");
+        return;
+      }
 
       const geoRes = await fetch(`${API_URL}/process/geo`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, session_id })
+        body: JSON.stringify({ 
+          ...formData, 
+          session_id: sessionId,
+          latitude: selectPosition.lat,
+          longitude: selectPosition.lng
+        })
       });
 
-      if (!geoRes.ok) throw new Error("Geo save failed");
+      if (!geoRes.ok) throw new Error("Failed to save geography and economy data");
       const geoResult = await geoRes.json();
       localStorage.setItem("geoEconomyId", geoResult.id);
 
       navigate("/system");
     } catch (err) {
       console.error(err);
-      setErrors(prev => ({ ...prev, submit: "Failed to save data. Try again." }));
+      setErrorDialog({
+        open: true,
+        title: 'Error Saving Data',
+        message: 'Failed to save your data. Please try again.'
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCloseError = () => {
+    setErrorDialog(prev => ({ ...prev, open: false }));
+  };
+
+  const sendComponentInfo = async () => {
+    const sessionId = localStorage.getItem("session_id");
+    if (!sessionId) {
+      console.error("No session ID found");
+      return;
+    }
+
+    const Geo_Data = {
+      latitude: myData.latitude,
+      longitude: myData.longitude,
+      discountRate: myData.discountRate,
+      projectLifetime: myData.projectLifetime,
+      capitalCost: myData.capitalCost,
+      replacementCost: myData.replacementCost,
+      OMCost: myData.OMCost
+    };
+
+    try {
+      console.log(Geo_Data);
+      const response = await fetch(`${API_URL}/geo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(Geo_Data)
+      });
+
+      const result = await response.json();
+      console.log('Response from server:', result);
+    } catch (error) {
+      console.error('Error sending geo info:', error);
     }
   };
 
@@ -163,10 +261,6 @@ function GeoAndEconomy() {
           />
         </Box>
 
-        {errors.submit && (
-          <Alert severity="error">{errors.submit}</Alert>
-        )}
-
         <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
           <SystemButton 
             loading={loading}
@@ -174,6 +268,13 @@ function GeoAndEconomy() {
           />
         </Box>
       </Box>
+
+      <ErrorMessage
+        open={errorDialog.open}
+        onClose={handleCloseError}
+        title={errorDialog.title}
+        message={errorDialog.message}
+      />
     </Box>
   );
 }

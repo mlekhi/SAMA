@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import FormInputField from '@components/form/FormInputField';
 import NextButton from '@components/form/NextButton';
+import { API_URL } from "@utils/config";
 
 function GridInfo() {
 
@@ -163,7 +164,7 @@ function GridInfo() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/defaults');
+                const response = await fetch(`${API_URL}/api/defaults`);
                 if (!response.ok) throw new Error('Failed to fetch defaults');
                 const data = await response.json();
                 setDefaults(data);
@@ -362,7 +363,7 @@ function GridInfo() {
                 one_to_one_compensation: selectedSellStructure === 3
             };
 
-            const response = await fetch("http://127.0.0.1:5000/gridInfo", {
+            const response = await fetch(`${API_URL}/gridInfo`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -375,8 +376,8 @@ function GridInfo() {
             }
 
             console.log("Grid Info Saved Successfully!");
-        window.scrollTo(0, 0);
-        navigate('/optim');
+            window.scrollTo(0, 0);
+            navigate('/optim');
 
         } catch (error) {
             console.error('Error:', error);
@@ -415,11 +416,10 @@ function GridInfo() {
             summerMonths: Object.keys(summerMonths).filter((month) => summerMonths[month]),
         };
 
-        console.log("Sending Grid Info:", gridInfoData); // Add this line for debugging
-
+        console.log("Sending Grid Info:", gridInfoData);
 
         try {
-            const response = await fetch("http://127.0.0.1:5000/gridInfo", {
+            const response = await fetch(`${API_URL}/gridInfo`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

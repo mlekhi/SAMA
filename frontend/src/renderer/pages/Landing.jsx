@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Typography, Container, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { API_URL } from "@utils/config";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -14,8 +15,23 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 const Landing = () => {
   const navigate = useNavigate();
 
-  const handleStart = () => {
-    navigate('/geo');
+  const handleStart = async () => {
+    try {
+      const initRes = await fetch(`${API_URL}/api/session/initialize`, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      });
+
+      if (!initRes.ok) throw new Error("Failed to initialize session");
+      const { session_id } = await initRes.json();
+      localStorage.setItem("session_id", session_id);
+      
+      navigate('/geo');
+    } catch (err) {
+      console.error("Failed to initialize session:", err);
+      // You might want to show an error message to the user here
+    }
   };
 
   const handleFaq = () => {
