@@ -21,12 +21,14 @@ import {
     Alert
 } from "@mui/material";
 import FormInputField from '@components/form/FormInputField';
+import NextButton from '@components/form/NextButton';
 
 function GridInfo() {
 
     const navigate = useNavigate();
     const [defaults, setDefaults] = useState(null);
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
     // State for the main dropdown selection
     const [isGridConnected, setIsGridConnected] = useState("");
@@ -493,762 +495,131 @@ function GridInfo() {
 
 
     return (
-        <div style={{ marginLeft: "220px", padding: "20px" }}>
-
-
-            <Box sx={{ padding: 4 }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
+            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                 <Typography variant="h4" gutterBottom>
                     Grid Information
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }}>
+                <Typography variant="body1" sx={{ mb: 4 }}>
                     <i>
-                        Default values are provided for some questions, but please review and adjust as necessary for more accurate
-                        results.
+                        Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
                     </i>
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {/* First Question: Is the system connected to the grid */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <FormControl>
-                        <Typography variant="body1" sx={{ mb: 1 }}>
-                            Is your energy system connected to the grid?
-                        </Typography>
+                        <Typography gutterBottom>Is your system connected to the grid?</Typography>
                         <RadioGroup
-                            row
                             value={isGridConnected}
-                            onChange={(e) => setIsGridConnected(e.target.value)}
+                            onChange={(e) => {
+                                setIsGridConnected(e.target.value);
+                                if (e.target.value === 'No') {
+                                    setIsNetMetered('No');
+                                }
+                            }}
                         >
-                            <FormControlLabel
-                                value="Yes"
-                                control={<Radio sx={{
-                                    color: 'secondary.main',
-                                    '&.Mui-checked': {
-                                        color: 'secondary.main',
-                                    },
-                                }} />}
-                                label="Yes"
-                            />
-                            <FormControlLabel
-                                value="No"
-                                control={<Radio sx={{
-                                    color: 'secondary.main',
-                                    '&.Mui-checked': {
-                                        color: 'secondary.main',
-                                    },
-                                }} />}
-                                label="No"
-                            />
+                            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                            <FormControlLabel value="No" control={<Radio />} label="No" />
                         </RadioGroup>
                     </FormControl>
 
-                    {/* Second Question */}
                     {isGridConnected === 'Yes' && (
                         <FormControl>
-                            <Typography variant="body1" sx={{ mb: 1 }}>
-                                Is your energy system net metered?
-                            </Typography>
+                            <Typography gutterBottom>Is your system net metered?</Typography>
                             <RadioGroup
-                                row
                                 value={isNetMetered}
                                 onChange={(e) => setIsNetMetered(e.target.value)}
                             >
-                                <FormControlLabel
-                                    value="Yes"
-                                    control={<Radio sx={{
-                                        color: 'secondary.main',
-                                        '&.Mui-checked': {
-                                            color: 'secondary.main',
-                                        },
-                                    }} />}
-                                    label="Yes"
-                                />
-                                <FormControlLabel
-                                    value="No"
-                                    control={<Radio sx={{
-                                        color: 'secondary.main',
-                                        '&.Mui-checked': {
-                                            color: 'secondary.main',
-                                        },
-                                    }} />}
-                                    label="No"
-                                />
+                                <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+                                <FormControlLabel value="No" control={<Radio />} label="No" />
                             </RadioGroup>
                         </FormControl>
                     )}
 
-                    {isGridConnected === 'No' && (
+                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
                         <FormControl>
-                            <Typography variant="body1" sx={{ mb: 1 }}>
-                                Do you want to compare your off-grid system with the time you only buy electricity from the grid?
-                            </Typography>
-                            <RadioGroup
-                                row
-                                value={isNetMetered}
-                                onChange={(e) => setIsNetMetered(e.target.value)}
+                            <Typography gutterBottom>Select your utility structure:</Typography>
+                            <Select
+                                value={utilityStructure}
+                                onChange={(e) => setUtilityStructure(e.target.value)}
+                                sx={{ minWidth: 200 }}
                             >
-                                <FormControlLabel
-                                    value="Yes"
-                                    control={<Radio sx={{
-                                        color: 'secondary.main',
-                                        '&.Mui-checked': {
-                                            color: 'secondary.main',
-                                        },
-                                    }} />}
-                                    label="Yes"
-                                />
-                                <FormControlLabel
-                                    value="No"
-                                    control={<Radio sx={{
-                                        color: 'secondary.main',
-                                        '&.Mui-checked': {
-                                            color: 'secondary.main',
-                                        },
-                                    }} />}
-                                    label="No"
-                                />
-                            </RadioGroup>
+                                <MenuItem value="tiered">Tiered</MenuItem>
+                                <MenuItem value="timeOfUse">Time of Use</MenuItem>
+                                <MenuItem value="realTime">Real Time</MenuItem>
+                            </Select>
                         </FormControl>
                     )}
 
-                    {/* If the second question is No */}
+                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && utilityStructure && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Typography gutterBottom>Enter your utility prices:</Typography>
+                            {getPriceFields(utilityStructure).map((field, index) => (
+                                <FormInputField
+                                    key={index}
+                                    label={field.label}
+                                    name={field.name}
+                                    value={prices[field.name] || ''}
+                                    onChange={(e) => handlePriceChange(field.name, e.target.value)}
+                                    error={!prices[field.name]}
+                                    helperText={!prices[field.name] ? 'Required' : ''}
+                                    endAdornment={field.unit}
+                                />
+                            ))}
+                        </Box>
+                    )}
+
+                    {isGridConnected === 'Yes' && isNetMetered === 'No' && (
+                        <FormControl>
+                            <Typography gutterBottom>Enter your utility price:</Typography>
+                            <FormInputField
+                                label="Utility Price"
+                                name="utilityPrice"
+                                value={prices.utilityPrice || ''}
+                                onChange={(e) => handlePriceChange('utilityPrice', e.target.value)}
+                                error={!prices.utilityPrice}
+                                helperText={!prices.utilityPrice ? 'Required' : ''}
+                                endAdornment="$/kWh"
+                            />
+                        </FormControl>
+                    )}
+
                     {isGridConnected === 'No' && isNetMetered === 'No' && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, maxWidth: 300 }}>
-                            {/* <Button
-                                variant="contained"
-                                sx={{
-                                    minWidth: 100,
-                                    backgroundColor: '#5A3472',
-                                    '&:hover': { backgroundColor: '#4A2D61' },
-                                    color: 'white',
-                                }}
-                                onClick={handlePrev}
-                            >
-                                Previous
-                            </Button> */}
-                            <Button
-                                variant="contained"
-                                sx={{
-                                    minWidth: 100,
-                                    backgroundColor: 'secondary.main',
-                                    '&:hover': { backgroundColor: 'secondary.dark' },
-                                    color: 'white',
-                                }}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <NextButton
+                                label="Next"
                                 onClick={handleNext}
-                            >
-                                Next
-                            </Button>
+                                loading={loading}
+                                color="secondary"
+                            />
+                        </Box>
+                    )}
+
+                    {isGridConnected === 'Yes' && isNetMetered === 'Yes' && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <NextButton
+                                label="Next"
+                                onClick={handleNext}
+                                loading={loading}
+                                disabled={!utilityStructure || getMissingFields(utilityStructure, prices).length > 0}
+                                color="secondary"
+                            />
+                        </Box>
+                    )}
+
+                    {isGridConnected === 'Yes' && isNetMetered === 'No' && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <NextButton
+                                label="Next"
+                                onClick={handleNext}
+                                loading={loading}
+                                color="secondary"
+                            />
                         </Box>
                     )}
                 </Box>
-
-
-                {((isGridConnected === 'Yes' && isNetMetered === 'Yes') || (isGridConnected === 'Yes' && isNetMetered === 'No') || (isGridConnected === 'No' && isNetMetered === 'Yes')) && (
-                    <>
-                        < Typography variant="body1" sx={{ mt: 3, mb: 1 }}>
-                            Which months of the year are considered summer by your electricity utility company?
-                        </Typography>
-                        <FormGroup row>
-                            {Object.keys(summerMonths).map((month) => (
-                                <FormControlLabel
-                                    key={month}
-                                    control={
-                                        <Checkbox
-                                            checked={summerMonths[month]}
-                                            onChange={() => handleMonthChange(month)}
-                                            sx={{
-                                                color: 'secondary.main',
-                                                '&.Mui-checked': {
-                                                    color: 'secondary.main',
-                                                },
-                                            }}
-                                        />
-                                    }
-                                    label={month}
-                                />
-                            ))}
-                        </FormGroup>
-
-                        {/* Holidays */}
-                        {/* <Typography variant="body1" sx={{ mt: 3, mb: 2 }}>
-                            Which dates of the year are considered holidays by your electricity utility company? Select your country:
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                            <FormControl fullWidth>
-                                <InputLabel id="country-label">Country</InputLabel>
-                                <Select sx={{ maxWidth: 300, width: '100%' }}
-                                    label="country-label"
-                                    value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
-                                >
-                                    {[
-                                        { value: "AR", label: "Argentina" },
-                                        { value: "AU", label: "Australia" },
-                                        { value: "CA", label: "Canada" },
-                                        { value: "AE", label: "United Arab Emirates" },
-                                        { value: "GB", label: "United Kingdom" },
-                                        { value: "US", label: "United States" },
-                                    ].map((option) => (
-                                        <MenuItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Box> */}
-
-                        {/* <Button
-                            onClick={fetchHolidays}
-                            variant="contained"
-                            sx={{
-                                minWidth: 100,
-                                backgroundColor: '#5A3472',
-                                '&:hover': { backgroundColor: '#4A2D61' },
-                                color: 'white',
-                            }}
-                        >
-                            Fetch Holidays
-                        </Button>
-
-                        {loading && <CircularProgress sx={{ mt: 2 }} />}
-                        {error && (
-                            <Typography color="error" sx={{ mt: 2 }}>
-                                {error}
-                            </Typography>
-                        )} */}
-
-                        <List>
-                            {holidays.map((holiday, index) => (
-                                <ListItem key={index}>
-                                    {holiday}
-                                </ListItem>
-                            ))}
-                        </List>
-
-                        <Divider sx={{ my: 4 }} />
-                        <Box
-                            sx={{
-                                maxWidth: 450,
-                                display: 'flex',
-                                flexDirection: 'column',
-                            }}
-                        >
-                            <FormInputField
-                                label="Annual Expenses for Grid Interconnection"
-                                name="annualExpense"
-                                value={annualExpense}
-                                onChange={(e) => setAnnualExpense(e.target.value)}
-                                endAdornment="$"
-                            />
-
-                            <FormInputField
-                                label="Sale Tax Percentage of Grid Electricity"
-                                name="saleTaxPrecentage"
-                                value={saleTaxPrecentage}
-                                onChange={(e) => setSaleTaxPrecentage(e.target.value)}
-                            />
-
-                            <FormInputField
-                                label="Grid Adjustments"
-                                name="gridAdjust"
-                                value={gridAdjust}
-                                onChange={(e) => setGridAdjust(e.target.value)}
-                                endAdornment="kWh"
-                            />
-
-                            <FormInputField
-                                label="Yearly Escalation Rate in Grid Electricity Prices"
-                                name="yearlyEscRate"
-                                value={yearlyEscRate}
-                                onChange={(e) => setYearlyEscRate(e.target.value)}
-                            />
-
-                            <FormInputField
-                                label="Annual Credits Offered by Utility Grid"
-                                name="annualCredits"
-                                value={annualCredits}
-                                onChange={(e) => setAnnualCredits(e.target.value)}
-                                endAdornment="$"
-                            />
-
-                            {isNetMetered === "Yes" && (
-                                <FormInputField
-                                    label="Net Metering One-Time Setup Fee"
-                                    name="netMetering"
-                                    value={netMetering}
-                                    onChange={(e) => setNetMetering(e.target.value)}
-                                    endAdornment="$"
-                                />
-                            )}
-
-                            <FormInputField
-                                label="Grid Monthly Fixed Charge"
-                                name="monthlyFixedCharge"
-                                value={monthlyFixedCharge}
-                                onChange={(e) => setMonthlyFixedCharge(e.target.value)}
-                                endAdornment="$"
-                            />
-                        </Box>
-
-                        <Divider sx={{ my: 4 }} />
-
-                        {/* Utility structure */}
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, margin: 'auto', }}>
-                            <Typography variant="body1" sx={{ mb: 1 }}>
-                                Select a Utility Structure:
-                            </Typography>
-                            <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-                                <InputLabel id="rate-structure-label">Rate Structure</InputLabel>
-                                <Select
-                                    label='rate-structure-label'
-                                    id='rate-structure-select'
-                                    value={utilityStructure}
-                                    onChange={handleUtilityStructureChange}
-                                >
-                                    <MenuItem value="flatrate">Flat Rate</MenuItem>
-                                    <MenuItem value="seasonalrate">Seasonal Rate</MenuItem>
-                                    <MenuItem value="monthlyrate">Monthly Rate</MenuItem>
-                                    <MenuItem value="tieredrate">Tiered Rate</MenuItem>
-                                    <MenuItem value="seasonaltier">Seasonal Tiered Rate</MenuItem>
-                                    <MenuItem value="monthlytier">Monthly Tiered Rate</MenuItem>
-                                    <MenuItem value="timeofuse">Time of Use</MenuItem>
-                                </Select>
-                            </FormControl>
-
-                            {/* Conditional input fields */}
-                            {utilityStructure === "flatrate" && (
-                                <FormInputField
-                                    label="Flat Price"
-                                    name="flatPrice"
-                                    value={prices.flatPrice}
-                                    onChange={(e) => setPrices({ ...prices, flatPrice: e.target.value })}
-                                    endAdornment="$"
-                                />
-                            )}
-
-                            {utilityStructure === "seasonalrate" && (
-                                <>
-                                    <FormInputField
-                                        label="Summer Price"
-                                        name="summerPrice"
-                                        value={prices.summerPrice}
-                                        onChange={(e) => setPrices({ ...prices, summerPrice: e.target.value })}
-                                        endAdornment="$"
-                                    />
-                                    <FormInputField
-                                        label="Winter Price"
-                                        name="winterPrice"
-                                        value={prices.winterPrice}
-                                        onChange={(e) => setPrices({ ...prices, winterPrice: e.target.value })}
-                                        endAdornment="$"
-                                    />
-                                </>
-                            )}
-
-                            {utilityStructure === "monthlyrate" && (
-                                <Box>
-                                    <Typography variant="body1" sx={{ mb: 2 }}>
-                                        Enter Monthly Prices:
-                                    </Typography>
-                                    <Grid2 container spacing={2} sx={{ maxWidth: 1000 }}>
-                                        {Object.keys(prices.monthlyPrices).map((month) => (
-                                            <Box key={month} sx={{ mb: 2 }}>
-                                                <FormInputField
-                                                    label={`${month} Price`}
-                                                    name={`monthlyPrice-${month}`}
-                                                    value={prices.monthlyPrices[month]}
-                                                    onChange={(e) => handleMonthlyPriceChange(month, e.target.value)}
-                                                    endAdornment="$"
-                                                />
-                                            </Box>
-                                        ))}
-                                    </Grid2>
-                                </Box>
-                            )}
-
-                            {utilityStructure === "tieredrate" && (
-                                <Box sx={{ display: 'flex', mt: 2 }}>
-                                    <Grid2 container spacing={2} sx={{ maxWidth: 800 }}>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="Low Tier Price"
-                                                name="lowTierPrice"
-                                                value={prices.tieredRate.lowTierPrice}
-                                                onChange={(e) => handleTieredRateChange("lowTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                        </Grid2>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="Low Tier Max Load"
-                                                name="lowTierMaxLoad"
-                                                value={prices.tieredRate.lowTierMaxLoad}
-                                                onChange={(e) => handleTieredRateChange("lowTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                        </Grid2>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="Medium Tier Price"
-                                                name="mediumTierPrice"
-                                                value={prices.tieredRate.mediumTierPrice}
-                                                onChange={(e) => handleTieredRateChange("mediumTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                        </Grid2>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="Medium Tier Max Load"
-                                                name="mediumTierMaxLoad"
-                                                value={prices.tieredRate.mediumTierMaxLoad}
-                                                onChange={(e) => handleTieredRateChange("mediumTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                        </Grid2>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="High Tier Price"
-                                                name="highTierPrice"
-                                                value={prices.tieredRate.highTierPrice}
-                                                onChange={(e) => handleTieredRateChange("highTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                        </Grid2>
-                                        <Grid2 item xs={6}>
-                                            <FormInputField
-                                                label="High Tier Max Load"
-                                                name="highTierMaxLoad"
-                                                value={prices.tieredRate.highTierMaxLoad}
-                                                onChange={(e) => handleTieredRateChange("highTierMaxLoad", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
-                                            />
-                                        </Grid2>
-                                    </Grid2>
-                                </Box>
-                            )}
-
-
-                            {utilityStructure === "seasonaltier" && (
-                                <Box>
-                                    <Grid2 container spacing={4}>
-                                        {/* Summer Rates */}
-                                        <Grid2 item xs={12} sm={6}>
-                                            <Typography variant="h6" sx={{ mb: 2 }}>
-                                                Summer Rates
-                                            </Typography>
-                                            <FormInputField
-                                                label="Low Tier Price"
-                                                name="summerLowTierPrice"
-                                                value={prices.seasonalTieredRate.summer.lowTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "lowTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="Low Tier Max Load"
-                                                name="summerLowTierMaxLoad"
-                                                value={prices.seasonalTieredRate.summer.lowTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "lowTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                            <FormInputField
-                                                label="Medium Tier Price"
-                                                name="summerMediumTierPrice"
-                                                value={prices.seasonalTieredRate.summer.mediumTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "mediumTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="Medium Tier Max Load"
-                                                name="summerMediumTierMaxLoad"
-                                                value={prices.seasonalTieredRate.summer.mediumTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "mediumTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                            <FormInputField
-                                                label="High Tier Price"
-                                                name="summerHighTierPrice"
-                                                value={prices.seasonalTieredRate.summer.highTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "highTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="High Tier Max Load"
-                                                name="summerHighTierMaxLoad"
-                                                value={prices.seasonalTieredRate.summer.highTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "highTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                        </Grid2>
-
-                                        {/* Winter Rates */}
-                                        <Grid2 item xs={12} sm={6}>
-                                            <Typography variant="h6" sx={{ mb: 2 }}>
-                                                Winter Rates
-                                            </Typography>
-                                            <FormInputField
-                                                label="Low Tier Price"
-                                                name="winterLowTierPrice"
-                                                value={prices.seasonalTieredRate.winter.lowTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "lowTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="Low Tier Max Load"
-                                                name="winterLowTierMaxLoad"
-                                                value={prices.seasonalTieredRate.winter.lowTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "lowTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                            <FormInputField
-                                                label="Medium Tier Price"
-                                                name="winterMediumTierPrice"
-                                                value={prices.seasonalTieredRate.winter.mediumTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "mediumTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="Medium Tier Max Load"
-                                                name="winterMediumTierMaxLoad"
-                                                value={prices.seasonalTieredRate.winter.mediumTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "mediumTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                            <FormInputField
-                                                label="High Tier Price"
-                                                name="winterHighTierPrice"
-                                                value={prices.seasonalTieredRate.winter.highTierPrice}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "highTierPrice", e.target.value)}
-                                                endAdornment="$"
-                                            />
-                                            <FormInputField
-                                                label="High Tier Max Load"
-                                                name="winterHighTierMaxLoad"
-                                                value={prices.seasonalTieredRate.winter.highTierMaxLoad}
-                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "highTierMaxLoad", e.target.value)}
-                                                endAdornment="kWh"
-                                            />
-                                        </Grid2>
-                                    </Grid2>
-                                </Box>
-                            )}
-
-                            {utilityStructure === "monthlytier" && (
-                                <Box>
-                                    <Typography variant="h6" sx={{ mb: 2 }}>
-                                        Monthly Tiered Rates
-                                    </Typography>
-                                    <Grid2 container spacing={4}>
-                                        {Object.keys(prices.monthlyTieredRate).map((month, index) => (
-                                            <Grid2 item xs={12} sm={4} key={month}>
-                                                <Box>
-                                                    <Typography variant="subtitle1" sx={{ mb: 1, ml: 2 }}>
-                                                        {month}
-                                                    </Typography>
-                                                    {["lowTierPrice", "lowTierMaxLoad", "mediumTierPrice", "mediumTierMaxLoad", "highTierPrice", "highTierMaxLoad"].map((field) => (
-                                                        <TextField
-                                                            key={`${month}-${field}`}
-                                                            label={field.replace(/([A-Z])/g, " $1")}
-                                                            type="number"
-                                                            value={prices.monthlyTieredRate[month][field]}
-                                                            onChange={(e) => handleMonthlyTieredRateChange(month, field, e.target.value)}
-                                                            fullWidth
-                                                            sx={{ mb: 2, maxWidth: 300, ml: 2 }}
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            </Grid2>
-                                        ))}
-                                    </Grid2>
-                                </Box>
-                            )}
-
-
-                            {utilityStructure === "timeofuse" && (
-                                <Box>
-                                    <Typography variant="h5" sx={{ mb: 2 }}>
-                                        Time of Use Rates
-                                    </Typography>
-
-                                    {/* Summer Rates */}
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        Summer
-                                    </Typography>
-
-                                    <FormInputField
-                                        label="Peak Rate"
-                                        name="summerPeakRate"
-                                        value={prices.timeOfUse.summerPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("summer", "PeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-                                    <FormInputField
-                                        label="Mid-Peak Rate"
-                                        name="summerMidPeakRate"
-                                        value={prices.timeOfUse.summerMidPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("summer", "MidPeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-                                    <FormInputField
-                                        label="Off-Peak Rate"
-                                        name="summerOffPeakRate"
-                                        value={prices.timeOfUse.summerOffPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("summer", "OffPeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-
-                                    {/* Winter Rates */}
-                                    <Typography variant="h6" sx={{ mb: 1, mt: 3 }}>
-                                        Winter
-                                    </Typography>
-
-                                    <FormInputField
-                                        label="Peak Rate"
-                                        name="winterPeakRate"
-                                        value={prices.timeOfUse.winterPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("winter", "PeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-                                    <FormInputField
-                                        label="Mid-Peak Rate"
-                                        name="winterMidPeakRate"
-                                        value={prices.timeOfUse.winterMidPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("winter", "MidPeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-                                    <FormInputField
-                                        label="Off-Peak Rate"
-                                        name="winterOffPeakRate"
-                                        value={prices.timeOfUse.winterOffPeakRate}
-                                        onChange={(e) => handleTimeOfUseChange("winter", "OffPeakRate", e.target.value)}
-                                        endAdornment="$"
-                                    />
-                                </Box>
-                            )}
-                        </Box>
-
-                        <Divider sx={{ my: 4 }} />
-
-                        <Box
-                            sx={{
-                                maxWidth: 450,
-                                display: 'flex',
-                                flexDirection: 'column',
-                            }}
-                        >
-                            <FormInputField
-                                label="Purchase Capacity"
-                                name="purchaseCapacity"
-                                value={purchaseCapacity}
-                                onChange={(e) => setPurchaseCapacity(e.target.value)}
-                                endAdornment="kWh"
-                            />
-
-                            <FormInputField
-                                label="Sell Capacity"
-                                name="sellCapacity"
-                                value={sellCapacity}
-                                onChange={(e) => setSellCapacity(e.target.value)}
-                                endAdornment="kWh"
-                            />
-                        </Box>
-
-                        {/* Compensation */}
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, margin: 'auto', }}>
-                            <Typography variant="body1" sx={{ mb: 1 }}>
-                                Select Compensation Option:
-                            </Typography>
-                            <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-                                <InputLabel id="compensation-label">Compensation Option</InputLabel>
-                                <Select
-                                    label='compensation-label'
-                                    id='compensation-select'
-                                    value={compensation}
-                                    onChange={handleCompensationChange}
-                                >
-                                    <MenuItem value="flatcomp">Flat Compensation</MenuItem>
-                                    <MenuItem value="monthlycomp">Monthly Compensation</MenuItem>
-                                    <MenuItem value="one-to-one">1:1 Compensation</MenuItem>
-                                </Select>
-                            </FormControl>
-
-                            {compensation === "flatcomp" && (
-                                <FormInputField
-                                    label="Flat Compensation"
-                                    name="flatComp"
-                                    value={prices.flatComp}
-                                    onChange={(e) => setPrices({ ...prices, flatComp: e.target.value })}
-                                    endAdornment="$"
-                                />
-                            )}
-
-                            {compensation === "monthlycomp" && (
-                                <Box>
-                                    <Typography variant="body1" sx={{ mb: 2 }}>
-                                        Enter Monthly Prices:
-                                    </Typography>
-
-                                    <Grid2 container spacing={2} sx={{ maxWidth: 1000 }}>
-                                        {Object.keys(prices.monthlyComp).map((month) => (
-                                            <Box key={month} sx={{ mb: 2 }}>
-                                                <FormInputField
-                                                    label={`${month} Price`}
-                                                    name={`monthlyComp-${month}`}
-                                                    value={prices.monthlyComp[month]}
-                                                    onChange={(e) => handleMonthlyCompChange(month, e.target.value)}
-                                                    endAdornment="$"
-                                                />
-                                            </Box>
-                                        ))}
-                                    </Grid2>
-                                </Box>
-                            )}
-                        </Box>
-
-                        <Grid2>
-                            {!utilityStructure ? (
-                                <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-                                    Select a utility structure.
-                                </Alert>
-                            ) : getMissingFields(utilityStructure, prices).length > 0 ? (
-                                <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-                                    {`Missing required values: ${getMissingFields(utilityStructure, prices).join(', ')}`}
-                                </Alert>
-                            ) : null}
-                        </Grid2>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, maxWidth: 300 }}>
-                            {/* <Button
-                                variant="contained"
-                                sx={{
-                                    minWidth: 100,
-                                    backgroundColor: '#5A3472',
-                                    '&:hover': { backgroundColor: '#4A2D61' },
-                                    color: 'white',
-                                }}
-                                onClick={handlePrev}
-                            >
-                                Previous
-                            </Button> */}
-                            <Button
-                                variant="contained"
-                                sx={{
-                                    minWidth: 100,
-                                    backgroundColor: 'secondary.main',
-                                    '&:hover': { backgroundColor: 'secondary.dark' },
-                                    color: 'white',
-                                }}
-                                onClick={handleNext}
-                                disabled={!utilityStructure || getMissingFields(utilityStructure, prices).length > 0}
-                            >
-                                Next
-                            </Button>
-
-                        </Box>
-
-                    </>
-                )}
             </Box>
-        </div >
+        </Box>
     );
 }
 

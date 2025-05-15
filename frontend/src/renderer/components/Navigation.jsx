@@ -40,11 +40,11 @@ import GridInfo from '@system/GridInfo';
 import OptimizationParams from '@system/OptimizationParams';
 
 // Component Pages
-import ComponentInfoPV from '@components/ComponentInfoPV';
-import ComponentInfoBattery from '@components/ComponentInfoBattery';
-import ComponentInfoDG from '@components/ComponentInfoDG';
-import ComponentInfoInverter from '@components/ComponentInfoInverter';
-import ComponentInfoWindTurbine from '@components/ComponentInfoWindTurbine';
+import ComponentInfoPV from '@system/ComponentInfoPV';
+import ComponentInfoBattery from '@system/ComponentInfoBattery';
+import ComponentInfoDG from '@system/ComponentInfoDG';
+import ComponentInfoInverter from '@system/ComponentInfoInverter';
+import ComponentInfoWindTurbine from '@system/ComponentInfoWindTurbine';
 
 // Results Pages
 import ResultsGraphs from '@components/results/ResultsGraphs';

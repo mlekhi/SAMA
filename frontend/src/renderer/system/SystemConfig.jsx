@@ -6,10 +6,7 @@ import {
     Checkbox, 
     FormGroup,
     FormControlLabel, 
-    TextField, 
-    InputAdornment, 
     FormControl, 
-    Grid2, 
     Typography, 
     Box, 
     Input,
@@ -27,12 +24,7 @@ import PVIcon from '@assets/PV.svg';
 import DGIcon from '@assets/DG.svg';
 import WTIcon from '@assets/WT.svg';
 import BattIcon from '@assets/Batt.svg';
-
-
-
-
-
-
+import FormInputField from '@components/form/FormInputField';
 
 function SystemConfig(){
 
@@ -305,493 +297,389 @@ function SystemConfig(){
         }
     };
 
-    return(
-        <>
-      
-            <Box component = "main"
-                sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    ml: `250px`, // Offset content by the width of the sidebar
-                }}>
-            
-            
-            <Grid2 container direction = "column"
-                spacing = {2}
-                alignItems = "start">
-                <Grid2 item>
-                <Typography variant="h5" component = "h2">
+    return (
+        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
+            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                <Typography variant="h5" component="h2" gutterBottom>
                     System Configuration 
                 </Typography>
                 
-                <Typography variant = "body2" color = "textSecondary">
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 4 }}>
                     <i>
                         Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
                     </i>
                 </Typography>
-                </Grid2>
-                    <Grid2 item>
-                    
-                    <FormControl>
-                        <Typography gutterBottom>Enter the lifetime of system in simulation. </Typography>
-                      <TextField 
-                        name="lifetime"
-                        label = "Lifetime of System"
-                        type = "number"
-                        value = {formData.lifetime}
-                        onChange={handleChange}
-                        fullWidth
-                        variant = "outlined"
-                        sx={{mt:2, mb:3}}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    years
-                                </InputAdornment>
-                            ),
-                            sx: isUsingDefaults.lifetime ? { color: 'text.secondary' } : {}
-                        }}
-                        required
-                        error={!!errors.lifetime}
-                        helperText={errors.lifetime}
-                        >
-                        </TextField>
 
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <FormControl>
+                        <Typography gutterBottom>Enter the lifetime of system in simulation.</Typography>
+                        <FormInputField
+                            label="Lifetime of System"
+                            name="lifetime"
+                            value={formData.lifetime}
+                            onChange={handleChange}
+                            error={errors.lifetime}
+                            helperText={errors.lifetime}
+                            isDefault={isUsingDefaults.lifetime}
+                            endAdornment="years"
+                        />
                     </FormControl>
-                </Grid2>
-                    <Grid2 item>
+
                     <FormControl>
                         <Typography gutterBottom>Enter the maximum loss of power supply probability percentage</Typography>
-                    <TextField
-                    name="maxPL"
-                    label = "Max Loss of Power %"
-                    type = "number"
-                    value = {formData.maxPL}
-                    onChange ={handleChange}
-                    fullwidthvariant = "outlined"
-                    sx = {{mt:2, mb:3}}
-                    InputProps = {{
-                        endAdornment: (
-                            <InputAdornment position = "end">
-                                %
-                            </InputAdornment>
-                        ),
-                        sx: isUsingDefaults.maxPL ? { color: 'text.secondary' } : {}
-                    }}
-                    required
-                    error={!!errors.maxPL}
-                    helperText={errors.maxPL}
-                    >
-                    </TextField>
+                        <FormInputField
+                            label="Max Loss of Power %"
+                            name="maxPL"
+                            value={formData.maxPL}
+                            onChange={handleChange}
+                            error={errors.maxPL}
+                            helperText={errors.maxPL}
+                            isDefault={isUsingDefaults.maxPL}
+                            endAdornment="%"
+                        />
                     </FormControl>
-                </Grid2>
-                    <Grid2 item>
+
                     <FormControl>
                         <Typography gutterBottom>Enter the minimal renewable energy capacity percentage</Typography>
-                    <TextField
-                    name="minRenewEC"
-                    label = "Min Renewable Energy %"
-                    type = "number"
-                    value = {formData.minRenewEC}
-                    onChange ={handleChange}
-                    fullwidthvariant = "outlined"
-                    sx = {{mt:2, mb:3}}
-                    InputProps = {{
-                        endAdornment: (
-                            <InputAdornment position = "end">
-                                %
-                            </InputAdornment>
-                        ),
-                        sx: isUsingDefaults.minRenewEC ? { color: 'text.secondary' } : {}
-                    }}
-                    required
-                    error={!!errors.minRenewEC}
-                    helperText={errors.minRenewEC}
-                    >
-                    </TextField>
+                        <FormInputField
+                            label="Min Renewable Energy %"
+                            name="minRenewEC"
+                            value={formData.minRenewEC}
+                            onChange={handleChange}
+                            error={errors.minRenewEC}
+                            helperText={errors.minRenewEC}
+                            isDefault={isUsingDefaults.minRenewEC}
+                            endAdornment="%"
+                        />
                     </FormControl>
-                </Grid2>
-                <Grid2 item>
-                <Typography gutterBottom>
-                        Next we will ask for information about the electrical load. 
-                    </Typography>
-                </Grid2>
-                
-                                    
-                    <Typography  marginTop={2}>
-                        Do you have hourly consumption data?
-                    </Typography>
-                    <FormGroup>
-                        <FormControlLabel
-                        control={
-                            <Checkbox
-                            checked={hasHourly === true}
-                            onChange={() => {
-                                setHasHourly(true)
-                                setHasMonthly(false); // Remove Monthly section
-                                setMonthlyData(Array(12).fill("")); // Clear Monthly data
-                                setHasAnnual(false); // Remove Annual section
-                            }}
-                            
-                            />
-                        }
-                        label="Yes"
-                        />
-                        <FormControlLabel
-                        control={
-                            <Checkbox
-                            checked={hasHourly === false}
-                            onChange={() => setHasHourly(false)}
-                        
-                            />
-                        }
-                        label="No"
-                        />
-                    </FormGroup>
-                        {hasHourly === true && (
-                        <Box marginTop={3}>
-                        <Typography>Upload your CSV file:</Typography>
-                        <input type="file" accept=".csv" onChange={handleFileImport} />
-                        </Box>
-                        )}
 
+                    <Typography gutterBottom>
+                        Next we will ask for information about the electrical load.
+                    </Typography>
 
-                        {hasHourly === false && (                    
-                        <Box marginTop={3}>
-                            <Typography >Do you have monthly power consumption data?</Typography>
-                            <FormGroup>
+                    <Box>
+                        <Typography marginTop={2}>
+                            Do you have hourly consumption data?
+                        </Typography>
+                        <FormGroup>
                             <FormControlLabel
                                 control={
-                                <Checkbox
-                                    checked={hasMonthly === true}
-                                    onChange={() => {
-                                    setHasMonthly(true);
-                                    
-                                    }}
-                                />
+                                    <Checkbox
+                                        checked={hasHourly === true}
+                                        onChange={() => {
+                                            setHasHourly(true)
+                                            setHasMonthly(false);
+                                            setMonthlyData(Array(12).fill(""));
+                                            setHasAnnual(false);
+                                        }}
+                                    />
                                 }
                                 label="Yes"
                             />
                             <FormControlLabel
                                 control={
-                                <Checkbox
-                                    checked={hasMonthly === false}
-                                    onChange={() => {
-                                    setHasMonthly(false);
-                                    setMonthlyData(Array(12).fill("")); // Clear monthly data when switching to "No"
-                                    }}
-                                />
+                                    <Checkbox
+                                        checked={hasHourly === false}
+                                        onChange={() => setHasHourly(false)}
+                                    />
                                 }
                                 label="No"
                             />
-                            </FormGroup>
-                        </Box>
+                        </FormGroup>
+
+                        {hasHourly === true && (
+                            <Box marginTop={3}>
+                                <Typography>Upload your CSV file:</Typography>
+                                <input type="file" accept=".csv" onChange={handleFileImport} />
+                            </Box>
+                        )}
+
+                        {hasHourly === false && (
+                            <Box marginTop={3}>
+                                <Typography>Do you have monthly power consumption data?</Typography>
+                                <FormGroup>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={hasMonthly === true}
+                                                onChange={() => setHasMonthly(true)}
+                                            />
+                                        }
+                                        label="Yes"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={hasMonthly === false}
+                                                onChange={() => {
+                                                    setHasMonthly(false);
+                                                    setMonthlyData(Array(12).fill(""));
+                                                }}
+                                            />
+                                        }
+                                        label="No"
+                                    />
+                                </FormGroup>
+                            </Box>
                         )}
 
                         {hasMonthly === true && (
-                          <Box marginTop={3}>
-                            <Typography>Enter your monthly power consumption data:</Typography>
-                            <Box
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns with equal width
-                                gap: 2, // Adds spacing between grid items
-                              }}
-                               >
-                              {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, index) => (
-                            <TextField
-                                key={index}
-                                label={month}
-                                value={monthlyData[index]}
-                                onChange={(e) => {
-                                    const newMonthlyData = [...monthlyData];
-                                    // Only allow numerical values (including decimals)
-                                    const inputValue = e.target.value;
-                                    if (inputValue === '' || /^[0-9]*\.?[0-9]*$/.test(inputValue)) {
-                                        newMonthlyData[index] = inputValue;
-                                        setMonthlyData(newMonthlyData);
-                                    }
-                                }}
-                                fullWidth
-                                variant="outlined"
-                                margin="normal"
-                                required
-                                error={monthlyData[index] === ''}
-                                helperText={monthlyData[index] === '' ? 'Required' : ''}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            kWh
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        ))}
+                            <Box marginTop={3}>
+                                <Typography>Enter your monthly power consumption data:</Typography>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, index) => (
+                                        <FormInputField
+                                            key={index}
+                                            label={month}
+                                            name={`month${index}`}
+                                            value={monthlyData[index]}
+                                            onChange={(e) => {
+                                                const newMonthlyData = [...monthlyData];
+                                                const inputValue = e.target.value;
+                                                if (inputValue === '' || /^[0-9]*\.?[0-9]*$/.test(inputValue)) {
+                                                    newMonthlyData[index] = inputValue;
+                                                    setMonthlyData(newMonthlyData);
+                                                }
+                                            }}
+                                            error={monthlyData[index] === ''}
+                                            helperText={monthlyData[index] === '' ? 'Required' : ''}
+                                            endAdornment="kWh"
+                                        />
+                                    ))}
+                                </Box>
                             </Box>
-                          </Box>
                         )}
 
-                    
-                    {hasHourly === false && hasMonthly === false && (
-                        <Box marginTop={3}>
-                        <Typography >Do you have annual power consumption data?</Typography>
-                        <FormGroup>
-                            <FormControlLabel
-                            control={
-                                <Checkbox
-                                checked={hasAnnual === true}
-                                onChange={() => setHasAnnual(true)}
-                                
-                                />
-                            }
-                            label="Yes"
-                            />
-                            <FormControlLabel
-                            control={
-                                <Checkbox
-                                checked={hasAnnual === false}
-                                onChange={() => {
-                                    setHasAnnual(false);
-                                    
-                                    
-                                    
-                                }
-                                }
-                                
-                                />
-                            }
-                            label="No"
-                            />
-                        </FormGroup>
-                        </Box>
-                    )}
+                        {hasHourly === false && hasMonthly === false && (
+                            <Box marginTop={3}>
+                                <Typography>Do you have annual power consumption data?</Typography>
+                                <FormGroup>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={hasAnnual === true}
+                                                onChange={() => setHasAnnual(true)}
+                                            />
+                                        }
+                                        label="Yes"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={hasAnnual === false}
+                                                onChange={() => setHasAnnual(false)}
+                                            />
+                                        }
+                                        label="No"
+                                    />
+                                </FormGroup>
+                            </Box>
+                        )}
 
-                    {hasAnnual === true && hasMonthly === false && hasHourly === false &&(
-                        <Box marginTop={3}>
-                        <Typography>Enter your annual power consumption:</Typography>
-                        <TextField
-                            label="Annual Power Consumption"
-                            value={formData.annualData}
-                            onChange={(e) => setFormData(prev => ({ ...prev, annualData: Number(e.target.value) }))}
-                            fullWidth
-                            margin="normal"
-                        />
+                        {hasAnnual === true && hasMonthly === false && hasHourly === false && (
+                            <Box marginTop={3}>
+                                <Typography>Enter your annual power consumption:</Typography>
+                                <FormInputField
+                                    label="Annual Power Consumption"
+                                    name="annualData"
+                                    value={formData.annualData}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, annualData: Number(e.target.value) }))}
+                                    endAdornment="kWh"
+                                />
+                            </Box>
+                        )}
 
-                        </Box>
-                    )}
-                    {hasAnnual === false && hasMonthly === false && hasHourly === false &&(
-                        <Box marginTop={3}>
-                        <Typography>Default value for annual power consumption:</Typography>
-                        <TextField
-                            
-                            
-                            label="Annual Power Consumption"
-                            value={9}
-                            disabled
-                            fullWidth
-                            margin="normal"
-                        />
-                        </Box>
-                    )}
-                    
-                        <Grid2 item>
+                        {hasAnnual === false && hasMonthly === false && hasHourly === false && (
+                            <Box marginTop={3}>
+                                <Typography>Default value for annual power consumption:</Typography>
+                                <FormInputField
+                                    label="Annual Power Consumption"
+                                    value={9}
+                                    disabled
+                                    endAdornment="kWh"
+                                />
+                            </Box>
+                        )}
+                    </Box>
+
+                    {/* Energy Systems Section */}
+                    <Box marginTop={4}>
+                        <Typography mb={3}>
+                            Next we will ask for information about the Energy System you want in the simulations.
+                        </Typography>
                         
-                        </Grid2>
+                        <Typography gutterBottom variant="h6">
+                            Energy Systems
+                        </Typography>
+                        <Typography>Select the energy systems you wish to use:</Typography>
                     
-                    
+                        <List sx={{ display: "flex", gap: 4, flexWrap: "wrap", padding: 0 }}>
+                            {/* PV System */}
+                            <ListItem
+                                disablePadding
+                                sx={{
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    width: "120px",
+                                }}
+                            >
+                                <ListItemButton
+                                    onClick={() => handleCheckboxChange("PV")}
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        width: 100,
+                                        height: 100,
+                                        border: "5px solid",
+                                        borderColor: selectedSystems.PV ? 'secondary.main' : "grey.400",
+                                        borderRadius: 4,
+                                        padding: 0,
+                                    }}
+                                >
+                                    <IconButton>
+                                        <img  src={PVIcon}></img>
+                                    </IconButton>
+                                </ListItemButton>
+                                <Typography variant="body1" marginTop={1}>
+                                    Photo-voltaic
+                                </Typography>
+                            </ListItem>
 
-               
-        {/* Energy Systems Section */}
-      <Box marginTop={4}>
-        
-        <Typography mb= {3}>
-                Next we will ask for information about the Energy System you want in the simulations.
-        </Typography>
-        
-        <Typography gutterBottom variant="h6">
-          Energy Systems
-        </Typography>
-        <Typography>Select the energy systems you wish to use:</Typography>
-    
-        
-        <List
-    sx={{
-      display: "flex",
-      gap: 4,
-      flexWrap: "wrap",
-      padding: 0,
-    }}
-  >{/* PV System */}
-  <ListItem
-    disablePadding
-    sx={{
-      flexDirection: "column",
-      alignItems: "center",
-      width: "120px",
-    }}
-  >
-     <ListItemButton
-        onClick={() => handleCheckboxChange("PV")}
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: 100,
-          height: 100,
-          border: "5px solid",
-          borderColor: selectedSystems.PV ? 'secondary.main' : "grey.400",
-          borderRadius: 4,
-          padding: 0,
-        }}
-      >
-        <IconButton>
-          <img  src={PVIcon}></img>
-        </IconButton>
-      </ListItemButton>
-      <Typography variant="body1" marginTop={1}>
-        Photo-voltaic
-      </Typography>
-    </ListItem>
+                            {/* WT System */}
+                            <ListItem
+                                disablePadding
+                                sx={{
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    width: "120px",
+                                }}
+                            >
+                                <ListItemButton
+                                    onClick={() => handleCheckboxChange("WT")} //call to update state
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        width: 100,
+                                        height: 100,
+                                        border: "5px solid",
+                                        borderColor: selectedSystems.WT ? 'secondary.main' : "grey.400",
+                                        borderRadius: 4,
+                                        padding: 0,
+                                    }}
+                                >
+                                    <IconButton>
+                                        <img  src={WTIcon}></img>
+                                    </IconButton>
+                                </ListItemButton>
+                                <Typography variant="body1" marginTop={1}>
+                                    Wind Turbine
+                                </Typography>
+                            </ListItem>
 
-    {/* WT System */}
-    <ListItem
-      disablePadding
-      sx={{
-        flexDirection: "column",
-        alignItems: "center",
-        width: "120px",
-      }}
-    >
-      <ListItemButton
-        onClick={() => handleCheckboxChange("WT")} //call to update state
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: 100,
-          height: 100,
-          border: "5px solid",
-          borderColor: selectedSystems.WT ? 'secondary.main' : "grey.400",
-          borderRadius: 4,
-          padding: 0,
-        }}
-      >
-        <IconButton>
-          <img  src={WTIcon}></img>
-        </IconButton>
-      </ListItemButton>
-      <Typography variant="body1" marginTop={1}>
-        Wind Turbine
-      </Typography>
-    </ListItem>
+                            {/* DG System */}
+                            <ListItem
+                                disablePadding
+                                sx={{
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    width: "120px",
+                                }}
+                            >
+                                <ListItemButton
+                                    onClick={() => handleCheckboxChange("DG")}
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        width: 100,
+                                        height: 100,
+                                        border: "5px solid",
+                                        borderColor: selectedSystems.DG ? 'secondary.main' : "grey.400",
+                                        borderRadius: 4,
+                                        padding: 0,
+                                    }}
+                                >
+                                    <IconButton>
+                                        <img  src={DGIcon}></img>
+                                    </IconButton>
+                                </ListItemButton>
+                                <Typography variant="body1" marginTop={1}>
+                                    Diesel Gen
+                                </Typography>
+                            </ListItem>
 
-    {/* DG System */}
-    <ListItem
-      disablePadding
-      sx={{
-        flexDirection: "column",
-        alignItems: "center",
-        width: "120px",
-      }}
-    >
-      <ListItemButton
-        onClick={() => handleCheckboxChange("DG")}
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: 100,
-          height: 100,
-          border: "5px solid",
-          borderColor: selectedSystems.DG ? 'secondary.main' : "grey.400",
-          borderRadius: 4,
-          padding: 0,
-        }}
-      >
-       <IconButton>
-          <img  src={DGIcon}></img>
-        </IconButton>
-      </ListItemButton>
-      <Typography variant="body1" marginTop={1}>
-        Diesel Gen
-      </Typography>
-    </ListItem>
+                            {/* Battery System */}
+                            <ListItem
+                                disablePadding
+                                sx={{
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    width: "120px",
+                                }}
+                            >
+                                <ListItemButton
+                                    onClick={() => handleCheckboxChange("Battery")}
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        width: 100,
+                                        height: 100,
+                                        border: "5px solid",
+                                        borderColor: selectedSystems.Battery ? 'secondary.main' : "grey.400",
+                                        borderRadius: 4,
+                                        padding: 0,
+                                    }}
+                                >
+                                    <IconButton>
+                                        <img  src={BattIcon}></img>
+                                    </IconButton>
+                                </ListItemButton>
+                                <Typography variant="body1" marginTop={1}>
+                                    Battery
+                                </Typography>
+                            </ListItem>
+                        </List>
+                        
+                        {selectedSystems.Battery && (
+                            <Box marginTop={2} marginBottom={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="battery-type-label">Battery Type</InputLabel>
+                                    <Select
+                                        labelId="battery-type-label"
+                                        value={batteryType}
+                                        onChange={(e) => setBatteryType(e.target.value)}
+                                    >
+                                        <MenuItem value="Lead-Acid">Lead-Acid</MenuItem>
+                                        <MenuItem value="Li-Ion">Li-Ion</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        )}
 
-    {/* Battery System */}
-    <ListItem
-      disablePadding
-      sx={{
-        flexDirection: "column",
-        alignItems: "center",
-        width: "120px",
-      }}
-    >
-      <ListItemButton
-        onClick={() => handleCheckboxChange("Battery")}
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: 100,
-          height: 100,
-          border: "5px solid",
-          borderColor: selectedSystems.Battery ? 'secondary.main' : "grey.400",
-          borderRadius: 4,
-          padding: 0,
-        }}
-      >
-        <IconButton>
-          <img  src={BattIcon}></img>
-        </IconButton>
-      </ListItemButton>
-      <Typography variant="body1" marginTop={1}>
-        Battery
-      </Typography>
-    </ListItem>
-  </List>
-        
-        {selectedSystems.Battery && (
-          <Box marginTop={2} marginBottom={6}>
-            <FormControl fullWidth>
-              <InputLabel id="battery-type-label">Battery Type</InputLabel>
-              <Select
-                labelId="battery-type-label"
-                value={batteryType}
-                onChange={(e) => setBatteryType(e.target.value)}
-              >
-                <MenuItem value="Lead-Acid">Lead-Acid</MenuItem>
-                <MenuItem value="Li-Ion">Li-Ion</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        )}
-         {/* Warning Message */}
-  {selectedSystems.Battery &&
-    !selectedSystems.PV &&
-    !selectedSystems.WT &&
-    !selectedSystems.DG && (
-      <Typography
-        color="error"
-        variant="body2"
-        sx={{ marginTop: 2 }}
-      >
-        Warning: Please select at least one other energy generation system.
-      </Typography>
-    )}
-    <Snackbar
-  open={snackbarOpen}
-  autoHideDuration={6000}
-  onClose={() => setSnackbarOpen(false)}
-  message={errorMessage}
-  action={
-    <Button color="secondary" size="small" onClick={() => setSnackbarOpen(false)}>
-      OK
-    </Button>
-  }
-/>
-      </Box>
-            </Grid2>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                        {selectedSystems.Battery && !selectedSystems.PV && !selectedSystems.WT && !selectedSystems.DG && (
+                            <Typography color="error" variant="body2" sx={{ marginTop: 2 }}>
+                                Warning: Please select at least one other energy generation system.
+                            </Typography>
+                        )}
+                    </Box>
+
+                    <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={6000}
+                        onClose={() => setSnackbarOpen(false)}
+                        message={errorMessage}
+                        action={
+                            <Button color="secondary" size="small" onClick={() => setSnackbarOpen(false)}>
+                                OK
+                            </Button>
+                        }
+                    />
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
                     <Button
                         variant="contained"
                         sx={{
@@ -806,11 +694,8 @@ function SystemConfig(){
                         {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Next"}
                     </Button>
                 </Box>
-                
-            
+            </Box>
         </Box>
-        
-        </>
     );
 };
 

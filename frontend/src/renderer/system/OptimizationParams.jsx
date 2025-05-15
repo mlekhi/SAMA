@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Button } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import FormInputField from '@components/form/FormInputField';
+import NextButton from '@components/form/NextButton';
 
 function OptimizationParams() {
     const navigate = useNavigate();
@@ -233,31 +234,12 @@ function OptimizationParams() {
                 />
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '300px', mt: 4 }}>
-                    <Button
-                        variant="contained"
-                        sx={{
-                            minWidth: 100,
-                            backgroundColor: '#5A3472',
-                            '&:hover': { backgroundColor: '#4A2D61' },
-                            color: 'white'
-                        }}
-                        onClick={handlePrev}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="contained"
-                        sx={{
-                            minWidth: 100,
-                            backgroundColor: '#5A3472',
-                            '&:hover': { backgroundColor: '#4A2D61' },
-                            color: 'white'
-                        }}
+                    <NextButton
+                        label="Submit"
                         onClick={handleOptimize}
-                        disabled={loading}
-                    >
-                        {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Submit"}
-                    </Button>
+                        loading={loading}
+                        color="secondary"
+                    />
                 </Box>
             </Box>
         </div>
