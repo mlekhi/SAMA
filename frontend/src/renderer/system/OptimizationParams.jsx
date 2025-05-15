@@ -39,13 +39,16 @@ function OptimizationParams() {
                 
                 // Set default values from backend
                 setFormData({
-                    maxIterations: data.maxIterations?.toString() || '',
-                    populationSize: data.populationSize?.toString() || '',
-                    inertiaWeight: data.inertiaWeight?.toString() || '',
-                    inertiaWeightDamping: data.inertiaWeightDamping?.toString() || '',
-                    personalLearningCoeff: data.personalLearningCoeff?.toString() || '',
-                    globalLearningCoeff: data.globalLearningCoeff?.toString() || ''
+                    maxIterations: data.max_iterations?.toString() || '',
+                    populationSize: data.population_size?.toString() || '',
+                    inertiaWeight: data.inertia_weight?.toString() || '',
+                    inertiaWeightDamping: data.inertia_weight_damping?.toString() || '',
+                    personalLearningCoeff: data.personal_learning_coeff?.toString() || '',
+                    globalLearningCoeff: data.global_learning_coeff?.toString() || ''
                 });
+
+                // Log the data to verify what we're receiving
+                console.log('Received defaults:', data);
             } catch (error) {
                 console.error('Error fetching defaults:', error);
             }

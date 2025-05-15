@@ -203,7 +203,7 @@ class SessionData(db.Model):
     solrad_monthly = db.Column(db.JSON, nullable=True)  # Monthly solar radiation
     dc_monthly = db.Column(db.JSON, nullable=True)  # Monthly DC output
     poa_monthly = db.Column(db.JSON, nullable=True)  # Monthly plane of array irradiance
-
+    
     def to_dict(self):
         """Convert session data to dictionary with component lookups"""
         # Get all components for this session

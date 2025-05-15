@@ -111,7 +111,7 @@ def create_app(config_class=Config):
             data = request.get_json()
             if not data:
                 return jsonify({"error": "No data provided"}), 400
-                
+
             # Use session ID from request or create a new one
             session_id = data.get("session_id") or str(uuid.uuid4())
             session["session_id"] = session_id
@@ -169,7 +169,6 @@ def create_app(config_class=Config):
             save_meteo_data(downloaded.text, file_path)
             
             return Response(downloaded, mimetype="text/csv")
-            
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         except requests.exceptions.RequestException as e:
@@ -296,7 +295,16 @@ def create_app(config_class=Config):
                 'grid_sale_tax': in_data.Grid_sale_tax_rate,
                 'grid_tax_amount': in_data.Grid_Tax_amount,
                 'grid_credit': in_data.Grid_credit,
-                'nem_fee': in_data.NEM_fee
+                'nem_fee': in_data.NEM_fee,
+
+                # Optimization defaults
+                'max_iterations': in_data.MaxIt,
+                'population_size': in_data.nPop,
+                'inertia_weight': in_data.w,
+                'inertia_weight_damping': in_data.wdamp,
+                'personal_learning_coeff': in_data.c1,
+                'global_learning_coeff': in_data.c2,
+                'run_time': in_data.Run_Time
             }
             
             return jsonify(defaults)
