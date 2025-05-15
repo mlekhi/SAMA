@@ -42,7 +42,7 @@ const Landing = () => {
             sx={{
               textAlign: 'center',
               fontWeight: 'bold',
-              color: '#1976d2',
+              color: 'secondary.main',
               mb: 4,
             }}
           >
@@ -88,7 +88,7 @@ const Landing = () => {
             paragraph
             sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}
           >
-            Get started by clicking the button below to begin your solar assessment journey.
+            Get started by clicking the button below to begin.
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -103,7 +103,9 @@ const Landing = () => {
                 borderRadius: 2,
                 textTransform: 'none',
                 boxShadow: 3,
+                backgroundColor: 'secondary.main',
                 '&:hover': {
+                  backgroundColor: 'secondary.dark',
                   boxShadow: 6,
                 },
               }}
@@ -117,9 +119,6 @@ const Landing = () => {
                 fontSize: '1rem',
                 textTransform: 'none',
                 color: 'text.secondary',
-                '&:hover': {
-                  color: 'primary.main',
-                },
               }}
             >
               View FAQ
