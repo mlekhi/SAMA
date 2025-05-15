@@ -1,6 +1,14 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
+  palette: {
+    secondary: {
+      main: '#5A3472',
+      dark: '#4A2D61',
+      light: '#6B3D82',
+      contrastText: '#ffffff',
+    },
+  },
   typography: {
     fontFamily: '"Space Grotesk", sans-serif',
     h1: {
