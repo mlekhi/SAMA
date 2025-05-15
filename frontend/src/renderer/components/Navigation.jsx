@@ -77,17 +77,47 @@ const steps = [
     required: true
   },
   {
+    label: 'Grid Information',
+    path: '/grid',
+    icon: GridIcon,
+    required: true
+  },
+  {
     label: 'System Configuration',
     path: '/system',
     icon: SettingsIcon,
     required: true
   },
   {
-    label: 'Grid Information',
-    path: '/grid',
-    icon: GridIcon,
+    label: 'PV System',
+    path: '/pv',
+    icon: SolarIcon,
+    required: false
+  },
+  {
+    label: 'Inverter',
+    path: '/inverter',
+    icon: ElectricIcon,
     required: true
   },
+  {
+    label: 'Diesel Generator',
+    path: '/dg',
+    icon: PowerIcon,
+    required: false
+  },
+  {
+    label: 'Battery',
+    path: '/bat',
+    icon: BatteryIcon,
+    required: false
+  },
+  {
+    label: 'Wind Turbine',
+    path: '/wt',
+    icon: WindIcon,
+    required: false
+  }
 ];
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
@@ -145,6 +175,27 @@ const NavigationContent = () => {
   const [completedSteps, setCompletedSteps] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
   const [maxCompletedStep, setMaxCompletedStep] = useState(0);
+
+  useEffect(() => {
+    const fetchCompletedModels = async () => {
+      const sessionId = localStorage.getItem("session_id");
+      if (!sessionId) {
+        console.error("No session ID found");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/component/completed_models?session_id=${sessionId}`);
+        if (!response.ok) throw new Error('Failed to fetch completed models');
+        const data = await response.json();
+        setCompletedSteps(data);
+      } catch (error) {
+        console.error('Error fetching completed models:', error);
+      }
+    };
+
+    fetchCompletedModels();
+  }, []);
 
   useEffect(() => {
     const currentPath = location.pathname;
