@@ -6,7 +6,7 @@ def run_app():
     try:
         # Start Flask application
         print("Starting Flask application...")
-        os.environ['FLASK_APP'] = 'app.py'
+        os.environ['FLASK_APP'] = 'app:app'  # Point to the app instance
         os.environ['FLASK_ENV'] = 'development'
         
         # Run Flask

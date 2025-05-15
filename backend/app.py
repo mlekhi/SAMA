@@ -17,8 +17,21 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Initialize extensions
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    # Initialize extensions with more specific CORS configuration
+    CORS(app, 
+         resources={r"/*": {
+             "origins": [
+                 "http://localhost:3000",
+                 "http://127.0.0.1:3000",
+                 "http://localhost:5173",  # Vite dev server
+                 "http://127.0.0.1:5173"   # Vite dev server alternative
+             ],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True
+         }},
+         supports_credentials=True
+    )
     db.init_app(app)
     
     # Configure logging
@@ -85,59 +98,6 @@ def create_app(config_class=Config):
             logger.error(f"Failed to save METEO data: {str(e)}")
             raise
 
-    # API Routes
-    @app.route("/api/sessions", methods=["GET"])
-    def get_sessions():
-        try:
-            # Get session_id from the request
-            session_id = request.args.get("session_id")
-            
-            if not session_id:
-                return jsonify({"error": "No session ID available"}), 400
-                
-            # Find session data by session_id (which is the primary key)
-            session_data = SessionData.query.get(session_id)
-            if not session_data:
-                return jsonify([])
-                
-            return jsonify([session_data.to_dict()])
-        except Exception as e:
-            logger.error(f"Error fetching session data: {str(e)}")
-            return jsonify({"error": "Failed to fetch session data"}), 500
-
-    @app.route("/api/sessions", methods=["POST"])
-    def create_session():
-        try:
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "No data provided"}), 400
-
-            # Use session ID from request or create a new one
-            session_id = data.get("session_id") or str(uuid.uuid4())
-            session["session_id"] = session_id
-
-            # Create new session data
-            session_data = SessionData(
-                session_id=session_id,
-                latitude=data.get("latitude"),
-                longitude=data.get("longitude"),
-                system_capacity=data.get("system_capacity"),
-                azimuth=data.get("azimuth"),
-                tilt=data.get("tilt"),
-                array_type=data.get("array_type"),
-                module_type=data.get("module_type"),
-                losses=data.get("losses")
-            )
-
-            db.session.add(session_data)
-            db.session.commit()
-
-            return jsonify(session_data.to_dict()), 201
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error creating session: {str(e)}")
-            return jsonify({"error": "Failed to create session"}), 500
-
     @app.route("/api/map", methods=["GET"])
     def mapAPIFetch():
         try:
@@ -186,56 +146,7 @@ def create_app(config_class=Config):
             logger.error(f"Error fetching session {session_id}: {str(e)}")
             return jsonify({"error": "Failed to fetch session"}), 500
 
-    @app.route("/api/sessions/<string:session_id>", methods=["PUT"])
-    def update_session(session_id):
-        try:
-            session_data = SessionData.query.get_or_404(session_id)
-            data = request.get_json()
-            
-            if not data:
-                return jsonify({"error": "No data provided"}), 400
-            
-            # Update session fields
-            for key, value in data.items():
-                if hasattr(session_data, key) and key != 'session_id':  # Don't update the primary key
-                    setattr(session_data, key, value)
-            
-            # Update session timestamp
-            session_data.updated_at = datetime.utcnow()
-            
-            db.session.commit()
-            return jsonify(session_data.to_dict())
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error updating session {session_id}: {str(e)}")
-            return jsonify({"error": "Failed to update session"}), 500
 
-    @app.route("/api/sessions/<string:session_id>", methods=["DELETE"])
-    def delete_session(session_id):
-        try:
-            session_data = SessionData.query.get_or_404(session_id)
-            
-            # Delete all associated components first
-            component_models = [
-                GeographyEconomy, SystemConfiguration, PhotovoltaicSystem, 
-                Inverter, DieselGenerator, Battery, Grid, Optimization,
-                WindTurbine, ChargeController, GridSelling
-            ]
-            
-            for model in component_models:
-                components = model.query.filter_by(session_id=session_id).all()
-                for component in components:
-                    db.session.delete(component)
-            
-            # Then delete the session data itself
-            db.session.delete(session_data)
-            db.session.commit()
-            
-            return jsonify({"message": "Session and all associated data deleted successfully"})
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error deleting session {session_id}: {str(e)}")
-            return jsonify({"error": "Failed to delete session"}), 500
 
     @app.route('/api/defaults', methods=['GET'])
     def get_defaults():
@@ -311,31 +222,100 @@ def create_app(config_class=Config):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+
+
+
+    @app.route("/api/sessions", methods=["GET"])
+    def get_sessions():
+        try:
+            # Get session_id from the request
+            session_id = request.args.get("session_id")
+            
+            if not session_id:
+                return jsonify({"error": "No session ID available"}), 400
+                
+            # Find session data by session_id (which is the primary key)
+            session_data = SessionData.query.get(session_id)
+            if not session_data:
+                return jsonify([])
+                
+            return jsonify([session_data.to_dict()])
+        except Exception as e:
+            logger.error(f"Error fetching session data: {str(e)}")
+            return jsonify({"error": "Failed to fetch session data"}), 500
+
+    @app.route("/api/sessions/<string:session_id>", methods=["PUT"])
+    def update_session(session_id):
+        try:
+            session_data = SessionData.query.get_or_404(session_id)
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+            
+            # Update session fields
+            for key, value in data.items():
+                if hasattr(session_data, key) and key != 'session_id':  # Don't update the primary key
+                    setattr(session_data, key, value)
+            
+            # Update session timestamp
+            session_data.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            return jsonify(session_data.to_dict())
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating session {session_id}: {str(e)}")
+            return jsonify({"error": "Failed to update session"}), 500
+
     # Initialize a new session
     @app.route("/api/session/initialize", methods=["POST"])
     def initialize_session():
+        print("\n=== Session Initialization Request ===")
+        print(f"Request Method: {request.method}")
+        print(f"Request Headers: {dict(request.headers)}")
+        print(f"Request Data: {request.get_data()}")
+        
         try:
             data = request.get_json() or {}
+            print(f"Parsed JSON Data: {data}")
             
             # Create a new session with a unique ID
             session_id = data.get("session_id") or str(uuid.uuid4())
+            print(f"Generated Session ID: {session_id}")
+            
+            # Create session with current timestamp
+            current_time = datetime.utcnow()
             session_data = SessionData(
-                session_id=session_id
+                session_id=session_id,
+                created_at=current_time,
+                updated_at=current_time
             )
+            print(f"Created Session Data Object: {session_data.to_dict()}")
             
             db.session.add(session_data)
             db.session.commit()
+            print("Successfully committed session to database")
             
-            return jsonify({
+            response = {
                 'success': True,
                 'session_id': session_data.session_id
-            })
+            }
+            print(f"Sending Response: {response}")
+            return jsonify(response)
+            
         except Exception as e:
             db.session.rollback()
+            print(f"ERROR in initialize_session: {str(e)}")
+            print(f"Error Type: {type(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             logger.error(f"Error initializing session: {str(e)}")
             return jsonify({"error": "Failed to initialize session", "details": str(e)}), 500
 
-    # Add a generic component route
+
+
+
     @app.route("/api/component/<component_type>", methods=["POST"])
     def save_component(component_type):
         try:
@@ -397,6 +377,10 @@ def create_app(config_class=Config):
             logger.error(f"Error saving {component_type}: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
+    return app
+
+# Create the application instance
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(host='127.0.0.1', port=5000, debug=app.config['DEBUG'])
