@@ -71,6 +71,18 @@ const steps = [
     required: true
   },
   {
+    label: 'Optimization',
+    path: '/optim',
+    icon: BuildIcon,
+    required: true
+  },
+  {
+    label: 'Grid Information',
+    path: '/grid',
+    icon: GridIcon,
+    required: true
+  },
+  {
     label: 'System Configuration',
     path: '/system',
     icon: SettingsIcon,
@@ -80,7 +92,7 @@ const steps = [
     label: 'PV System',
     path: '/pv',
     icon: SolarIcon,
-    required: true
+    required: false
   },
   {
     label: 'Inverter',
@@ -105,18 +117,6 @@ const steps = [
     path: '/wt',
     icon: WindIcon,
     required: false
-  },
-  {
-    label: 'Grid Information',
-    path: '/grid',
-    icon: GridIcon,
-    required: false
-  },
-  {
-    label: 'Optimization',
-    path: '/optim',
-    icon: BuildIcon,
-    required: true
   }
 ];
 

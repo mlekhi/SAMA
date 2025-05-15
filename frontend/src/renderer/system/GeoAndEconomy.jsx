@@ -142,20 +142,13 @@ function GeoAndEconomy() {
         throw new Error("No session ID found");
       }
 
-      // Prepare all data for the geography_economy component
+      // Prepare only the required data for the GeographyEconomy component
       const geoEconomyData = {
         session_id: sessionId,
-        latitude: selectPosition.lat,
-        longitude: selectPosition.lng,
-        nominal_discount_rate: parseFloat(formData.nomDiscRate),
-        expected_inflation_rate: parseFloat(formData.expInfRate),
-        equipment_sale_percentage: parseFloat(formData.equipSalePercent),
-        investment_tax_credit: parseFloat(formData.invTaxCredit),
-        discount_rate: parseFloat(myData.discountRate),
-        project_lifetime: parseFloat(myData.projectLifetime),
-        capital_cost: parseFloat(myData.capitalCost),
-        replacement_cost: parseFloat(myData.replacementCost),
-        om_cost: parseFloat(myData.OMCost)
+        n_ir_rate: parseFloat(formData.nomDiscRate),
+        e_ir_rate: parseFloat(formData.expInfRate),
+        Tax_rate: parseFloat(formData.equipSalePercent),
+        RE_incentives_rate: parseFloat(formData.invTaxCredit)
       };
 
       console.log('Sending geography and economy data:', geoEconomyData);
