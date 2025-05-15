@@ -61,22 +61,27 @@ function GeoAndEconomy() {
         const response = await fetch(`${API_URL}/api/defaults`);
         if (!response.ok) throw new Error('Failed to fetch defaults');
         const data = await response.json();
+        setDefaults(data);
         
         // Set form data with backend defaults
+        setFormData({
+          nomDiscRate: data.nomDiscRate?.toString() || '',
+          expInfRate: data.expInfRate?.toString() || '',
+          equipSalePercent: data.equipSalePercent?.toString() || '',
+          invTaxCredit: data.invTaxCredit?.toString() || ''
+        });
+
+        // Set myData with backend defaults
         setMyData({
           latitude: data.latitude?.toString() || '',
           longitude: data.longitude?.toString() || '',
           discountRate: data.discount_rate?.toString() || '',
           projectLifetime: data.project_lifetime?.toString() || '',
-          capitalCost: '1000', // Default cost
-          replacementCost: '1000', // Default cost
-          OMCost: '10' // Default cost
+          capitalCost: data.capital_cost?.toString() || '1000',
+          replacementCost: data.replacement_cost?.toString() || '1000',
+          OMCost: data.om_cost?.toString() || '10'
         });
 
-        // Get system config
-        const configResponse = await fetch(`${API_URL}/get/routing`);
-        const configData = await configResponse.json();
-        setSelectedSystems(configData["Energy Systems"]);
         setIsConfigLoaded(true);
       } catch (error) {
         console.error('Error fetching defaults:', error);
@@ -134,31 +139,51 @@ function GeoAndEconomy() {
     try {
       const sessionId = localStorage.getItem("session_id");
       if (!sessionId) {
-        console.error("No session ID found");
-        return;
+        throw new Error("No session ID found");
       }
 
-      const geoRes = await fetch(`${API_URL}/process/geo`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          ...formData, 
-          session_id: sessionId,
-          latitude: selectPosition.lat,
-          longitude: selectPosition.lng
-        })
+      // Prepare all data for the geography_economy component
+      const geoEconomyData = {
+        session_id: sessionId,
+        latitude: selectPosition.lat,
+        longitude: selectPosition.lng,
+        nominal_discount_rate: parseFloat(formData.nomDiscRate),
+        expected_inflation_rate: parseFloat(formData.expInfRate),
+        equipment_sale_percentage: parseFloat(formData.equipSalePercent),
+        investment_tax_credit: parseFloat(formData.invTaxCredit),
+        discount_rate: parseFloat(myData.discountRate),
+        project_lifetime: parseFloat(myData.projectLifetime),
+        capital_cost: parseFloat(myData.capitalCost),
+        replacement_cost: parseFloat(myData.replacementCost),
+        om_cost: parseFloat(myData.OMCost)
+      };
+
+      console.log('Sending geography and economy data:', geoEconomyData);
+
+      const response = await fetch(`${API_URL}/api/component/geography_economy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geoEconomyData)
       });
 
-      if (!geoRes.ok) throw new Error("Failed to save geography and economy data");
-      const geoResult = await geoRes.json();
-      localStorage.setItem("geoEconomyId", geoResult.id);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save geography and economy data");
+      }
+
+      const result = await response.json();
+      console.log('Geography and economy data saved successfully:', result);
+      
+      // Store the component ID for future reference
+      localStorage.setItem("geoEconomyId", result.id);
 
       navigate("/system");
     } catch (err) {
-      console.error(err);
+      console.error('Error saving geography and economy data:', err);
       setErrorDialog({
         open: true,
         title: 'Error Saving Data',
-        message: 'Failed to save your data. Please try again.'
+        message: err.message || 'Failed to save your data. Please try again.'
       });
     } finally {
       setLoading(false);

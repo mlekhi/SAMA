@@ -7,16 +7,10 @@ import { API_URL } from "@utils/config"
 
 function ComponentInfoBattery() {
     const navigate = useNavigate()
-    const [selectedSystems, setSelectedSystems] = useState({
-        PV: false,
-        WT: false,
-        DG: false,
-        Battery: false
-    })
-
+    const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-    const defaultComponentInfoBattery = {
+    const [myData, setMyData] = useState({
         batteryLifetime: '',
         batteryMinSOC: '',
         batteryMaxSOC: '',
@@ -24,9 +18,7 @@ function ComponentInfoBattery() {
         capitalCostBattery: '',
         replacementCostBattery: '',
         OMCostBattery: ''
-    }
-
-    const [myData, setMyData] = useState(defaultComponentInfoBattery)
+    })
 
     function handleChange(e) {
         const { value, name } = e.target
@@ -36,39 +28,34 @@ function ComponentInfoBattery() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        if (selectedSystems.PV) {
-            navigate('/pv')
-        } else if (selectedSystems.WT) {
-            navigate('/wt')
-        } else if (selectedSystems.DG) {
-            navigate('/dg')
-        } else {
-            navigate('/grid')
-        }
+        navigate('/grid')
     }
 
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
+                setDefaults(data)
                 
                 // Set form data with backend defaults
                 setMyData({
                     batteryLifetime: data.battery_lifetime?.toString() || '',
                     batteryMinSOC: data.SOC_min?.toString() || '',
                     batteryMaxSOC: data.SOC_max?.toString() || '',
-                    batteryEfficiency: '0.9', // Default efficiency
-                    capitalCostBattery: '1000', // Default cost
-                    replacementCostBattery: '1000', // Default cost
-                    OMCostBattery: '10' // Default cost
+                    batteryEfficiency: data.battery_efficiency?.toString() || '0.9',
+                    capitalCostBattery: data.battery_capital_cost?.toString() || '1000',
+                    replacementCostBattery: data.battery_replacement_cost?.toString() || '1000',
+                    OMCostBattery: data.battery_om_cost?.toString() || '10'
                 })
 
-                // Get system config
-                const configResponse = await fetch(`${API_URL}/get/routing`)
-                const configData = await configResponse.json()
-                setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
             } catch (error) {
                 console.error('Error fetching defaults:', error)

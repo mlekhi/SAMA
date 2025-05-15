@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Typography, Container, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { API_URL } from "@utils/config";
+import ErrorMessage from '@components/form/ErrorMessage';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -14,28 +15,72 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [errorDialog, setErrorDialog] = useState({
+    open: false,
+    title: '',
+    message: ''
+  });
 
   const handleStart = async () => {
+    setLoading(true);
+    setErrorDialog({ open: false, title: '', message: '' });
+    
     try {
+      console.log('Attempting to connect to:', `${API_URL}/api/session/initialize`);
+      
       const initRes = await fetch(`${API_URL}/api/session/initialize`, {
         method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({}),
+        credentials: 'include'
+      }).catch(error => {
+        console.error('Network error:', error);
+        throw new Error(`Network error: ${error.message}. Please check if the backend server is running.`);
       });
 
-      if (!initRes.ok) throw new Error("Failed to initialize session");
-      const { session_id } = await initRes.json();
-      localStorage.setItem("session_id", session_id);
+      if (!initRes.ok) {
+        const errorData = await initRes.json().catch(() => ({ error: 'Failed to parse error response' }));
+        console.error('Server error response:', errorData);
+        throw new Error(errorData.error || `Server error: ${initRes.status} ${initRes.statusText}`);
+      }
+
+      const result = await initRes.json().catch(error => {
+        console.error('Error parsing response:', error);
+        throw new Error('Failed to parse server response');
+      });
+
+      console.log('Session initialization response:', result);
+      
+      if (!result.session_id) {
+        throw new Error('No session ID received from server');
+      }
+
+      localStorage.setItem("session_id", result.session_id);
+      console.log('Session ID stored:', result.session_id);
       
       navigate('/geo');
     } catch (err) {
       console.error("Failed to initialize session:", err);
-      // You might want to show an error message to the user here
+      setErrorDialog({
+        open: true,
+        title: 'Connection Error',
+        message: err.message || "Failed to connect to the server. Please check if the backend is running and try again."
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFaq = () => {
     navigate('/faq');
+  };
+
+  const handleCloseError = () => {
+    setErrorDialog(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -112,6 +157,7 @@ const Landing = () => {
               variant="contained"
               size="large"
               onClick={handleStart}
+              disabled={loading}
               sx={{
                 py: 2,
                 px: 4,
@@ -124,13 +170,17 @@ const Landing = () => {
                   backgroundColor: 'secondary.dark',
                   boxShadow: 6,
                 },
+                '&:disabled': {
+                  backgroundColor: 'action.disabled',
+                },
               }}
             >
-              Start Assessment
+              {loading ? 'Starting...' : 'Start Assessment'}
             </Button>
             <Button
               variant="text"
               onClick={handleFaq}
+              disabled={loading}
               sx={{
                 fontSize: '1rem',
                 textTransform: 'none',
@@ -142,6 +192,13 @@ const Landing = () => {
           </Box>
         </StyledPaper>
       </Container>
+
+      <ErrorMessage
+        open={errorDialog.open}
+        onClose={handleCloseError}
+        title={errorDialog.title}
+        message={errorDialog.message}
+      />
     </Box>
   );
 };

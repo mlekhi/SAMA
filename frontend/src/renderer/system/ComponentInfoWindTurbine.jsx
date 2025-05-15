@@ -7,16 +7,10 @@ import { API_URL } from "@utils/config"
 
 function ComponentInfoWindTurbine() {
     const navigate = useNavigate()
-    const [selectedSystems, setSelectedSystems] = useState({
-        PV: false,
-        WT: false,
-        DG: false,
-        Battery: false
-    })
-
+    const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-    const defaultComponentInfoWindTurbine = {
+    const [myData, setMyData] = useState({
         hubHeight: '',
         anemometerHeight: '',
         windEfficiency: '',
@@ -29,9 +23,7 @@ function ComponentInfoWindTurbine() {
         replacementCostWT: '',
         OMCostWT: '',
         engineeringOtherCosts: ''
-    }
-
-    const [myData, setMyData] = useState(defaultComponentInfoWindTurbine)
+    })
 
     function handleChange(e) {
         const { value, name } = e.target
@@ -41,21 +33,22 @@ function ComponentInfoWindTurbine() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        if (selectedSystems.DG) {
-            navigate('/dg')
-        } else if (selectedSystems.Battery) {
-            navigate('/battery')
-        } else {
-            navigate('/grid')
-        }
+        navigate('/grid')
     }
 
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
+                setDefaults(data)
                 
                 // Set form data with backend defaults
                 setMyData({
@@ -65,18 +58,14 @@ function ComponentInfoWindTurbine() {
                     cutOutSpeed: data.cut_out_speed?.toString() || '',
                     cutInSpeed: data.cut_in_speed?.toString() || '',
                     ratedSpeed: data.rated_speed?.toString() || '',
-                    coefficientFriction: '0.11', // Default value
+                    coefficientFriction: data.coefficient_friction?.toString() || '0.11',
                     windLifetime: data.wind_lifetime?.toString() || '',
-                    capitalCostWT: '1200', // Default cost
-                    replacementCostWT: '1200', // Default cost
-                    OMCostWT: '40', // Default cost
-                    engineeringOtherCosts: '0' // Default cost
+                    capitalCostWT: data.wind_capital_cost?.toString() || '1200',
+                    replacementCostWT: data.wind_replacement_cost?.toString() || '1200',
+                    OMCostWT: data.wind_om_cost?.toString() || '40',
+                    engineeringOtherCosts: data.engineering_other_costs?.toString() || '0'
                 })
 
-                // Get system config
-                const configResponse = await fetch(`${API_URL}/get/routing`)
-                const configData = await configResponse.json()
-                setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
             } catch (error) {
                 console.error('Error fetching defaults:', error)
@@ -86,7 +75,7 @@ function ComponentInfoWindTurbine() {
     }, [])
 
     const sendComponentInfo = async () => {
-        const WT_Data = {
+        const WindTurbine_Data = {
             hubHeight: myData.hubHeight,
             anemometerHeight: myData.anemometerHeight,
             windEfficiency: myData.windEfficiency,
@@ -102,13 +91,12 @@ function ComponentInfoWindTurbine() {
         }
 
         try {
-            console.log(WT_Data)
-            const response = await fetch(`${API_URL}/wt`, {
+            const response = await fetch(`${API_URL}/windturbine`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(WT_Data)
+                body: JSON.stringify(WindTurbine_Data)
             })
 
             const result = await response.json()
@@ -222,15 +210,15 @@ function ComponentInfoWindTurbine() {
                         name="OMCostWT"
                         value={myData.OMCostWT}
                         onChange={handleChange}
-                        endAdornment="($/kW)/year"
+                        endAdornment="$/kW/year"
                     />
 
                     <FormInputField
-                        label="Engineering/Other Costs"
+                        label="Engineering and Other Costs"
                         name="engineeringOtherCosts"
                         value={myData.engineeringOtherCosts}
                         onChange={handleChange}
-                        endAdornment="$"
+                        endAdornment="$/kW"
                     />
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

@@ -7,8 +7,10 @@ import { API_URL } from "@utils/config"
 
 function ComponentInfoDG() {
     const navigate = useNavigate()
+    const [defaults, setDefaults] = useState(null)
+    const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-    const defaultComponentInfoDG = {
+    const [myData, setMyData] = useState({
         slope: '',
         interceptCoefficient: '',
         capitalCostDG: '',
@@ -16,9 +18,7 @@ function ComponentInfoDG() {
         OMCostDG: '',
         fuelCostDG: '',
         DGFuelCostRate: ''
-    }
-
-    const [myData, setMyData] = useState(defaultComponentInfoDG)
+    })
 
     function handleChange(e) {
         const { value, name } = e.target
@@ -34,20 +34,29 @@ function ComponentInfoDG() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
+                setDefaults(data)
                 
                 // Set form data with backend defaults
                 setMyData({
                     slope: data.fuel_curve_a?.toString() || '',
                     interceptCoefficient: data.fuel_curve_b?.toString() || '',
-                    capitalCostDG: '1000', // Default cost
-                    replacementCostDG: '1000', // Default cost
-                    OMCostDG: '10', // Default cost
-                    fuelCostDG: '1', // Default cost
-                    DGFuelCostRate: '0' // Default rate
+                    capitalCostDG: data.dg_capital_cost?.toString() || '1000',
+                    replacementCostDG: data.dg_replacement_cost?.toString() || '1000',
+                    OMCostDG: data.dg_om_cost?.toString() || '10',
+                    fuelCostDG: data.dg_fuel_cost?.toString() || '1',
+                    DGFuelCostRate: data.dg_fuel_cost_rate?.toString() || '0'
                 })
+
+                setIsConfigLoaded(true)
             } catch (error) {
                 console.error('Error fetching defaults:', error)
             }
@@ -163,6 +172,7 @@ function ComponentInfoDG() {
                         <NextButton
                             label="Next"
                             onClick={handleNext}
+                            disabled={!isConfigLoaded}
                             color="secondary"
                         />
                     </Box>

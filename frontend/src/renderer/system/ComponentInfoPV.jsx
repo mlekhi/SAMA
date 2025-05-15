@@ -7,16 +7,10 @@ import { API_URL } from "@utils/config"
 
 function ComponentInfoPV() {
     const navigate = useNavigate()
-    const [selectedSystems, setSelectedSystems] = useState({
-        PV: false,
-        WT: false,
-        DG: false,
-        Battery: false
-    })
-
+    const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-    const defaultComponentInfoPV = {
+    const [myData, setMyData] = useState({
         pvLifetime: '',
         pvDerating: '',
         tempCoeff: '',
@@ -26,9 +20,7 @@ function ComponentInfoPV() {
         capitalCostPV: '',
         replacementCostPV: '',
         OMCostPV: ''
-    }
-
-    const [myData, setMyData] = useState(defaultComponentInfoPV)
+    })
 
     function handleChange(e) {
         const { value, name } = e.target
@@ -38,23 +30,22 @@ function ComponentInfoPV() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        if (selectedSystems.WT) {
-            navigate('/wt')
-        } else if (selectedSystems.DG) {
-            navigate('/dg')
-        } else if (selectedSystems.Battery) {
-            navigate('/battery')
-        } else {
-            navigate('/grid')
-        }
+        navigate('/grid')
     }
 
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
+                setDefaults(data)
                 
                 // Set form data with backend defaults
                 setMyData({
@@ -64,15 +55,11 @@ function ComponentInfoPV() {
                     tempRef: data.temp_ref?.toString() || '',
                     tempNoct: data.temp_noct?.toString() || '',
                     pvEfficiency: data.pv_efficiency?.toString() || '',
-                    capitalCostPV: '1000', // Default cost
-                    replacementCostPV: '1000', // Default cost
-                    OMCostPV: '10' // Default cost
+                    capitalCostPV: data.pv_capital_cost?.toString() || '1000',
+                    replacementCostPV: data.pv_replacement_cost?.toString() || '1000',
+                    OMCostPV: data.pv_om_cost?.toString() || '10'
                 })
 
-                // Get system config
-                const configResponse = await fetch(`${API_URL}/get/routing`)
-                const configData = await configResponse.json()
-                setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
             } catch (error) {
                 console.error('Error fetching defaults:', error)
@@ -95,7 +82,6 @@ function ComponentInfoPV() {
         }
 
         try {
-            console.log(PV_Data)
             const response = await fetch(`${API_URL}/pv`, {
                 method: 'POST',
                 headers: {
@@ -137,7 +123,7 @@ function ComponentInfoPV() {
                     />
 
                     <FormInputField
-                        label="PV Derating Factor"
+                        label="PV Derating"
                         name="pvDerating"
                         value={myData.pvDerating}
                         onChange={handleChange}
@@ -199,7 +185,7 @@ function ComponentInfoPV() {
                         name="OMCostPV"
                         value={myData.OMCostPV}
                         onChange={handleChange}
-                        endAdornment="($/kW)/year"
+                        endAdornment="$/kW/year"
                     />
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

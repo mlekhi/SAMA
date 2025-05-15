@@ -7,25 +7,16 @@ import { API_URL } from "@utils/config"
 
 function ComponentInfoInverter() {
     const navigate = useNavigate()
-    const [selectedSystems, setSelectedSystems] = useState({
-        PV: false,
-        WT: false,
-        DG: false,
-        Battery: false
-    })
-
+    const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-    const defaultComponentInfoInverter = {
+    const [myData, setMyData] = useState({
         inverterEfficiency: '',
         inverterLifetime: '',
-        maxAcceptableRatio: '',
-        capitalCostI: '',
-        replacementCostI: '',
-        OMCostI: ''
-    }
-
-    const [myData, setMyData] = useState(defaultComponentInfoInverter)
+        capitalCostInverter: '',
+        replacementCostInverter: '',
+        OMCostInverter: ''
+    })
 
     function handleChange(e) {
         const { value, name } = e.target
@@ -35,38 +26,32 @@ function ComponentInfoInverter() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        if (selectedSystems.PV) {
-            navigate('/pv')
-        } else if (selectedSystems.WT) {
-            navigate('/wt')
-        } else if (selectedSystems.DG) {
-            navigate('/dg')
-        } else {
-            navigate('/grid')
-        }
+        navigate('/grid')
     }
 
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/api/defaults`)
                 if (!response.ok) throw new Error('Failed to fetch defaults')
                 const data = await response.json()
+                setDefaults(data)
                 
                 // Set form data with backend defaults
                 setMyData({
                     inverterEfficiency: data.inverter_efficiency?.toString() || '',
                     inverterLifetime: data.inverter_lifetime?.toString() || '',
-                    maxAcceptableRatio: data.dc_ac_ratio?.toString() || '',
-                    capitalCostI: '1000', // Default cost
-                    replacementCostI: '1000', // Default cost
-                    OMCostI: '10' // Default cost
+                    capitalCostInverter: data.inverter_capital_cost?.toString() || '1000',
+                    replacementCostInverter: data.inverter_replacement_cost?.toString() || '1000',
+                    OMCostInverter: data.inverter_om_cost?.toString() || '10'
                 })
 
-                // Get system config
-                const configResponse = await fetch(`${API_URL}/get/routing`)
-                const configData = await configResponse.json()
-                setSelectedSystems(configData["Energy Systems"])
                 setIsConfigLoaded(true)
             } catch (error) {
                 console.error('Error fetching defaults:', error)
@@ -76,23 +61,21 @@ function ComponentInfoInverter() {
     }, [])
 
     const sendComponentInfo = async () => {
-        const I_Data = {
+        const Inverter_Data = {
             inverterEfficiency: myData.inverterEfficiency,
             inverterLifetime: myData.inverterLifetime,
-            maxAcceptableRatio: myData.maxAcceptableRatio,
-            capitalCostI: myData.capitalCostI,
-            replacementCostI: myData.replacementCostI,
-            OMCostI: myData.OMCostI
+            capitalCostInverter: myData.capitalCostInverter,
+            replacementCostInverter: myData.replacementCostInverter,
+            OMCostInverter: myData.OMCostInverter
         }
 
         try {
-            console.log(I_Data)
             const response = await fetch(`${API_URL}/inverter`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(I_Data)
+                body: JSON.stringify(Inverter_Data)
             })
 
             const result = await response.json()
@@ -134,39 +117,32 @@ function ComponentInfoInverter() {
                         endAdornment="years"
                     />
 
-                    <FormInputField
-                        label="Maximum acceptable DC to AC ratio"
-                        name="maxAcceptableRatio"
-                        value={myData.maxAcceptableRatio}
-                        onChange={handleChange}
-                    />
-
                     <Typography variant="h5" gutterBottom>
                         Economic Information
                     </Typography>
 
                     <FormInputField
                         label="Capital Cost"
-                        name="capitalCostI"
-                        value={myData.capitalCostI}
+                        name="capitalCostInverter"
+                        value={myData.capitalCostInverter}
                         onChange={handleChange}
                         endAdornment="$/kW"
                     />
 
                     <FormInputField
                         label="Replacement Cost"
-                        name="replacementCostI"
-                        value={myData.replacementCostI}
+                        name="replacementCostInverter"
+                        value={myData.replacementCostInverter}
                         onChange={handleChange}
                         endAdornment="$/kW"
                     />
 
                     <FormInputField
                         label="O&M Cost"
-                        name="OMCostI"
-                        value={myData.OMCostI}
+                        name="OMCostInverter"
+                        value={myData.OMCostInverter}
                         onChange={handleChange}
-                        endAdornment="($/kW)/year"
+                        endAdornment="$/kW/year"
                     />
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
