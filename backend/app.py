@@ -311,43 +311,6 @@ def create_app(config_class=Config):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
-    @app.route("/process/geo", methods=["POST", "OPTIONS"])
-    def process_geo():
-        if request.method == "OPTIONS":
-            return "", 200
-            
-        try:
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "No data provided"}), 400
-
-            # Check if session_id is provided
-            session_id = data.get('session_id')
-            if not session_id:
-                return jsonify({"error": "session_id is required"}), 400
-
-            # Create a new GeographyEconomy instance
-            geo_economy = GeographyEconomy(
-                session_id=session_id,
-                n_ir_rate=float(data.get('nomDiscRate', 0)),
-                e_ir_rate=float(data.get('expInfRate', 0)),
-                Tax_rate=float(data.get('equipSalePercent', 0)),
-                RE_incentives_rate=float(data.get('invTaxCredit', 0))
-            )
-            
-            # Save to database
-            db.session.add(geo_economy)
-            db.session.commit()
-
-            return jsonify({
-                "message": "Geography and Economy data saved successfully",
-                "id": geo_economy.id
-            }), 201
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error saving geography and economy data: {str(e)}")
-            return jsonify({"error": str(e)}), 500
-
     # Initialize a new session
     @app.route("/api/session/initialize", methods=["POST"])
     def initialize_session():
@@ -433,19 +396,6 @@ def create_app(config_class=Config):
             db.session.rollback()
             logger.error(f"Error saving {component_type}: {str(e)}")
             return jsonify({"error": str(e)}), 500
-
-    # Special route to recreate database tables (REMOVE IN PRODUCTION)
-    @app.route("/api/reset_db", methods=["GET"])
-    def reset_db():
-        try:
-            db.drop_all()
-            db.create_all()
-            return jsonify({"message": "Database tables reset successfully"})
-        except Exception as e:
-            logger.error(f"Error resetting database: {str(e)}")
-            return jsonify({"error": "Failed to reset database", "details": str(e)}), 500
-
-    return app
 
 if __name__ == "__main__":
     app = create_app()
