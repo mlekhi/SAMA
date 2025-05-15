@@ -36,7 +36,7 @@ The SAMA Tool is a web application designed to help users configure and optimize
    - **Backend**:
      ```bash
      cd backend
-     python app.py
+     flask run
      ```
    - **Frontend**:
      ```bash
