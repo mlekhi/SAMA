@@ -162,87 +162,89 @@ function OptimizationParams() {
     };
 
     return (
-        <div style={{ marginLeft: "220px", padding: "20px" }}>
-            <Box sx={{ maxWidth: 300, padding: 4, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h4" gutterBottom sx={{ mb: '2 !important', width: '400px !important', maxWidth: '400px !important' }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
+            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                <Typography variant="h4" gutterBottom>
                     Optimization Parameters
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3, width: '900px !important', maxWidth: '900px !important' }}>
+                <Typography variant="body1" sx={{ mb: 4 }}>
                     <i>
                         Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
                     </i>
                 </Typography>
 
-                <FormInputField
-                    label="Maximum Number of Iterations"
-                    name="maxIterations"
-                    value={formData.maxIterations}
-                    onChange={handleChange}
-                    error={errors.maxIterations}
-                    helperText={errors.maxIterations}
-                    isDefault={isUsingDefaults.maxIterations}
-                />
-
-                <FormInputField
-                    label="Population Size (Swarm Size)"
-                    name="populationSize"
-                    value={formData.populationSize}
-                    onChange={handleChange}
-                    error={errors.populationSize}
-                    helperText={errors.populationSize}
-                    isDefault={isUsingDefaults.populationSize}
-                />
-
-                <FormInputField
-                    label="Inertia Weight"
-                    name="inertiaWeight"
-                    value={formData.inertiaWeight}
-                    onChange={handleChange}
-                    error={errors.inertiaWeight}
-                    helperText={errors.inertiaWeight}
-                    isDefault={isUsingDefaults.inertiaWeight}
-                />
-
-                <FormInputField
-                    label="Inertia Weight Damping Ratio"
-                    name="inertiaWeightDamping"
-                    value={formData.inertiaWeightDamping}
-                    onChange={handleChange}
-                    error={errors.inertiaWeightDamping}
-                    helperText={errors.inertiaWeightDamping}
-                    isDefault={isUsingDefaults.inertiaWeightDamping}
-                />
-
-                <FormInputField
-                    label="Personal Learning Coefficient"
-                    name="personalLearningCoeff"
-                    value={formData.personalLearningCoeff}
-                    onChange={handleChange}
-                    error={errors.personalLearningCoeff}
-                    helperText={errors.personalLearningCoeff}
-                    isDefault={isUsingDefaults.personalLearningCoeff}
-                />
-
-                <FormInputField
-                    label="Global Learning Coefficient"
-                    name="globalLearningCoeff"
-                    value={formData.globalLearningCoeff}
-                    onChange={handleChange}
-                    error={errors.globalLearningCoeff}
-                    helperText={errors.globalLearningCoeff}
-                    isDefault={isUsingDefaults.globalLearningCoeff}
-                />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '300px', mt: 4 }}>
-                    <NextButton
-                        label="Submit"
-                        onClick={handleOptimize}
-                        loading={loading}
-                        color="secondary"
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <FormInputField
+                        label="Maximum Number of Iterations"
+                        name="maxIterations"
+                        value={formData.maxIterations}
+                        onChange={handleChange}
+                        error={errors.maxIterations}
+                        helperText={errors.maxIterations}
+                        isDefault={isUsingDefaults.maxIterations}
                     />
+
+                    <FormInputField
+                        label="Population Size (Swarm Size)"
+                        name="populationSize"
+                        value={formData.populationSize}
+                        onChange={handleChange}
+                        error={errors.populationSize}
+                        helperText={errors.populationSize}
+                        isDefault={isUsingDefaults.populationSize}
+                    />
+
+                    <FormInputField
+                        label="Inertia Weight"
+                        name="inertiaWeight"
+                        value={formData.inertiaWeight}
+                        onChange={handleChange}
+                        error={errors.inertiaWeight}
+                        helperText={errors.inertiaWeight}
+                        isDefault={isUsingDefaults.inertiaWeight}
+                    />
+
+                    <FormInputField
+                        label="Inertia Weight Damping Ratio"
+                        name="inertiaWeightDamping"
+                        value={formData.inertiaWeightDamping}
+                        onChange={handleChange}
+                        error={errors.inertiaWeightDamping}
+                        helperText={errors.inertiaWeightDamping}
+                        isDefault={isUsingDefaults.inertiaWeightDamping}
+                    />
+
+                    <FormInputField
+                        label="Personal Learning Coefficient"
+                        name="personalLearningCoeff"
+                        value={formData.personalLearningCoeff}
+                        onChange={handleChange}
+                        error={errors.personalLearningCoeff}
+                        helperText={errors.personalLearningCoeff}
+                        isDefault={isUsingDefaults.personalLearningCoeff}
+                    />
+
+                    <FormInputField
+                        label="Global Learning Coefficient"
+                        name="globalLearningCoeff"
+                        value={formData.globalLearningCoeff}
+                        onChange={handleChange}
+                        error={errors.globalLearningCoeff}
+                        helperText={errors.globalLearningCoeff}
+                        isDefault={isUsingDefaults.globalLearningCoeff}
+                    />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '300px', mt: 4 }}>
+                        <NextButton
+                            label="Submit"
+                            onClick={handleOptimize}
+                            loading={loading}
+                            color="secondary"
+                        />
+                    </Box>
                 </Box>
             </Box>
-        </div>
+        </Box>
     );
 }
 
