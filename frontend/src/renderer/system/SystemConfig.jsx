@@ -639,7 +639,7 @@ function SystemConfig(){
           width: 100,
           height: 100,
           border: "5px solid",
-          borderColor: selectedSystems.PV ? '#5A3472' : "grey.400",
+          borderColor: selectedSystems.PV ? 'secondary.main' : "grey.400",
           borderRadius: 4,
           padding: 0,
         }}
@@ -671,7 +671,7 @@ function SystemConfig(){
           width: 100,
           height: 100,
           border: "5px solid",
-          borderColor: selectedSystems.WT ? '#5A3472' : "grey.400",
+          borderColor: selectedSystems.WT ? 'secondary.main' : "grey.400",
           borderRadius: 4,
           padding: 0,
         }}
@@ -703,7 +703,7 @@ function SystemConfig(){
           width: 100,
           height: 100,
           border: "5px solid",
-          borderColor: selectedSystems.DG ? '#5A3472' : "grey.400",
+          borderColor: selectedSystems.DG ? 'secondary.main' : "grey.400",
           borderRadius: 4,
           padding: 0,
         }}
@@ -735,7 +735,7 @@ function SystemConfig(){
           width: 100,
           height: 100,
           border: "5px solid",
-          borderColor: selectedSystems.Battery ? '#5A3472' : "grey.400",
+          borderColor: selectedSystems.Battery ? 'secondary.main' : "grey.400",
           borderRadius: 4,
           padding: 0,
         }}
@@ -793,22 +793,18 @@ function SystemConfig(){
             </Grid2>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
                     <Button
-                    type="submit"
                         variant="contained"
                         sx={{
                             minWidth: 100,
-                            backgroundColor: '#5A3472', // Dark purple color
-                            '&:hover': { backgroundColor: '#4A2D61' }, // Slightly darker on hover
+                            backgroundColor: 'secondary.main',
+                            '&:hover': { backgroundColor: 'secondary.dark' },
                             color: 'white',
                         }}
-                        onClick = {handleNext}
-                        loading={loading}
+                        onClick={handleNext}
                         disabled={loading}
                     >
-                        {loading ? <CircularProgress color="white"/> : "Next"}
+                        {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Next"}
                     </Button>
-                    
-                    
                 </Box>
                 
             

@@ -174,44 +174,43 @@ const NavigationContent = () => {
   const navigate = useNavigate();
   const [completedSteps, setCompletedSteps] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
+  const [maxCompletedStep, setMaxCompletedStep] = useState(0);
 
   useEffect(() => {
     const currentPath = location.pathname;
     const stepIndex = steps.findIndex(step => step.path === currentPath);
     if (stepIndex !== -1) {
       setCurrentStep(stepIndex);
+      // Update max completed step if we're moving forward
+      if (stepIndex > maxCompletedStep) {
+        setMaxCompletedStep(stepIndex);
+      }
     }
-  }, [location]);
+  }, [location, maxCompletedStep]);
 
   const handleStepClick = (stepIndex) => {
-    // Check if all previous required steps are completed
-    const canAccess = steps.slice(0, stepIndex).every((step, index) => {
-      if (step.required) {
-        return completedSteps[index] === true;
-      }
-      return true;
-    });
-
-    if (canAccess) {
+    const status = getStepStatus(stepIndex);
+    if (status !== 'locked') {
       navigate(steps[stepIndex].path);
     }
   };
 
-  const markStepComplete = (stepIndex) => {
-    setCompletedSteps(prev => ({
-      ...prev,
-      [stepIndex]: true
-    }));
-  };
-
   const getStepStatus = (index) => {
-    if (index < currentStep) {
-      return completedSteps[index] ? 'completed' : 'locked';
+    // If we've completed this step before, it's always accessible
+    if (index <= maxCompletedStep) {
+      return 'completed';
     }
     if (index === currentStep) {
       return 'current';
     }
-    return 'locked';
+    // Check if all previous required steps are completed
+    const canAccess = steps.slice(0, index).every((step, idx) => {
+      if (step.required) {
+        return idx <= maxCompletedStep;
+      }
+      return true;
+    });
+    return canAccess ? 'available' : 'locked';
   };
 
   const calculateProgress = () => {

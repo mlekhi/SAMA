@@ -1,33 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  TextField, Button, InputAdornment, FormControl,
-  Box, Typography, CircularProgress, Alert, Grid
+  Box, Typography, Alert, Grid
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Search from '@components/Search';
 import Map from '@components/Map';
+import SystemButton from '@components/form/NextButton';
+import FormInputField from '@components/form/FormInputField';
 import { API_URL } from "@utils/config"; 
-
-const GeoInputField = ({ label, name, value, onChange, error, helperText, isDefault }) => (
-  <FormControl fullWidth sx={{ mt: 2 }}>
-    <Typography>{label}</Typography>
-    <TextField
-      name={name}
-      value={value}
-      onChange={onChange}
-      type="number"
-      label={label}
-      variant="outlined"
-      required
-      error={!!error}
-      helperText={helperText}
-      InputProps={{
-        endAdornment: <InputAdornment position="end">%</InputAdornment>,
-        sx: isDefault ? { color: 'text.secondary' } : {}
-      }}
-    />
-  </FormControl>
-);
 
 function GeoAndEconomy() {
   const navigate = useNavigate();
@@ -126,27 +106,26 @@ function GeoAndEconomy() {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
+    <Box sx={{ flexGrow: 1, p: 3, ml: '250px', maxWidth: '800px' }}>
       <Typography variant="h5" gutterBottom>
         Geography and Economy
       </Typography>
-      <Typography variant="body2" color="text.secondary" mb={2}>
+      <Typography variant="body2" color="text.secondary" mb={4}>
         <i>Default values are loaded. Modify as needed for accuracy.</i>
       </Typography>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Box>
           <Search selectPosition={selectPosition} setSelectPosition={setSelectPosition} />
           {errors.address && <Typography color="error">{errors.address}</Typography>}
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ height: 400 }}>
-            <Map selectPosition={selectPosition} />
-          </Box>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={6}>
-          <GeoInputField
+        <Box sx={{ height: 400 }}>
+          <Map selectPosition={selectPosition} />
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <FormInputField
             label="Nominal Discount Rate"
             name="nomDiscRate"
             value={formData.nomDiscRate}
@@ -155,7 +134,7 @@ function GeoAndEconomy() {
             helperText={errors.nomDiscRate}
             isDefault={isUsingDefaults.nomDiscRate}
           />
-          <GeoInputField
+          <FormInputField
             label="Expected Inflation Rate"
             name="expInfRate"
             value={formData.expInfRate}
@@ -164,10 +143,7 @@ function GeoAndEconomy() {
             helperText={errors.expInfRate}
             isDefault={isUsingDefaults.expInfRate}
           />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <GeoInputField
+          <FormInputField
             label="Equipment Sale Tax Percentage"
             name="equipSalePercent"
             value={formData.equipSalePercent}
@@ -176,7 +152,7 @@ function GeoAndEconomy() {
             helperText={errors.equipSalePercent}
             isDefault={isUsingDefaults.equipSalePercent}
           />
-          <GeoInputField
+          <FormInputField
             label="Investment Tax Credit (ITC)"
             name="invTaxCredit"
             value={formData.invTaxCredit}
@@ -185,25 +161,19 @@ function GeoAndEconomy() {
             helperText={errors.invTaxCredit}
             isDefault={isUsingDefaults.invTaxCredit}
           />
-        </Grid>
+        </Box>
 
         {errors.submit && (
-          <Grid item xs={12}>
-            <Alert severity="error">{errors.submit}</Alert>
-          </Grid>
+          <Alert severity="error">{errors.submit}</Alert>
         )}
 
-        <Grid item xs={12}>
-          <Button
-            variant="contained"
-            color="secondary"
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
+          <SystemButton 
+            loading={loading}
             onClick={handleNext}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Next"}
-          </Button>
-        </Grid>
-      </Grid>
+          />
+        </Box>
+      </Box>
     </Box>
   );
 }

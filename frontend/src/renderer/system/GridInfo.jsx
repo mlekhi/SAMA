@@ -20,6 +20,7 @@ import {
     RadioGroup,
     Alert
 } from "@mui/material";
+import FormInputField from '@components/form/FormInputField';
 
 function GridInfo() {
 
@@ -372,8 +373,8 @@ function GridInfo() {
             }
 
             console.log("Grid Info Saved Successfully!");
-            window.scrollTo(0, 0);
-            navigate('/optim');
+        window.scrollTo(0, 0);
+        navigate('/optim');
 
         } catch (error) {
             console.error('Error:', error);
@@ -520,9 +521,9 @@ function GridInfo() {
                             <FormControlLabel
                                 value="Yes"
                                 control={<Radio sx={{
-                                    color: '#5A3472',
+                                    color: 'secondary.main',
                                     '&.Mui-checked': {
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                     },
                                 }} />}
                                 label="Yes"
@@ -530,9 +531,9 @@ function GridInfo() {
                             <FormControlLabel
                                 value="No"
                                 control={<Radio sx={{
-                                    color: '#5A3472',
+                                    color: 'secondary.main',
                                     '&.Mui-checked': {
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                     },
                                 }} />}
                                 label="No"
@@ -554,9 +555,9 @@ function GridInfo() {
                                 <FormControlLabel
                                     value="Yes"
                                     control={<Radio sx={{
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                         '&.Mui-checked': {
-                                            color: '#5A3472',
+                                            color: 'secondary.main',
                                         },
                                     }} />}
                                     label="Yes"
@@ -564,9 +565,9 @@ function GridInfo() {
                                 <FormControlLabel
                                     value="No"
                                     control={<Radio sx={{
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                         '&.Mui-checked': {
-                                            color: '#5A3472',
+                                            color: 'secondary.main',
                                         },
                                     }} />}
                                     label="No"
@@ -588,9 +589,9 @@ function GridInfo() {
                                 <FormControlLabel
                                     value="Yes"
                                     control={<Radio sx={{
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                         '&.Mui-checked': {
-                                            color: '#5A3472',
+                                            color: 'secondary.main',
                                         },
                                     }} />}
                                     label="Yes"
@@ -598,9 +599,9 @@ function GridInfo() {
                                 <FormControlLabel
                                     value="No"
                                     control={<Radio sx={{
-                                        color: '#5A3472',
+                                        color: 'secondary.main',
                                         '&.Mui-checked': {
-                                            color: '#5A3472',
+                                            color: 'secondary.main',
                                         },
                                     }} />}
                                     label="No"
@@ -628,8 +629,8 @@ function GridInfo() {
                                 variant="contained"
                                 sx={{
                                     minWidth: 100,
-                                    backgroundColor: '#5A3472',
-                                    '&:hover': { backgroundColor: '#4A2D61' },
+                                    backgroundColor: 'secondary.main',
+                                    '&:hover': { backgroundColor: 'secondary.dark' },
                                     color: 'white',
                                 }}
                                 onClick={handleNext}
@@ -655,9 +656,9 @@ function GridInfo() {
                                             checked={summerMonths[month]}
                                             onChange={() => handleMonthChange(month)}
                                             sx={{
-                                                color: '#5A3472', // Default unchecked color
+                                                color: 'secondary.main',
                                                 '&.Mui-checked': {
-                                                    color: '#5A3472', // Checked state color
+                                                    color: 'secondary.main',
                                                 },
                                             }}
                                         />
@@ -731,99 +732,60 @@ function GridInfo() {
                                 flexDirection: 'column',
                             }}
                         >
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter annual expenses for grid interconnection in $ (if any)
-                            </Typography>
-                            <TextField
-                                label="Annual Expenses"
-                                type="number"
+                            <FormInputField
+                                label="Annual Expenses for Grid Interconnection"
+                                name="annualExpense"
                                 value={annualExpense}
                                 onChange={(e) => setAnnualExpense(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="$"
                             />
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter sale tax percentage of grid electricity
-                            </Typography>
-                            <TextField
-                                label="Sale Tax Percentage"
-                                type="number"
+                            <FormInputField
+                                label="Sale Tax Percentage of Grid Electricity"
+                                name="saleTaxPrecentage"
                                 value={saleTaxPrecentage}
                                 onChange={(e) => setSaleTaxPrecentage(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
                             />
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter grid adjusments in kWh
-                            </Typography>
-                            <TextField
-                                label="Grid Adjusments"
-                                type="number"
+                            <FormInputField
+                                label="Grid Adjustments"
+                                name="gridAdjust"
                                 value={gridAdjust}
                                 onChange={(e) => setGridAdjust(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="kWh"
                             />
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter yearly escalation rate in grid electricity prices
-                            </Typography>
-                            <TextField
-                                label="Yearly escalation rate"
-                                type="number"
+                            <FormInputField
+                                label="Yearly Escalation Rate in Grid Electricity Prices"
+                                name="yearlyEscRate"
                                 value={yearlyEscRate}
                                 onChange={(e) => setYearlyEscRate(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
                             />
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter annual credits offered by utility grid to users
-                            </Typography>
-                            <TextField
-                                label="Annual Credits"
-                                type="number"
+                            <FormInputField
+                                label="Annual Credits Offered by Utility Grid"
+                                name="annualCredits"
                                 value={annualCredits}
                                 onChange={(e) => setAnnualCredits(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="$"
                             />
 
                             {isNetMetered === "Yes" && (
-                                <>
-                                    <Typography variant="body1" sx={{ mb: 2 }}>
-                                        Enter net metering one-time setup fee
-                                    </Typography>
-                                    <TextField
-                                        label="Net Metering"
-                                        type="number"
-                                        value={netMetering}
-                                        onChange={(e) => setNetMetering(e.target.value)}
-                                        fullWidth
-                                        variant="outlined"
-                                        sx={{ maxWidth: 300, width: '100%', mb: 3 }}
-                                    />
-                                </>
+                                <FormInputField
+                                    label="Net Metering One-Time Setup Fee"
+                                    name="netMetering"
+                                    value={netMetering}
+                                    onChange={(e) => setNetMetering(e.target.value)}
+                                    endAdornment="$"
+                                />
                             )}
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter grid monthly fixed charge
-                            </Typography>
-                            <TextField
-                                label="Monthly Fixed Charge"
-                                type="number"
+                            <FormInputField
+                                label="Grid Monthly Fixed Charge"
+                                name="monthlyFixedCharge"
                                 value={monthlyFixedCharge}
                                 onChange={(e) => setMonthlyFixedCharge(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="$"
                             />
                         </Box>
 
@@ -854,32 +816,30 @@ function GridInfo() {
 
                             {/* Conditional input fields */}
                             {utilityStructure === "flatrate" && (
-                                <TextField
+                                <FormInputField
                                     label="Flat Price"
-                                    type="number"
+                                    name="flatPrice"
                                     value={prices.flatPrice}
-                                    onChange={(e) =>
-                                        setPrices({ ...prices, flatPrice: e.target.value })
-                                    }
-                                    sx={{ maxWidth: 300, width: '100%' }}
+                                    onChange={(e) => setPrices({ ...prices, flatPrice: e.target.value })}
+                                    endAdornment="$"
                                 />
                             )}
 
                             {utilityStructure === "seasonalrate" && (
                                 <>
-                                    <TextField
+                                    <FormInputField
                                         label="Summer Price"
-                                        type="number"
+                                        name="summerPrice"
                                         value={prices.summerPrice}
                                         onChange={(e) => setPrices({ ...prices, summerPrice: e.target.value })}
-                                        sx={{ maxWidth: 300, width: '100%' }}
+                                        endAdornment="$"
                                     />
-                                    <TextField
+                                    <FormInputField
                                         label="Winter Price"
-                                        type="number"
+                                        name="winterPrice"
                                         value={prices.winterPrice}
                                         onChange={(e) => setPrices({ ...prices, winterPrice: e.target.value })}
-                                        sx={{ maxWidth: 300, width: '100%' }}
+                                        endAdornment="$"
                                     />
                                 </>
                             )}
@@ -889,18 +849,15 @@ function GridInfo() {
                                     <Typography variant="body1" sx={{ mb: 2 }}>
                                         Enter Monthly Prices:
                                     </Typography>
-
                                     <Grid2 container spacing={2} sx={{ maxWidth: 1000 }}>
                                         {Object.keys(prices.monthlyPrices).map((month) => (
                                             <Box key={month} sx={{ mb: 2 }}>
-
-                                                <TextField
-                                                    label={`${month} Price:`}
-                                                    type="number"
+                                                <FormInputField
+                                                    label={`${month} Price`}
+                                                    name={`monthlyPrice-${month}`}
                                                     value={prices.monthlyPrices[month]}
                                                     onChange={(e) => handleMonthlyPriceChange(month, e.target.value)}
-                                                    fullWidth
-                                                    sx={{ maxWidth: 300 }}
+                                                    endAdornment="$"
                                                 />
                                             </Box>
                                         ))}
@@ -911,71 +868,55 @@ function GridInfo() {
                             {utilityStructure === "tieredrate" && (
                                 <Box sx={{ display: 'flex', mt: 2 }}>
                                     <Grid2 container spacing={2} sx={{ maxWidth: 800 }}>
-                                        {/* Low Tier Price */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="Low Tier Price:"
-                                                type="number"
+                                            <FormInputField
+                                                label="Low Tier Price"
+                                                name="lowTierPrice"
                                                 value={prices.tieredRate.lowTierPrice}
                                                 onChange={(e) => handleTieredRateChange("lowTierPrice", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
+                                                endAdornment="$"
                                             />
                                         </Grid2>
-
-                                        {/* Low Tier Max Load */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="Low Tier Max Load (kWh):"
-                                                type="number"
+                                            <FormInputField
+                                                label="Low Tier Max Load"
+                                                name="lowTierMaxLoad"
                                                 value={prices.tieredRate.lowTierMaxLoad}
                                                 onChange={(e) => handleTieredRateChange("lowTierMaxLoad", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
+                                                endAdornment="kWh"
                                             />
                                         </Grid2>
-
-                                        {/* Medium Tier Price */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="Medium Tier Price:"
-                                                type="number"
+                                            <FormInputField
+                                                label="Medium Tier Price"
+                                                name="mediumTierPrice"
                                                 value={prices.tieredRate.mediumTierPrice}
                                                 onChange={(e) => handleTieredRateChange("mediumTierPrice", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
+                                                endAdornment="$"
                                             />
                                         </Grid2>
-
-                                        {/* Medium Tier Max Load */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="Medium Tier Max Load (kWh):"
-                                                type="number"
+                                            <FormInputField
+                                                label="Medium Tier Max Load"
+                                                name="mediumTierMaxLoad"
                                                 value={prices.tieredRate.mediumTierMaxLoad}
                                                 onChange={(e) => handleTieredRateChange("mediumTierMaxLoad", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
+                                                endAdornment="kWh"
                                             />
                                         </Grid2>
-
-                                        {/* High Tier Price */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="High Tier Price:"
-                                                type="number"
+                                            <FormInputField
+                                                label="High Tier Price"
+                                                name="highTierPrice"
                                                 value={prices.tieredRate.highTierPrice}
                                                 onChange={(e) => handleTieredRateChange("highTierPrice", e.target.value)}
-                                                fullWidth
-                                                sx={{ width: '300px !important', maxWidth: '300px !important' }}
+                                                endAdornment="$"
                                             />
                                         </Grid2>
-
-                                        {/* High Tier Max Load */}
                                         <Grid2 item xs={6}>
-                                            <TextField
-                                                label="High Tier Max Load (kWh):"
-                                                type="number"
+                                            <FormInputField
+                                                label="High Tier Max Load"
+                                                name="highTierMaxLoad"
                                                 value={prices.tieredRate.highTierMaxLoad}
                                                 onChange={(e) => handleTieredRateChange("highTierMaxLoad", e.target.value)}
                                                 fullWidth
@@ -995,18 +936,48 @@ function GridInfo() {
                                             <Typography variant="h6" sx={{ mb: 2 }}>
                                                 Summer Rates
                                             </Typography>
-                                            {["lowTierPrice", "lowTierMaxLoad", "mediumTierPrice", "mediumTierMaxLoad", "highTierPrice", "highTierMaxLoad"].map((field) => (
-                                                <Box key={`summer-${field}`} sx={{ mb: 2 }}>
-                                                    <TextField
-                                                        label={field.replace(/([A-Z])/g, " $1")}
-                                                        type="number"
-                                                        value={prices.seasonalTieredRate.summer[field]}
-                                                        onChange={(e) => handleSeasonalTieredRateChange("summer", field, e.target.value)}
-                                                        fullWidth
-                                                        sx={{ maxWidth: 300 }}
-                                                    />
-                                                </Box>
-                                            ))}
+                                            <FormInputField
+                                                label="Low Tier Price"
+                                                name="summerLowTierPrice"
+                                                value={prices.seasonalTieredRate.summer.lowTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "lowTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="Low Tier Max Load"
+                                                name="summerLowTierMaxLoad"
+                                                value={prices.seasonalTieredRate.summer.lowTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "lowTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
+                                            <FormInputField
+                                                label="Medium Tier Price"
+                                                name="summerMediumTierPrice"
+                                                value={prices.seasonalTieredRate.summer.mediumTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "mediumTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="Medium Tier Max Load"
+                                                name="summerMediumTierMaxLoad"
+                                                value={prices.seasonalTieredRate.summer.mediumTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "mediumTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
+                                            <FormInputField
+                                                label="High Tier Price"
+                                                name="summerHighTierPrice"
+                                                value={prices.seasonalTieredRate.summer.highTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "highTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="High Tier Max Load"
+                                                name="summerHighTierMaxLoad"
+                                                value={prices.seasonalTieredRate.summer.highTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("summer", "highTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
                                         </Grid2>
 
                                         {/* Winter Rates */}
@@ -1014,18 +985,48 @@ function GridInfo() {
                                             <Typography variant="h6" sx={{ mb: 2 }}>
                                                 Winter Rates
                                             </Typography>
-                                            {["lowTierPrice", "lowTierMaxLoad", "mediumTierPrice", "mediumTierMaxLoad", "highTierPrice", "highTierMaxLoad"].map((field) => (
-                                                <Box key={`winter-${field}`} sx={{ mb: 2 }}>
-                                                    <TextField
-                                                        label={field.replace(/([A-Z])/g, " $1")}
-                                                        type="number"
-                                                        value={prices.seasonalTieredRate.winter[field]}
-                                                        onChange={(e) => handleSeasonalTieredRateChange("winter", field, e.target.value)}
-                                                        fullWidth
-                                                        sx={{ maxWidth: 300 }}
-                                                    />
-                                                </Box>
-                                            ))}
+                                            <FormInputField
+                                                label="Low Tier Price"
+                                                name="winterLowTierPrice"
+                                                value={prices.seasonalTieredRate.winter.lowTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "lowTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="Low Tier Max Load"
+                                                name="winterLowTierMaxLoad"
+                                                value={prices.seasonalTieredRate.winter.lowTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "lowTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
+                                            <FormInputField
+                                                label="Medium Tier Price"
+                                                name="winterMediumTierPrice"
+                                                value={prices.seasonalTieredRate.winter.mediumTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "mediumTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="Medium Tier Max Load"
+                                                name="winterMediumTierMaxLoad"
+                                                value={prices.seasonalTieredRate.winter.mediumTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "mediumTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
+                                            <FormInputField
+                                                label="High Tier Price"
+                                                name="winterHighTierPrice"
+                                                value={prices.seasonalTieredRate.winter.highTierPrice}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "highTierPrice", e.target.value)}
+                                                endAdornment="$"
+                                            />
+                                            <FormInputField
+                                                label="High Tier Max Load"
+                                                name="winterHighTierMaxLoad"
+                                                value={prices.seasonalTieredRate.winter.highTierMaxLoad}
+                                                onChange={(e) => handleSeasonalTieredRateChange("winter", "highTierMaxLoad", e.target.value)}
+                                                endAdornment="kWh"
+                                            />
                                         </Grid2>
                                     </Grid2>
                                 </Box>
@@ -1064,7 +1065,6 @@ function GridInfo() {
 
                             {utilityStructure === "timeofuse" && (
                                 <Box>
-                                    {/* Time of Use Rates Header */}
                                     <Typography variant="h5" sx={{ mb: 2 }}>
                                         Time of Use Rates
                                     </Typography>
@@ -1074,234 +1074,54 @@ function GridInfo() {
                                         Summer
                                     </Typography>
 
-                                    <TextField
+                                    <FormInputField
                                         label="Peak Rate"
-                                        type="number"
+                                        name="summerPeakRate"
                                         value={prices.timeOfUse.summerPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("summer", "PeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2, mr: 3 }}
+                                        endAdornment="$"
                                     />
-                                    <TextField
+                                    <FormInputField
                                         label="Mid-Peak Rate"
-                                        type="number"
+                                        name="summerMidPeakRate"
                                         value={prices.timeOfUse.summerMidPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("summer", "MidPeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2, mr: 3 }}
+                                        endAdornment="$"
                                     />
-                                    <TextField
+                                    <FormInputField
                                         label="Off-Peak Rate"
-                                        type="number"
+                                        name="summerOffPeakRate"
                                         value={prices.timeOfUse.summerOffPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("summer", "OffPeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2 }}
+                                        endAdornment="$"
                                     />
 
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        Summer Peak Hours
-                                    </Typography>
-                                    {prices.timeOfUse.summerPeakHours.map((range, index) => (
-                                        <Box key={index} sx={{ mb: 2 }}>
-                                            <TextField
-                                                label="Start"
-                                                type="time"
-                                                value={range.start}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("summer", "PeakHours", index, "start", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300, mb: 1, mr: 3 }}
-                                            />
-                                            <TextField
-                                                label="End"
-                                                type="time"
-                                                value={range.end}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("summer", "PeakHours", index, "end", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300 }}
-                                            />
-                                        </Box>
-                                    ))}
-                                    <Button onClick={() => handleAddHourRange("summer", "PeakHours")} variant="outlined" sx={{ mb: 3, color: "#5A3472", borderColor: "#5A3472" }}>
-                                        Add Peak Hour Range
-                                    </Button>
-
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        Summer Mid-Peak Hours
-                                    </Typography>
-                                    {prices.timeOfUse.summerMidPeakHours.map((range, index) => (
-                                        <Box key={index} sx={{ mb: 2, display: 'flex', gap: 3 }}>
-                                            {/* Start Time */}
-                                            <TextField
-                                                label="Start"
-                                                type="time"
-                                                value={range.start}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("summer", "MidPeakHours", index, "start", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-
-                                                sx={{
-                                                    maxWidth: 300,
-                                                    mb: 1,
-                                                }}
-                                            />
-
-                                            {/* End Time */}
-                                            <TextField
-                                                label="End"
-                                                type="time"
-                                                value={range.end}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("summer", "MidPeakHours", index, "end", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{
-                                                    maxWidth: 300,
-                                                }}
-                                            />
-                                        </Box>
-                                    ))}
-
-                                    <Button onClick={() => handleAddHourRange("summer", "MidPeakHours")} variant="outlined" sx={{ mb: 3, color: "#5A3472", borderColor: "#5A3472" }}>
-                                        Add Mid-Peak Hour Range
-                                    </Button>
-
                                     {/* Winter Rates */}
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
+                                    <Typography variant="h6" sx={{ mb: 1, mt: 3 }}>
                                         Winter
                                     </Typography>
 
-                                    <TextField
+                                    <FormInputField
                                         label="Peak Rate"
-                                        type="number"
+                                        name="winterPeakRate"
                                         value={prices.timeOfUse.winterPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("winter", "PeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2, mr: 3 }}
+                                        endAdornment="$"
                                     />
-                                    <TextField
+                                    <FormInputField
                                         label="Mid-Peak Rate"
-                                        type="number"
+                                        name="winterMidPeakRate"
                                         value={prices.timeOfUse.winterMidPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("winter", "MidPeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2, mr: 3 }}
+                                        endAdornment="$"
                                     />
-                                    <TextField
+                                    <FormInputField
                                         label="Off-Peak Rate"
-                                        type="number"
+                                        name="winterOffPeakRate"
                                         value={prices.timeOfUse.winterOffPeakRate}
                                         onChange={(e) => handleTimeOfUseChange("winter", "OffPeakRate", e.target.value)}
-                                        fullWidth
-                                        sx={{ maxWidth: 300, mb: 2 }}
+                                        endAdornment="$"
                                     />
-
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        Winter Peak Hours
-                                    </Typography>
-                                    {prices.timeOfUse.winterPeakHours.map((range, index) => (
-                                        <Box key={index} sx={{ mb: 2 }}>
-                                            <TextField
-                                                label="Start"
-                                                type="time"
-                                                value={range.start}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("winter", "PeakHours", index, "start", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300, mb: 1, mr: 3 }}
-                                            />
-                                            <TextField
-                                                label="End"
-                                                type="time"
-                                                value={range.end}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("winter", "PeakHours", index, "end", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300 }}
-                                            />
-                                        </Box>
-                                    ))}
-                                    <Button onClick={() => handleAddHourRange("winter", "PeakHours")} variant="outlined" sx={{ mb: 3, color: "#5A3472", borderColor: "#5A3472" }}>
-                                        Add Peak Hour Range
-                                    </Button>
-
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        Winter Mid-Peak Hours
-                                    </Typography>
-                                    {prices.timeOfUse.winterMidPeakHours.map((range, index) => (
-                                        <Box key={index} sx={{ mb: 2 }}>
-                                            <TextField
-                                                label="Start"
-                                                type="time"
-                                                value={range.start}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("winter", "MidPeakHours", index, "start", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300, mb: 1, mr: 3 }}
-                                            />
-                                            <TextField
-                                                label="End"
-                                                type="time"
-                                                value={range.end}
-                                                onChange={(e) =>
-                                                    handleHourRangeChange("winter", "MidPeakHours", index, "end", e.target.value)
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    inputLabel: {
-                                                        shrink: true,
-                                                    },
-                                                }}
-                                                sx={{ maxWidth: 300 }}
-                                            />
-                                        </Box>
-                                    ))}
-                                    <Button onClick={() => handleAddHourRange("winter", "MidPeakHours")} variant="outlined" sx={{ mb: 3, color: "#5A3472", borderColor: "#5A3472" }}>
-                                        Add Mid-Peak Hour Range
-                                    </Button>
                                 </Box>
                             )}
                         </Box>
@@ -1315,30 +1135,20 @@ function GridInfo() {
                                 flexDirection: 'column',
                             }}
                         >
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter Purchase Capacity
-                            </Typography>
-                            <TextField
+                            <FormInputField
                                 label="Purchase Capacity"
-                                type="number"
+                                name="purchaseCapacity"
                                 value={purchaseCapacity}
                                 onChange={(e) => setPurchaseCapacity(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="kWh"
                             />
 
-                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                Enter Sell Capacity
-                            </Typography>
-                            <TextField
+                            <FormInputField
                                 label="Sell Capacity"
-                                type="number"
+                                name="sellCapacity"
                                 value={sellCapacity}
                                 onChange={(e) => setSellCapacity(e.target.value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{ maxWidth: 300, width: '100%', mb: 3 }}
+                                endAdornment="kWh"
                             />
                         </Box>
 
@@ -1362,14 +1172,12 @@ function GridInfo() {
                             </FormControl>
 
                             {compensation === "flatcomp" && (
-                                <TextField
+                                <FormInputField
                                     label="Flat Compensation"
-                                    type="number"
+                                    name="flatComp"
                                     value={prices.flatComp}
-                                    onChange={(e) =>
-                                        setPrices({ ...prices, flatComp: e.target.value })
-                                    }
-                                    sx={{ maxWidth: 300, width: '100%' }}
+                                    onChange={(e) => setPrices({ ...prices, flatComp: e.target.value })}
+                                    endAdornment="$"
                                 />
                             )}
 
@@ -1382,14 +1190,12 @@ function GridInfo() {
                                     <Grid2 container spacing={2} sx={{ maxWidth: 1000 }}>
                                         {Object.keys(prices.monthlyComp).map((month) => (
                                             <Box key={month} sx={{ mb: 2 }}>
-
-                                                <TextField
-                                                    label={`${month} Price:`}
-                                                    type="number"
+                                                <FormInputField
+                                                    label={`${month} Price`}
+                                                    name={`monthlyComp-${month}`}
                                                     value={prices.monthlyComp[month]}
                                                     onChange={(e) => handleMonthlyCompChange(month, e.target.value)}
-                                                    fullWidth
-                                                    sx={{ maxWidth: 300 }}
+                                                    endAdornment="$"
                                                 />
                                             </Box>
                                         ))}
@@ -1427,8 +1233,8 @@ function GridInfo() {
                                 variant="contained"
                                 sx={{
                                     minWidth: 100,
-                                    backgroundColor: '#5A3472',
-                                    '&:hover': { backgroundColor: '#4A2D61' },
+                                    backgroundColor: 'secondary.main',
+                                    '&:hover': { backgroundColor: 'secondary.dark' },
                                     color: 'white',
                                 }}
                                 onClick={handleNext}

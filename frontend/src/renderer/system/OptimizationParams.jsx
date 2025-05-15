@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import FormInputField from '@components/form/FormInputField';
 
 function OptimizationParams() {
     const navigate = useNavigate();
@@ -171,139 +172,91 @@ function OptimizationParams() {
                     </i>
                 </Typography>
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Maximum Number of Iterations
-                </Typography>
-                <TextField
+                <FormInputField
+                    label="Maximum Number of Iterations"
                     name="maxIterations"
-                    label="Max # of Iterations"
-                    type="number"
                     value={formData.maxIterations}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.maxIterations}
+                    error={errors.maxIterations}
                     helperText={errors.maxIterations}
-                    InputProps={{
-                        sx: isUsingDefaults.maxIterations ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.maxIterations}
                 />
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Population Size (Swarm Size)
-                </Typography>
-                <TextField
+                <FormInputField
+                    label="Population Size (Swarm Size)"
                     name="populationSize"
-                    label="Population"
-                    type="number"
                     value={formData.populationSize}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.populationSize}
+                    error={errors.populationSize}
                     helperText={errors.populationSize}
-                    InputProps={{
-                        sx: isUsingDefaults.populationSize ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.populationSize}
                 />
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Inertia Weight
-                </Typography>
-                <TextField
-                    name="inertiaWeight"
+                <FormInputField
                     label="Inertia Weight"
-                    type="number"
+                    name="inertiaWeight"
                     value={formData.inertiaWeight}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.inertiaWeight}
+                    error={errors.inertiaWeight}
                     helperText={errors.inertiaWeight}
-                    InputProps={{
-                        sx: isUsingDefaults.inertiaWeight ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.inertiaWeight}
                 />
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Inertia Weight Damping Ratio
-                </Typography>
-                <TextField
-                    name="inertiaWeightDamping"
+                <FormInputField
                     label="Inertia Weight Damping Ratio"
-                    type="number"
+                    name="inertiaWeightDamping"
                     value={formData.inertiaWeightDamping}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.inertiaWeightDamping}
+                    error={errors.inertiaWeightDamping}
                     helperText={errors.inertiaWeightDamping}
-                    InputProps={{
-                        sx: isUsingDefaults.inertiaWeightDamping ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.inertiaWeightDamping}
                 />
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Personal Learning Coefficient
-                </Typography>
-                <TextField
-                    name="personalLearningCoeff"
+                <FormInputField
                     label="Personal Learning Coefficient"
-                    type="number"
+                    name="personalLearningCoeff"
                     value={formData.personalLearningCoeff}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.personalLearningCoeff}
+                    error={errors.personalLearningCoeff}
                     helperText={errors.personalLearningCoeff}
-                    InputProps={{
-                        sx: isUsingDefaults.personalLearningCoeff ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.personalLearningCoeff}
                 />
 
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                    Enter Global Learning Coefficient
-                </Typography>
-                <TextField
-                    name="globalLearningCoeff"
+                <FormInputField
                     label="Global Learning Coefficient"
-                    type="number"
+                    name="globalLearningCoeff"
                     value={formData.globalLearningCoeff}
                     onChange={handleChange}
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mb: 3 }}
-                    required
-                    error={!!errors.globalLearningCoeff}
+                    error={errors.globalLearningCoeff}
                     helperText={errors.globalLearningCoeff}
-                    InputProps={{
-                        sx: isUsingDefaults.globalLearningCoeff ? { color: 'text.secondary' } : {}
-                    }}
+                    isDefault={isUsingDefaults.globalLearningCoeff}
                 />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '300px', mt: 4 }}>
                     <Button
                         variant="contained"
                         sx={{
                             minWidth: 100,
                             backgroundColor: '#5A3472',
                             '&:hover': { backgroundColor: '#4A2D61' },
-                            color: 'white',
+                            color: 'white'
+                        }}
+                        onClick={handlePrev}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={{
+                            minWidth: 100,
+                            backgroundColor: '#5A3472',
+                            '&:hover': { backgroundColor: '#4A2D61' },
+                            color: 'white'
                         }}
                         onClick={handleOptimize}
                         disabled={loading}
                     >
-                        {loading ? <CircularProgress color="white" size={24} /> : "Submit"}
+                        {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Submit"}
                     </Button>
                 </Box>
             </Box>
