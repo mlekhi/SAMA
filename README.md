@@ -1,57 +1,68 @@
-# SAMA Tool
+# **SAMA Tool – Solar Alone Multiobjective Advisor**
 
-## Overview
-The SAMA Tool is a web application designed to help users configure and optimize renewable energy systems. It provides a step-by-step interface for entering geographical, economic, and technical parameters to simulate and analyze different energy configurations.
+SAMA is a web application that helps users configure and optimize renewable energy systems. Users input geographic, economic, and technical parameters through a guided interface to simulate various configurations and analyze results.
 
-## Features
-- **Geography & Economy**: Enter location and economic parameters.
-- **Optimization**: Configure optimization settings for energy systems.
-- **Grid Information**: Input grid-related parameters.
-- **System Configuration**: Set up system components and parameters.
-- **Component Information**: Detailed configuration for PV, Inverter, Diesel Generator, Battery, and Wind Turbine components.
-- **Results**: View graphs, summaries, and time series data of the simulation results.
+---
 
-## Setup Instructions
-1. **Clone the Repository**:
-   ```bash
-   git clone <repository-url>
-   cd sama-tool
-   ```
+## 🚀 Features
 
-2. **Install Dependencies**:
-   - **Backend**:
-     ```bash
-     cd backend
-     pip install -r requirements.txt
-     ```
-   - **Frontend**:
-     ```bash
-     cd frontend
-     npm install
-     ```
+* **Geography & Economy:** Input location and economic data
+* **Grid Info:** Define grid-related parameters
+* **System Configuration:** Set up PV, Inverter, Battery, Wind, Diesel, etc.
+* **Optimization Settings:** Choose objectives and constraints
+* **Component Details:** Configure technical parameters for each system part
+* **Results:** Visualize simulation summaries, graphs, and time series
 
-3. **Run the Application**:
-   - **Backend**:
-     ```bash
-     cd backend
-     python app.py
-     ```
-   - **Frontend**:
-     ```bash
-     cd frontend
-     npm start
-     ```
+---
 
-4. **Access the Application**:
-   Open your browser and navigate to `http://localhost:3000`.
+## ⚙️ Setup Instructions
 
-## Usage
-1. **Start Assessment**: Begin by selecting your location and entering economic parameters.
-2. **Configure Components**: Follow the step-by-step guide to configure each component of your energy system.
-3. **View Results**: After configuration, view the results in the graphs, summary, and time series sections.
+### 1. **Clone the repository**
 
-## Contributing
-Contributions are welcome! Please fork the repository and submit a pull request with your changes.
+```bash
+git clone <repository-url>
+cd SAMA
+```
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+### 2. **Backend Setup (Python/Flask)**
+
+#### Create & activate a virtual environment
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # macOS/Linux
+venv\Scripts\activate     # Windows
+```
+
+#### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### Run the Flask server
+
+```bash
+flask run
+```
+
+### 3. **Frontend Setup (React)**
+
+```bash
+cd ../frontend
+npm install
+npm start
+```
+
+---
+
+## 🧭 Usage Guide
+
+1. **Start Assessment:** Choose location and input economic data
+2. **Configure Components:** Follow the step-by-step UI
+3. **Run Simulation:** Analyze performance through results pages
+
+---
+
+Contributions welcome!
