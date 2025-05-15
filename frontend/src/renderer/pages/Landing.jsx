@@ -26,6 +26,15 @@ const Landing = () => {
     setLoading(true);
     setErrorDialog({ open: false, title: '', message: '' });
     
+    // Check if a session ID already exists
+    const existingSessionId = localStorage.getItem("session_id");
+    if (existingSessionId) {
+      console.log('Existing session ID found:', existingSessionId);
+      navigate('/geo');
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('Attempting to connect to:', `${API_URL}/api/session/initialize`);
       
@@ -62,7 +71,7 @@ const Landing = () => {
       localStorage.setItem("session_id", result.session_id);
       console.log('Session ID stored:', result.session_id);
       
-      navigate('/geo');
+    navigate('/geo');
     } catch (err) {
       console.error("Failed to initialize session:", err);
       setErrorDialog({
