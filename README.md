@@ -47,7 +47,7 @@ pip install -r requirements.txt
 flask run
 ```
 
-### 3. **Frontend Setup (React)**
+### 3. **Frontend Setup (Electron)**
 
 ```bash
 cd ../frontend
