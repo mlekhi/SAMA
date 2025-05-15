@@ -6,14 +6,15 @@ import NextButton from '@components/form/NextButton'
 
 function ComponentInfoDG() {
     const navigate = useNavigate()
+
     const defaultComponentInfoDG = {
-        slope: '0.273',
-        interceptCoefficient: '0.033',
-        capitalCostDG: '240.45',
-        replacementCostDG: '240.45',
-        OMCostDG: '0.066',
-        fuelCostDG: '1.428',
-        DGFuelCostRate: '2'
+        slope: '',
+        interceptCoefficient: '',
+        capitalCostDG: '',
+        replacementCostDG: '',
+        OMCostDG: '',
+        fuelCostDG: '',
+        DGFuelCostRate: ''
     }
 
     const [myData, setMyData] = useState(defaultComponentInfoDG)
@@ -28,6 +29,30 @@ function ComponentInfoDG() {
         window.scrollTo(0, 0)
         navigate('/grid')
     }
+
+    useEffect(() => {
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                if (!response.ok) throw new Error('Failed to fetch defaults')
+                const data = await response.json()
+                
+                // Set form data with backend defaults
+                setMyData({
+                    slope: data.fuel_curve_a?.toString() || '',
+                    interceptCoefficient: data.fuel_curve_b?.toString() || '',
+                    capitalCostDG: '1000', // Default cost
+                    replacementCostDG: '1000', // Default cost
+                    OMCostDG: '10', // Default cost
+                    fuelCostDG: '1', // Default cost
+                    DGFuelCostRate: '0' // Default rate
+                })
+            } catch (error) {
+                console.error('Error fetching defaults:', error)
+            }
+        }
+        fetchDefaults()
+    }, [])
 
     const sendComponentInfo = async () => {
         const DG_Data = {

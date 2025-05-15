@@ -16,14 +16,15 @@ function ComponentInfoPV() {
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
     const defaultComponentInfoPV = {
-        PVLifetime: '25',
-        PVDeratingFactor: '0.8',
-        PVTrackingMode: '0',
-        PVSlope: '0',
-        PVAzimuth: '0',
-        capitalCostPV: '1000',
-        replacementCostPV: '1000',
-        OMCostPV: '10'
+        pvLifetime: '',
+        pvDerating: '',
+        tempCoeff: '',
+        tempRef: '',
+        tempNoct: '',
+        pvEfficiency: '',
+        capitalCostPV: '',
+        replacementCostPV: '',
+        OMCostPV: ''
     }
 
     const [myData, setMyData] = useState(defaultComponentInfoPV)
@@ -40,34 +41,53 @@ function ComponentInfoPV() {
             navigate('/wt')
         } else if (selectedSystems.DG) {
             navigate('/dg')
+        } else if (selectedSystems.Battery) {
+            navigate('/battery')
         } else {
             navigate('/grid')
         }
     }
 
     useEffect(() => {
-        getSystemConfig()
-    }, [])
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                if (!response.ok) throw new Error('Failed to fetch defaults')
+                const data = await response.json()
+                
+                // Set form data with backend defaults
+                setMyData({
+                    pvLifetime: data.pv_lifetime?.toString() || '',
+                    pvDerating: data.pv_derating?.toString() || '',
+                    tempCoeff: data.temp_coef?.toString() || '',
+                    tempRef: data.temp_ref?.toString() || '',
+                    tempNoct: data.temp_noct?.toString() || '',
+                    pvEfficiency: data.pv_efficiency?.toString() || '',
+                    capitalCostPV: '1000', // Default cost
+                    replacementCostPV: '1000', // Default cost
+                    OMCostPV: '10' // Default cost
+                })
 
-    const getSystemConfig = async () => {
-        try {
-            const response = await fetch('http://127.0.0.1:5000/get/routing')
-            const data = await response.json()
-            setSelectedSystems(data["Energy Systems"])
-            console.log(data["Energy Systems"])
-            setIsConfigLoaded(true)
-        } catch (error) {
-            console.error('Error fetching system config:', error)
+                // Get system config
+                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configData = await configResponse.json()
+                setSelectedSystems(configData["Energy Systems"])
+                setIsConfigLoaded(true)
+            } catch (error) {
+                console.error('Error fetching defaults:', error)
+            }
         }
-    }
+        fetchDefaults()
+    }, [])
 
     const sendComponentInfo = async () => {
         const PV_Data = {
-            PVLifetime: myData.PVLifetime,
-            PVDeratingFactor: myData.PVDeratingFactor,
-            PVTrackingMode: myData.PVTrackingMode,
-            PVSlope: myData.PVSlope,
-            PVAzimuth: myData.PVAzimuth,
+            pvLifetime: myData.pvLifetime,
+            pvDerating: myData.pvDerating,
+            tempCoeff: myData.tempCoeff,
+            tempRef: myData.tempRef,
+            tempNoct: myData.tempNoct,
+            pvEfficiency: myData.pvEfficiency,
             capitalCostPV: myData.capitalCostPV,
             replacementCostPV: myData.replacementCostPV,
             OMCostPV: myData.OMCostPV
@@ -109,40 +129,48 @@ function ComponentInfoPV() {
 
                     <FormInputField
                         label="PV Lifetime"
-                        name="PVLifetime"
-                        value={myData.PVLifetime}
+                        name="pvLifetime"
+                        value={myData.pvLifetime}
                         onChange={handleChange}
                         endAdornment="years"
                     />
 
                     <FormInputField
                         label="PV Derating Factor"
-                        name="PVDeratingFactor"
-                        value={myData.PVDeratingFactor}
+                        name="pvDerating"
+                        value={myData.pvDerating}
                         onChange={handleChange}
                     />
 
                     <FormInputField
-                        label="PV Tracking Mode"
-                        name="PVTrackingMode"
-                        value={myData.PVTrackingMode}
+                        label="Temperature Coefficient"
+                        name="tempCoeff"
+                        value={myData.tempCoeff}
                         onChange={handleChange}
+                        endAdornment="%/°C"
                     />
 
                     <FormInputField
-                        label="PV Slope"
-                        name="PVSlope"
-                        value={myData.PVSlope}
+                        label="Reference Temperature"
+                        name="tempRef"
+                        value={myData.tempRef}
                         onChange={handleChange}
-                        endAdornment="degrees"
+                        endAdornment="°C"
                     />
 
                     <FormInputField
-                        label="PV Azimuth"
-                        name="PVAzimuth"
-                        value={myData.PVAzimuth}
+                        label="Nominal Operating Cell Temperature"
+                        name="tempNoct"
+                        value={myData.tempNoct}
                         onChange={handleChange}
-                        endAdornment="degrees"
+                        endAdornment="°C"
+                    />
+
+                    <FormInputField
+                        label="PV Efficiency"
+                        name="pvEfficiency"
+                        value={myData.pvEfficiency}
+                        onChange={handleChange}
                     />
 
                     <Typography variant="h5" gutterBottom>

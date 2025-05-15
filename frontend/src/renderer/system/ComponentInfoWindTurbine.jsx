@@ -1,386 +1,249 @@
-import React, { useState, useEffect} from 'react'
-import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
-  CircularProgress,
-  List,
-  ListItem,
-  Divider,
-  Grid2,
-  InputAdornment
-} from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import FormInputField from '@components/form/FormInputField'
+import NextButton from '@components/form/NextButton'
 
 function ComponentInfoWindTurbine() {
-  const navigate = useNavigate()
-     const [selectedSystems, setSelectedSystems] = useState({
-      PV: false,
-      WT: false,
-      DG: false,
-      Battery: false,
-    });
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
-  
-  const defaultComponentInfoWindTurbine = {
-    hubHeight: '17',
-    anemometerHeight: '43.6',
-    electricalEfficiency: '1',
-    cutOutSpeed: '25',
-    cutInSpeed: '2.5',
-    ratedSpeed: '9.5',
-    coefficientFriction: '0.11',
-    lifetimeWT: '20',
-    capitalCostWT: '1200',
-    replacementCostWT: '1200',
-    OMCostWT: '40',
-    engineeringOtherCosts: 0
-  }
-  const [myData, setMyData] = useState(defaultComponentInfoWindTurbine)
+    const navigate = useNavigate()
+    const [selectedSystems, setSelectedSystems] = useState({
+        PV: false,
+        WT: false,
+        DG: false,
+        Battery: false
+    })
 
-  function handleChange(e) {
-    let { value, name } = e.target
-    setMyData((myData) => ({ ...myData, [name]: value }))
-  }
+    const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
-   useEffect(() => {
-      getSystemConfig();
-    }, []);
-  
-
-  const handleNext = () => {
-    sendComponentInfo()
-    window.scrollTo(0, 0);
-    //Navigate based on the selected system
-    if (selectedSystems.DG) {
-      navigate('/dg')
-    } else {
-      navigate('/grid')
-    }
-  }
-
-// Function to fetch system configuration from the backend
-const getSystemConfig = async () => {
-  try {
-    const response = await fetch('http://127.0.0.1:5000/get/routing');
-    const data = await response.json();
-    // Set the selected systems state based on the data fetched from the backend
-    setSelectedSystems(data["Energy Systems"]);
-    console.log(data["Energy Systems"]);
-    setIsConfigLoaded(true); // Set config loaded flag to true
-  } catch (error) {
-    console.error('Error fetching system config:', error);
-  }
-};
-  
-  //backend connection
-  const sendComponentInfo = async () => {
-    const WT_Data = {
-      hubHeight: myData.hubHeight,
-      anemometerHeight: myData.anemometerHeight,
-      electricalEfficiency: myData.electricalEfficiency,
-      cutOutSpeed: myData.cutOutSpeed,
-      cutInSpeed: myData.cutInSpeed,
-      ratedSpeed: myData.ratedSpeed,
-      coefficientFriction: myData.coefficientFriction,
-      lifetimeWT: myData.lifetimeWT,
-      capitalCostWT: myData.capitalCostWT,
-      replacementCostWT: myData.replacementCostWT,
-      OMCostWT: myData.OMCostWT,
-      engineeringOtherCosts: myData.engineeringOtherCosts
+    const defaultComponentInfoWindTurbine = {
+        hubHeight: '',
+        anemometerHeight: '',
+        windEfficiency: '',
+        cutOutSpeed: '',
+        cutInSpeed: '',
+        ratedSpeed: '',
+        coefficientFriction: '',
+        windLifetime: '',
+        capitalCostWT: '',
+        replacementCostWT: '',
+        OMCostWT: '',
+        engineeringOtherCosts: ''
     }
 
-    try {
-      const response = await fetch('http://127.0.0.1:5000/wt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(WT_Data)
-      })
+    const [myData, setMyData] = useState(defaultComponentInfoWindTurbine)
 
-      const result = await response.json()
-      console.log('Response from server:', result)
-    } catch (error) {
-      console.error('Error sending wind turbine info:', error)
+    function handleChange(e) {
+        const { value, name } = e.target
+        setMyData(prev => ({ ...prev, [name]: value }))
     }
-  }
 
-  return (
-    <div style={{ marginLeft: '220px', padding: '20px' }}>
-      <Box sx={{ padding: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Component Information - Wind Turbine
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          <i>
-            Default values are provided for some questions, but please review and adjust as
-            necessary for more accurate results.
-          </i>
-        </Typography>
+    const handleNext = () => {
+        sendComponentInfo()
+        window.scrollTo(0, 0)
+        if (selectedSystems.DG) {
+            navigate('/dg')
+        } else if (selectedSystems.Battery) {
+            navigate('/battery')
+        } else {
+            navigate('/grid')
+        }
+    }
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', width: 700 }}>
-            Technical Information
-          </Typography>
+    useEffect(() => {
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                if (!response.ok) throw new Error('Failed to fetch defaults')
+                const data = await response.json()
+                
+                // Set form data with backend defaults
+                setMyData({
+                    hubHeight: data.hub_height?.toString() || '',
+                    anemometerHeight: data.anemometer_height?.toString() || '',
+                    windEfficiency: data.wind_efficiency?.toString() || '',
+                    cutOutSpeed: data.cut_out_speed?.toString() || '',
+                    cutInSpeed: data.cut_in_speed?.toString() || '',
+                    ratedSpeed: data.rated_speed?.toString() || '',
+                    coefficientFriction: '0.11', // Default value
+                    windLifetime: data.wind_lifetime?.toString() || '',
+                    capitalCostWT: '1200', // Default cost
+                    replacementCostWT: '1200', // Default cost
+                    OMCostWT: '40', // Default cost
+                    engineeringOtherCosts: '0' // Default cost
+                })
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your hub height
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Hub Height"
-              variant="outlined"
-              name="hubHeight"
-              value={myData.hubHeight}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">m</InputAdornment>
-              }}
-            />
-          </FormControl>
+                // Get system config
+                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configData = await configResponse.json()
+                setSelectedSystems(configData["Energy Systems"])
+                setIsConfigLoaded(true)
+            } catch (error) {
+                console.error('Error fetching defaults:', error)
+            }
+        }
+        fetchDefaults()
+    }, [])
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your anemometer height
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Anemometer Height"
-              variant="outlined"
-              name="anemometerHeight"
-              value={myData.anemometerHeight}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">m</InputAdornment>
-              }}
-            />
-          </FormControl>
+    const sendComponentInfo = async () => {
+        const WT_Data = {
+            hubHeight: myData.hubHeight,
+            anemometerHeight: myData.anemometerHeight,
+            windEfficiency: myData.windEfficiency,
+            cutOutSpeed: myData.cutOutSpeed,
+            cutInSpeed: myData.cutInSpeed,
+            ratedSpeed: myData.ratedSpeed,
+            coefficientFriction: myData.coefficientFriction,
+            windLifetime: myData.windLifetime,
+            capitalCostWT: myData.capitalCostWT,
+            replacementCostWT: myData.replacementCostWT,
+            OMCostWT: myData.OMCostWT,
+            engineeringOtherCosts: myData.engineeringOtherCosts
+        }
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your electrical efficiency
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Electrical Efficiency"
-              variant="outlined"
-              name="electricalEfficiency"
-              value={myData.electricalEfficiency}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">%</InputAdornment>
-              }}
-            />
-          </FormControl>
+        try {
+            console.log(WT_Data)
+            const response = await fetch('http://127.0.0.1:5000/wt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(WT_Data)
+            })
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your cut out speed
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Cut Out Speed"
-              variant="outlined"
-              name="cutOutSpeed"
-              value={myData.cutOutSpeed}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">m/s</InputAdornment>
-              }}
-            />
-          </FormControl>
+            const result = await response.json()
+            console.log('Response from server:', result)
+        } catch (error) {
+            console.error('Error sending wind turbine info:', error)
+        }
+    }
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your cut in speed
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Cut In Speed"
-              variant="outlined"
-              name="cutInSpeed"
-              value={myData.cutInSpeed}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">m/s</InputAdornment>
-              }}
-            />
-          </FormControl>
+    return (
+        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '250px' }}>
+            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                <Typography variant="h4" gutterBottom>
+                    Component Information - Wind Turbine
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 4 }}>
+                    <i>
+                        Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
+                    </i>
+                </Typography>
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your rated speed
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Rated Speed"
-              variant="outlined"
-              name="ratedSpeed"
-              value={myData.ratedSpeed}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">m/s</InputAdornment>
-              }}
-            />
-          </FormControl>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Typography variant="h5" gutterBottom>
+                        Technical Information
+                    </Typography>
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter coefficient of friction
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Coefficient of Friction"
-              variant="outlined"
-              name="coefficientFriction"
-              value={myData.coefficientFriction}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end"></InputAdornment>
-              }}
-            />
-          </FormControl>
+                    <FormInputField
+                        label="Hub Height"
+                        name="hubHeight"
+                        value={myData.hubHeight}
+                        onChange={handleChange}
+                        endAdornment="m"
+                    />
 
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your wind turbine lifetime
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Lifetime"
-              variant="outlined"
-              name="lifetimeWT"
-              value={myData.lifetimeWT}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: 0 }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">years</InputAdornment>
-              }}
-            />
-          </FormControl>
+                    <FormInputField
+                        label="Anemometer Height"
+                        name="anemometerHeight"
+                        value={myData.anemometerHeight}
+                        onChange={handleChange}
+                        endAdornment="m"
+                    />
+
+                    <FormInputField
+                        label="Wind Turbine Efficiency"
+                        name="windEfficiency"
+                        value={myData.windEfficiency}
+                        onChange={handleChange}
+                    />
+
+                    <FormInputField
+                        label="Cut-out Speed"
+                        name="cutOutSpeed"
+                        value={myData.cutOutSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Cut-in Speed"
+                        name="cutInSpeed"
+                        value={myData.cutInSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Rated Speed"
+                        name="ratedSpeed"
+                        value={myData.ratedSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Coefficient of Friction"
+                        name="coefficientFriction"
+                        value={myData.coefficientFriction}
+                        onChange={handleChange}
+                    />
+
+                    <FormInputField
+                        label="Wind Turbine Lifetime"
+                        name="windLifetime"
+                        value={myData.windLifetime}
+                        onChange={handleChange}
+                        endAdornment="years"
+                    />
+
+                    <Typography variant="h5" gutterBottom>
+                        Economic Information
+                    </Typography>
+
+                    <FormInputField
+                        label="Capital Cost"
+                        name="capitalCostWT"
+                        value={myData.capitalCostWT}
+                        onChange={handleChange}
+                        endAdornment="$/kW"
+                    />
+
+                    <FormInputField
+                        label="Replacement Cost"
+                        name="replacementCostWT"
+                        value={myData.replacementCostWT}
+                        onChange={handleChange}
+                        endAdornment="$/kW"
+                    />
+
+                    <FormInputField
+                        label="O&M Cost"
+                        name="OMCostWT"
+                        value={myData.OMCostWT}
+                        onChange={handleChange}
+                        endAdornment="($/kW)/year"
+                    />
+
+                    <FormInputField
+                        label="Engineering/Other Costs"
+                        name="engineeringOtherCosts"
+                        value={myData.engineeringOtherCosts}
+                        onChange={handleChange}
+                        endAdornment="$"
+                    />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                        <NextButton
+                            label="Next"
+                            onClick={handleNext}
+                            disabled={!isConfigLoaded}
+                            color="secondary"
+                        />
+                    </Box>
+                </Box>
+            </Box>
         </Box>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 4 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', width: 700 }}>
-            Economic Information
-          </Typography>
-
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your capital cost.
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Capital Cost"
-              variant="outlined"
-              name="capitalCostWT"
-              value={myData.capitalCostWT}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: '10px' }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">$/kW</InputAdornment>
-              }}
-            />
-          </FormControl>
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your replacement cost.
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Wind Turbine Replacement Cost"
-              variant="outlined"
-              name="replacementCostWT"
-              value={myData.replacementCostWT}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: '10px' }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">$/kW</InputAdornment>
-              }}
-            />
-          </FormControl>
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your OM cost.
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="OM Cost"
-              variant="outlined"
-              name="OMCostWT"
-              value={myData.OMCostWT}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: '10px' }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">$/kW</InputAdornment>
-              }}
-            />
-          </FormControl>
-          <Typography variant="body1" sx={{ mb: 0, width: 700 }}>
-            Enter your engineering and other costs.
-          </Typography>
-          <FormControl fullWidth sx={{ maxWidth: 300, width: '100%' }}>
-            <TextField
-              label="Engineering/Other Costs"
-              variant="outlined"
-              name="engineeringOtherCosts"
-              value={myData.engineeringOtherCosts}
-              onChange={handleChange}
-              fullWidth
-              style={{ marginBottom: '10px' }}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">$</InputAdornment>
-              }}
-            />
-          </FormControl>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '300px', mt: 4 }}>
-          {/* <Button
-            variant="contained"
-            sx={{
-              minWidth: 100,
-              backgroundColor: '#5A3472',
-              '&:hover': { backgroundColor: '#4A2D61' },
-              color: 'white'
-            }}
-          >
-            Previous
-          </Button> */}
-          <Button
-            variant="contained"
-            sx={{
-              minWidth: 100,
-              backgroundColor: '#5A3472',
-              '&:hover': { backgroundColor: '#4A2D61' },
-              color: 'white'
-            }}
-            onClick={handleNext}
-            disabled={!isConfigLoaded}
-          >
-            Next
-          </Button>
-        </Box>
-      </Box>
-    </div>
-  )
+    )
 }
 
 export default ComponentInfoWindTurbine

@@ -16,12 +16,16 @@ function ComponentInfoWT() {
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
     const defaultComponentInfoWT = {
-        WTLifetime: '25',
-        WTHubHeight: '80',
-        WTPowerCurve: '0',
-        capitalCostWT: '1000',
-        replacementCostWT: '1000',
-        OMCostWT: '10'
+        hubHeight: '',
+        anemometerHeight: '',
+        windEfficiency: '',
+        cutOutSpeed: '',
+        cutInSpeed: '',
+        ratedSpeed: '',
+        windLifetime: '',
+        capitalCostWT: '',
+        replacementCostWT: '',
+        OMCostWT: ''
     }
 
     const [myData, setMyData] = useState(defaultComponentInfoWT)
@@ -36,32 +40,55 @@ function ComponentInfoWT() {
         window.scrollTo(0, 0)
         if (selectedSystems.DG) {
             navigate('/dg')
+        } else if (selectedSystems.Battery) {
+            navigate('/battery')
         } else {
             navigate('/grid')
         }
     }
 
     useEffect(() => {
-        getSystemConfig()
-    }, [])
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                if (!response.ok) throw new Error('Failed to fetch defaults')
+                const data = await response.json()
+                
+                // Set form data with backend defaults
+                setMyData({
+                    hubHeight: data.hub_height?.toString() || '',
+                    anemometerHeight: data.anemometer_height?.toString() || '',
+                    windEfficiency: data.wind_efficiency?.toString() || '',
+                    cutOutSpeed: data.cut_out_speed?.toString() || '',
+                    cutInSpeed: data.cut_in_speed?.toString() || '',
+                    ratedSpeed: data.rated_speed?.toString() || '',
+                    windLifetime: data.wind_lifetime?.toString() || '',
+                    capitalCostWT: '1000', // Default cost
+                    replacementCostWT: '1000', // Default cost
+                    OMCostWT: '10' // Default cost
+                })
 
-    const getSystemConfig = async () => {
-        try {
-            const response = await fetch('http://127.0.0.1:5000/get/routing')
-            const data = await response.json()
-            setSelectedSystems(data["Energy Systems"])
-            console.log(data["Energy Systems"])
-            setIsConfigLoaded(true)
-        } catch (error) {
-            console.error('Error fetching system config:', error)
+                // Get system config
+                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configData = await configResponse.json()
+                setSelectedSystems(configData["Energy Systems"])
+                setIsConfigLoaded(true)
+            } catch (error) {
+                console.error('Error fetching defaults:', error)
+            }
         }
-    }
+        fetchDefaults()
+    }, [])
 
     const sendComponentInfo = async () => {
         const WT_Data = {
-            WTLifetime: myData.WTLifetime,
-            WTHubHeight: myData.WTHubHeight,
-            WTPowerCurve: myData.WTPowerCurve,
+            hubHeight: myData.hubHeight,
+            anemometerHeight: myData.anemometerHeight,
+            windEfficiency: myData.windEfficiency,
+            cutOutSpeed: myData.cutOutSpeed,
+            cutInSpeed: myData.cutInSpeed,
+            ratedSpeed: myData.ratedSpeed,
+            windLifetime: myData.windLifetime,
             capitalCostWT: myData.capitalCostWT,
             replacementCostWT: myData.replacementCostWT,
             OMCostWT: myData.OMCostWT
@@ -102,26 +129,58 @@ function ComponentInfoWT() {
                     </Typography>
 
                     <FormInputField
-                        label="WT Lifetime"
-                        name="WTLifetime"
-                        value={myData.WTLifetime}
-                        onChange={handleChange}
-                        endAdornment="years"
-                    />
-
-                    <FormInputField
-                        label="WT Hub Height"
-                        name="WTHubHeight"
-                        value={myData.WTHubHeight}
+                        label="Hub Height"
+                        name="hubHeight"
+                        value={myData.hubHeight}
                         onChange={handleChange}
                         endAdornment="m"
                     />
 
                     <FormInputField
-                        label="WT Power Curve"
-                        name="WTPowerCurve"
-                        value={myData.WTPowerCurve}
+                        label="Anemometer Height"
+                        name="anemometerHeight"
+                        value={myData.anemometerHeight}
                         onChange={handleChange}
+                        endAdornment="m"
+                    />
+
+                    <FormInputField
+                        label="Wind Turbine Efficiency"
+                        name="windEfficiency"
+                        value={myData.windEfficiency}
+                        onChange={handleChange}
+                    />
+
+                    <FormInputField
+                        label="Cut-out Speed"
+                        name="cutOutSpeed"
+                        value={myData.cutOutSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Cut-in Speed"
+                        name="cutInSpeed"
+                        value={myData.cutInSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Rated Speed"
+                        name="ratedSpeed"
+                        value={myData.ratedSpeed}
+                        onChange={handleChange}
+                        endAdornment="m/s"
+                    />
+
+                    <FormInputField
+                        label="Wind Turbine Lifetime"
+                        name="windLifetime"
+                        value={myData.windLifetime}
+                        onChange={handleChange}
+                        endAdornment="years"
                     />
 
                     <Typography variant="h5" gutterBottom>

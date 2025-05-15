@@ -6,7 +6,6 @@ import NextButton from '@components/form/NextButton'
 
 function ComponentInfoInverter() {
     const navigate = useNavigate()
-
     const [selectedSystems, setSelectedSystems] = useState({
         PV: false,
         WT: false,
@@ -17,12 +16,12 @@ function ComponentInfoInverter() {
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
 
     const defaultComponentInfoInverter = {
-        inverterEfficiency: '0.96',
-        inverterLifetime: '25',
-        maxAcceptableRatio: '1.99',
-        capitalCostI: '440',
-        replacementCostI: '440',
-        OMCostI: '3.4'
+        inverterEfficiency: '',
+        inverterLifetime: '',
+        maxAcceptableRatio: '',
+        capitalCostI: '',
+        replacementCostI: '',
+        OMCostI: ''
     }
 
     const [myData, setMyData] = useState(defaultComponentInfoInverter)
@@ -47,20 +46,33 @@ function ComponentInfoInverter() {
     }
 
     useEffect(() => {
-        getSystemConfig()
-    }, [])
+        const fetchDefaults = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/defaults')
+                if (!response.ok) throw new Error('Failed to fetch defaults')
+                const data = await response.json()
+                
+                // Set form data with backend defaults
+                setMyData({
+                    inverterEfficiency: data.inverter_efficiency?.toString() || '',
+                    inverterLifetime: data.inverter_lifetime?.toString() || '',
+                    maxAcceptableRatio: data.dc_ac_ratio?.toString() || '',
+                    capitalCostI: '1000', // Default cost
+                    replacementCostI: '1000', // Default cost
+                    OMCostI: '10' // Default cost
+                })
 
-    const getSystemConfig = async () => {
-        try {
-            const response = await fetch('http://127.0.0.1:5000/get/routing')
-            const data = await response.json()
-            setSelectedSystems(data["Energy Systems"])
-            console.log(data["Energy Systems"])
-            setIsConfigLoaded(true)
-        } catch (error) {
-            console.error('Error fetching system config:', error)
+                // Get system config
+                const configResponse = await fetch('http://127.0.0.1:5000/get/routing')
+                const configData = await configResponse.json()
+                setSelectedSystems(configData["Energy Systems"])
+                setIsConfigLoaded(true)
+            } catch (error) {
+                console.error('Error fetching defaults:', error)
+            }
         }
-    }
+        fetchDefaults()
+    }, [])
 
     const sendComponentInfo = async () => {
         const I_Data = {
