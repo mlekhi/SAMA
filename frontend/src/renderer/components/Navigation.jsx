@@ -77,47 +77,17 @@ const steps = [
     required: true
   },
   {
-    label: 'Grid Information',
-    path: '/grid',
-    icon: GridIcon,
-    required: true
-  },
-  {
     label: 'System Configuration',
     path: '/system',
     icon: SettingsIcon,
     required: true
   },
   {
-    label: 'PV System',
-    path: '/pv',
-    icon: SolarIcon,
-    required: false
-  },
-  {
-    label: 'Inverter',
-    path: '/inverter',
-    icon: ElectricIcon,
+    label: 'Grid Information',
+    path: '/grid',
+    icon: GridIcon,
     required: true
   },
-  {
-    label: 'Diesel Generator',
-    path: '/dg',
-    icon: PowerIcon,
-    required: false
-  },
-  {
-    label: 'Battery',
-    path: '/bat',
-    icon: BatteryIcon,
-    required: false
-  },
-  {
-    label: 'Wind Turbine',
-    path: '/wt',
-    icon: WindIcon,
-    required: false
-  }
 ];
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
