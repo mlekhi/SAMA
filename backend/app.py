@@ -54,113 +54,113 @@ def create_app(config_class=Config):
         return jsonify({'error': 'Internal Server Error', 'message': str(error)}), 500
 
     # Helper functions
-    def validate_coordinates(lat, lng):
-        if not isinstance(lat, (int, float)) or not isinstance(lng, (int, float)):
-            raise ValueError("Latitude and longitude must be numbers")
-        if not -90 <= lat <= 90:
-            raise ValueError("Latitude must be between -90 and 90")
-        if not -180 <= lng <= 180:
-            raise ValueError("Longitude must be between -180 and 180")
-        return True
+    # def validate_coordinates(lat, lng):
+    #     if not isinstance(lat, (int, float)) or not isinstance(lng, (int, float)):
+    #         raise ValueError("Latitude and longitude must be numbers")
+    #     if not -90 <= lat <= 90:
+    #         raise ValueError("Latitude must be between -90 and 90")
+    #     if not -180 <= lng <= 180:
+    #         raise ValueError("Longitude must be between -180 and 180")
+    #     return True
 
-    def fetch_nrel_data(lat, lng, api_key):
-        email = "dbharga@uwo.ca"
-        nsrdb_data_query_url = f'https://developer.nrel.gov/api/solar/nsrdb_data_query.json?api_key={api_key}&wkt=POINT({lat}+{lng})'
+    # def fetch_nrel_data(lat, lng, api_key):
+    #     email = "dbharga@uwo.ca"
+    #     nsrdb_data_query_url = f'https://developer.nrel.gov/api/solar/nsrdb_data_query.json?api_key={api_key}&wkt=POINT({lat}+{lng})'
         
-        try:
-            dq_response = requests.get(nsrdb_data_query_url, timeout=10)
-            dq_response.raise_for_status()
-            return dq_response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"NREL API request failed: {str(e)}")
-            raise
+    #     try:
+    #         dq_response = requests.get(nsrdb_data_query_url, timeout=10)
+    #         dq_response.raise_for_status()
+    #         return dq_response.json()
+    #     except requests.exceptions.RequestException as e:
+    #         logger.error(f"NREL API request failed: {str(e)}")
+    #         raise
 
-    def process_nrel_response(response_data):
-        valid_sources = [
-            "Physical Solar Model v3 TMY",
-            "Meteosat Prime Meridian V1.0.0 TMY",
-            "Himawari TMY",
-            "NSRDB MSG V1.0.0 TMY"
-        ]
+    # def process_nrel_response(response_data):
+    #     valid_sources = [
+    #         "Physical Solar Model v3 TMY",
+    #         "Meteosat Prime Meridian V1.0.0 TMY",
+    #         "Himawari TMY",
+    #         "NSRDB MSG V1.0.0 TMY"
+    #     ]
         
-        for item in response_data.get("outputs", []):
-            if isinstance(item, dict) and item.get("displayName") in valid_sources:
-                links = item.get("links", [])
-                if links:
-                    return links[0].get("link"), item
-        return None, {"Error": "No data found for your region"}
+    #     for item in response_data.get("outputs", []):
+    #         if isinstance(item, dict) and item.get("displayName") in valid_sources:
+    #             links = item.get("links", [])
+    #             if links:
+    #                 return links[0].get("link"), item
+    #     return None, {"Error": "No data found for your region"}
 
-    def save_meteo_data(data, file_path):
-        try:
-            with open(file_path, mode="w", newline="") as f:
-                f.write(data)
-            return True
-        except IOError as e:
-            logger.error(f"Failed to save METEO data: {str(e)}")
-            raise
+    # def save_meteo_data(data, file_path):
+    #     try:
+    #         with open(file_path, mode="w", newline="") as f:
+    #             f.write(data)
+    #         return True
+    #     except IOError as e:
+    #         logger.error(f"Failed to save METEO data: {str(e)}")
+    #         raise
 
-    def convert_numpy(obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-            np.int16, np.int32, np.int64, np.uint8,
-            np.uint16, np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
-            return float(obj)
-        elif isinstance(obj, dict):
-            return {key: convert_numpy(value) for key, value in obj.items()}
-        elif isinstance(obj, list):
-            return [convert_numpy(item) for item in obj]
-        return obj
+    # def convert_numpy(obj):
+    #     if isinstance(obj, np.ndarray):
+    #         return obj.tolist()
+    #     elif isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+    #         np.int16, np.int32, np.int64, np.uint8,
+    #         np.uint16, np.uint32, np.uint64)):
+    #         return int(obj)
+    #     elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+    #         return float(obj)
+    #     elif isinstance(obj, dict):
+    #         return {key: convert_numpy(value) for key, value in obj.items()}
+    #     elif isinstance(obj, list):
+    #         return [convert_numpy(item) for item in obj]
+    #     return obj
 
-    @app.route("/api/map", methods=["GET"])
-    def mapAPIFetch():
-        try:
-            # Validate coordinates
-            lat = request.args.get("lat", type=float)
-            lng = request.args.get("long", type=float)
+    # @app.route("/api/map", methods=["GET"])
+    # def mapAPIFetch():
+    #     try:
+    #         # Validate coordinates
+    #         lat = request.args.get("lat", type=float)
+    #         lng = request.args.get("long", type=float)
             
-            if not lat or not lng:
-                return jsonify({"error": "Missing required parameters: lat and long"}), 400
+    #         if not lat or not lng:
+    #             return jsonify({"error": "Missing required parameters: lat and long"}), 400
             
-            validate_coordinates(lat, lng)
+    #         validate_coordinates(lat, lng)
             
-            # Fetch data from NREL
-            api_key = app.config['NREL_API_KEY']
-            response_data = fetch_nrel_data(lat, lng, api_key)
+    #         # Fetch data from NREL
+    #         api_key = app.config['NREL_API_KEY']
+    #         response_data = fetch_nrel_data(lat, lng, api_key)
             
-            # Process response
-            found_link, selected_item = process_nrel_response(response_data)
+    #         # Process response
+    #         found_link, selected_item = process_nrel_response(response_data)
             
-            if not found_link:
-                return jsonify(selected_item), 404
+    #         if not found_link:
+    #             return jsonify(selected_item), 404
             
-            # Download and save data
-            found_link = found_link.replace('yourapikey', api_key).replace('youremail', "dbharga@uwo.ca")
-            downloaded = requests.get(found_link, timeout=30)
-            downloaded.raise_for_status()
+    #         # Download and save data
+    #         found_link = found_link.replace('yourapikey', api_key).replace('youremail', "dbharga@uwo.ca")
+    #         downloaded = requests.get(found_link, timeout=30)
+    #         downloaded.raise_for_status()
             
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], "METEO.csv")
-            save_meteo_data(downloaded.text, file_path)
+    #         file_path = os.path.join(app.config['UPLOAD_FOLDER'], "METEO.csv")
+    #         save_meteo_data(downloaded.text, file_path)
             
-            return Response(downloaded, mimetype="text/csv")
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 400
-        except requests.exceptions.RequestException as e:
-            return jsonify({"error": "Failed to fetch data from NREL", "details": str(e)}), 500
-        except Exception as e:
-            logger.error(f"Error in mapAPIFetch: {str(e)}")
-            return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    #         return Response(downloaded, mimetype="text/csv")
+    #     except ValueError as e:
+    #         return jsonify({"error": str(e)}), 400
+    #     except requests.exceptions.RequestException as e:
+    #         return jsonify({"error": "Failed to fetch data from NREL", "details": str(e)}), 500
+    #     except Exception as e:
+    #         logger.error(f"Error in mapAPIFetch: {str(e)}")
+    #         return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
-    @app.route("/api/sessions/<string:session_id>", methods=["GET"])
-    def get_session(session_id):
-        try:
-            session_data = SessionData.query.get_or_404(session_id)
-            return jsonify(session_data.to_dict())
-        except Exception as e:
-            logger.error(f"Error fetching session {session_id}: {str(e)}")
-            return jsonify({"error": "Failed to fetch session"}), 500
+    # @app.route("/api/sessions/<string:session_id>", methods=["GET"])
+    # def get_session(session_id):
+    #     try:
+    #         session_data = SessionData.query.get_or_404(session_id)
+    #         return jsonify(session_data.to_dict())
+    #     except Exception as e:
+    #         logger.error(f"Error in mapAPIFetch: {str(e)}")
+    #         return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
     @app.route('/api/get', methods=['GET'])
     def get_components():
@@ -169,23 +169,24 @@ def create_app(config_class=Config):
             
             # Get session_id from query parameters
             session_id = request.args.get("session_id")
+            
+            # If no session_id provided, create a new session
             if not session_id:
-                session_id = "system_defaults"  # Fallback to defaults if no session_id provided
-            
-            print(f"[get_components] --- Using session_id: {session_id} ---")
-            
-            # Check if session exists first
-            session_data = SessionData.query.get(session_id)
-            if not session_data:
-                # Initialize session using the dedicated endpoint only if it doesn't exist
-                with app.test_client() as client:
-                    init_response = client.post('/api/session/initialize', json={'session_id': session_id})
-                    if init_response.status_code != 200:
-                        raise Exception(f"Failed to initialize session: {init_response.get_json()}")
-                    print(f"[get_components] --- Initialized new session {session_id} ---")
-                # Get the newly created session
-                session_data = SessionData.query.get(session_id)
+                # Create new session directly instead of calling initialize endpoint
+                session_id = str(uuid.uuid4())
+                session_data = SessionData(
+                    session_id=session_id,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                db.session.add(session_data)
+                db.session.commit()
+                print(f"[get_components] --- Created new session {session_id} ---")
             else:
+                # Get existing session
+                session_data = SessionData.query.get(session_id)
+                if not session_data:
+                    raise Exception(f"Session {session_id} not found")
                 print(f"[get_components] --- Using existing session {session_id} ---")
             
             # Get or create records for the session
@@ -462,8 +463,8 @@ def create_app(config_class=Config):
             data = request.get_json() or {}
             print(f"Parsed JSON Data: {data}")
             
-            # Create a new session with a unique ID
-            session_id = data.get("session_id") or str(uuid.uuid4())
+            # Always generate a new UUID for the session
+            session_id = str(uuid.uuid4())
             print(f"Generated Session ID: {session_id}")
             
             # Create session with current timestamp
