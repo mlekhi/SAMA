@@ -4,7 +4,7 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class WindTurbine(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
     # Technical Parameters
     h_hub = db.Column(db.Float, default=17.0)  # Hub height (m)
@@ -13,8 +13,8 @@ class WindTurbine(db.Model):
     v_cut_out = db.Column(db.Float, default=25.0)  # Cut out speed (m/s)
     v_cut_in = db.Column(db.Float, default=2.5)  # Cut in speed (m/s)
     v_rated = db.Column(db.Float, default=9.5)  # Rated speed (m/s)
-    alfa_wind_turbine = db.Column(db.Float, default=20.0)  # Coefficient of friction
-    L_WT = db.Column(db.Float)  # Life time (Years)
+    alfa_wind_turbine = db.Column(db.Float, default=0.14)  # Coefficient of friction
+    L_WT = db.Column(db.Float, default=20.0)  # Life time (Years)
     
     # Economic Parameters
     C_WT = db.Column(db.Float, default=1200.0)  # Capital cost of Wind Turbine ($/kW)
@@ -22,45 +22,60 @@ class WindTurbine(db.Model):
     MO_WT = db.Column(db.Float, default=40.0)  # O&M cost of Wind Turbine ($/year/kw)
 
 class ChargeController(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
-    C_CH = db.Column(db.Float, default=200.0)  # Capital cost of charge controller ($)
-    R_CH = db.Column(db.Float, default=200.0)  # Replacement cost of charge controller ($)
+    C_CH = db.Column(db.Float, default=0.0)  # Capital cost of charge controller ($)
+    R_CH = db.Column(db.Float, default=0.0)  # Replacement cost of charge controller ($)
     MO_CH = db.Column(db.Float, default=0.0)  # O&M cost of charge controller ($/year)
 
 class GridSelling(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
     sellStructure = db.Column(db.Integer, default=3)  # Selling structure type (1=Flat, 2=Monthly, 3=1:1)
     flat_compensation = db.Column(db.Float, default=0.049)  # Flat compensation rate ($/kWh)
-    monthly_sell_prices = db.Column(db.JSON)  # Monthly compensation rates array
+    monthly_sell_prices = db.Column(db.JSON, default=lambda: [0.0638, 0.14538, 0.09079, 0.07914, 0.06469, 0.05336, 0.04612, 0.04411, 0.04737, 0.04591, 0.04512, 0.04415])  # Monthly compensation rates array
     one_to_one_compensation = db.Column(db.Boolean, default=True)  # Whether 1:1 compensation is used
 
 class GeographyEconomy(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
-    # Economic Parameters
+    # Geographic coordinates (from map selection or manual input)
+    latitude = db.Column(db.Float, nullable=True)  # From map selection in frontend
+    longitude = db.Column(db.Float, nullable=True)  # From map selection in frontend
+    
+    # Economic parameters (from user input in Geography & Economy page)
     n_ir_rate = db.Column(db.Float, default=5.5)  # Nominal discount rate (%)
     e_ir_rate = db.Column(db.Float, default=2.0)  # Expected inflation rate (%)
-    Tax_rate = db.Column(db.Float, default=0.0)  # Equipment sale tax percentage (%)
-    RE_incentives_rate = db.Column(db.Float, default=0.0)  # Investment tax credit percentage (%)
+    Tax_rate = db.Column(db.Float, default=0.0)   # Equipment sales tax rate (%)
+    RE_incentives_rate = db.Column(db.Float, default=30.0)  # Renewable energy incentives rate (%)
 
 class SystemConfiguration(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), db.ForeignKey('session_data.session_id'), primary_key=True)
     
+    # System Parameters
+    lifetime = db.Column(db.Float, default=25.0)  # Project lifetime in years
     LPSP_max_rate = db.Column(db.Float, default=0.0999999)  # Maximum loss of power supply probability (%)
     RE_min_rate = db.Column(db.Float, default=75.0)  # Minimum Renewable Energy Capacity percentage (%)
+    annualData = db.Column(db.Integer, default=9)  # Default load type
     
     # System Components
-    PV = db.Column(db.Boolean, default=False)  # PV system selected
+    PV = db.Column(db.Boolean, default=True)  # PV system selected
     WT = db.Column(db.Boolean, default=False)  # Wind Turbine selected
     DG = db.Column(db.Boolean, default=False)  # Diesel Generator selected
     Bat = db.Column(db.Boolean, default=False)  # Battery selected
     Lead_acid = db.Column(db.Boolean, default=False)  # Lead Acid battery type
-    Li_ion = db.Column(db.Boolean, default=False)  # Li-ion battery type
+    Li_ion = db.Column(db.Boolean, default=True)  # Li-ion battery type
 
 class PhotovoltaicSystem(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), db.ForeignKey('session_data.session_id'), primary_key=True)
+    
+    # System Configuration Parameters
+    system_capacity = db.Column(db.Float, nullable=True)  # Total system capacity in kW
+    azimuth = db.Column(db.Float, nullable=True)         # Array azimuth angle in degrees
+    tilt = db.Column(db.Float, nullable=True)           # Array tilt angle in degrees
+    array_type = db.Column(db.Integer, nullable=True)   # Array type (0=fixed, 1=tracking)
+    module_type = db.Column(db.Integer, nullable=True)  # Module type (0=standard, 1=premium)
+    losses = db.Column(db.Float, nullable=True)         # System losses in %
     
     # Technical Parameters
     fpv = db.Column(db.Float, default=0.9)  # PV derating factor (%)
@@ -72,6 +87,7 @@ class PhotovoltaicSystem(db.Model):
     n_PV = db.Column(db.Float, default=0.2182)  # Efficiency of PV module (%/100)
     Gref = db.Column(db.Float, default=1000.0)  # Reference irradiance (W/m2)
     L_PV = db.Column(db.Float, default=25.0)  # PV modules' life time (years)
+    gama = db.Column(db.Float, default=0.9)  # Temperature coefficient parameter
     
     # Economic Parameters
     C_PV = db.Column(db.Float, default=534.54)  # Capital cost ($/kW)
@@ -103,11 +119,12 @@ class Inverter(db.Model):
     MO_I = db.Column(db.Float, default=3.4)  # O&M cost ($/kW/year)
 
 class DieselGenerator(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), db.ForeignKey('session_data.session_id'), primary_key=True)
     
     # Diesel Generator fuel curve
-    a = db.Column(db.Float, default=0.273)  # Slope (Liter/hr/kW output)
-    b = db.Column(db.Float, default=0.033)  # Intercept coefficient (Liter/hr/kW rate)
+    a = db.Column(db.Float, default=0.2730)  # Slope (Liter/hr/kW output)
+    b = db.Column(db.Float, default=0.0330)  # Intercept coefficient (Liter/hr/kW rate)
+    min_load_ratio = db.Column(db.Float, default=0.25)  # Minimum load ratio
     
     # Economic Parameters
     C_DG = db.Column(db.Float, default=240.45)  # Capital cost ($/kW)
@@ -115,9 +132,10 @@ class DieselGenerator(db.Model):
     MO_DG = db.Column(db.Float, default=0.066)  # O&M cost / Running cost ($/op.h)
     C_fuel = db.Column(db.Float, default=1.428)  # Fuel Cost ($/L)
     C_fuel_adj_rate = db.Column(db.Float, default=2.0)  # DG fuel cost yearly escalation rate (%)
+    diesel_lifetime = db.Column(db.Float, default=24000.0)  # Diesel generator lifetime in hours
 
 class Battery(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
     # Technical Parameters
     SOC_min = db.Column(db.Float, default=0.1)  # Minimum state of charge (SoC) (%/100)
@@ -142,27 +160,27 @@ class Battery(db.Model):
     alfa_battery_Li_ion = db.Column(db.Float, default=1.0)  # Storage's maximum charge rate (A/Ah)
 
 class Grid(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True) 
     
     # Grid Connection Parameters
-    Grid = db.Column(db.Boolean, default=False)  # Is grid connected
-    NEM = db.Column(db.Boolean, default=False)  # Is net metered
+    Grid = db.Column(db.Boolean, default=True)  # Is grid connected
+    NEM = db.Column(db.Boolean, default=True)  # Is net metered
     
     # Economic Parameters
     Annual_expenses = db.Column(db.Float, default=0.0)  # Annual expenses for Grid interconnection ($)
-    Grid_sale_tax_rate = db.Column(db.Float, default=0.0)  # Sale tax percentage of grid electricity (%)
-    Grid_Tax_amount = db.Column(db.Float, default=0.0)  # Grid adjustments in kWh (kWh)
-    Grid_escalation_rate = db.Column(db.Float, default=2.0)  # Yearly escalation rate in grid electricity price (%)
-    Grid_credit = db.Column(db.Float, default=0.0)  # Annual Credits offered by utility grid to user ($)
+    Grid_sale_tax_rate = db.Column(db.Float, default=6.88)  # Sale tax percentage of grid electricity (%)
+    Grid_Tax_amount = db.Column(db.Float, default=0.0016)  # Grid adjustments in kWh (kWh)
+    Grid_escalation_rate = db.Column(db.Float, default=5.7)  # Yearly escalation rate in grid electricity price (%)
+    Grid_credit = db.Column(db.Float, default=121.4)  # Annual Credits offered by utility grid to user ($)
     NEM_fee = db.Column(db.Float, default=0.0)  # Net metering one time setup fee ($)
-    SC_flat = db.Column(db.Float, default=10.0)  # Grid monthly fixed charge ($/kWh)
+    SC_flat = db.Column(db.Float, default=0.0)  # Grid monthly fixed charge ($/kWh)
     
     # Technical Parameters
     Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)
     Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW)
 
 class Optimization(db.Model):
-    session_id = db.Column(db.String(100), primary_key=True)  # Direct session ID as primary key
+    session_id = db.Column(db.String(100), primary_key=True)
     
     MaxIt = db.Column(db.Integer, default=200)  # Maximum Number of Iterations
     nPop = db.Column(db.Integer, default=50)  # Population Size (Swarm Size)
@@ -177,21 +195,11 @@ class SessionData(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Input parameters
-    latitude = db.Column(db.Float, nullable=True)
-    longitude = db.Column(db.Float, nullable=True)
-    system_capacity = db.Column(db.Float, nullable=True)
-    azimuth = db.Column(db.Float, nullable=True)
-    tilt = db.Column(db.Float, nullable=True)
-    array_type = db.Column(db.Integer, nullable=True)
-    module_type = db.Column(db.Integer, nullable=True)
-    losses = db.Column(db.Float, nullable=True)
-    
-    # Results
-    ac_monthly = db.Column(db.JSON, nullable=True)  # Monthly AC output
+    # Results (calculated by the system)
+    ac_monthly = db.Column(db.JSON, nullable=True)      # Monthly AC output
     solrad_monthly = db.Column(db.JSON, nullable=True)  # Monthly solar radiation
-    dc_monthly = db.Column(db.JSON, nullable=True)  # Monthly DC output
-    poa_monthly = db.Column(db.JSON, nullable=True)  # Monthly plane of array irradiance
+    dc_monthly = db.Column(db.JSON, nullable=True)      # Monthly DC output
+    poa_monthly = db.Column(db.JSON, nullable=True)     # Monthly plane of array irradiance
     
     def to_dict(self):
         """Convert session data to dictionary with component lookups"""
@@ -212,14 +220,6 @@ class SessionData(db.Model):
             'session_id': self.session_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'system_capacity': self.system_capacity,
-            'azimuth': self.azimuth,
-            'tilt': self.tilt,
-            'array_type': self.array_type,
-            'module_type': self.module_type,
-            'losses': self.losses,
             'results': {
                 'ac_monthly': self.ac_monthly,
                 'solrad_monthly': self.solrad_monthly,
@@ -251,14 +251,18 @@ class SessionData(db.Model):
                 'one_to_one_compensation': grid_selling.one_to_one_compensation
             },
             'geography_economy': geography_economy and {
+                'latitude': geography_economy.latitude,
+                'longitude': geography_economy.longitude,
                 'n_ir_rate': geography_economy.n_ir_rate,
                 'e_ir_rate': geography_economy.e_ir_rate,
                 'Tax_rate': geography_economy.Tax_rate,
                 'RE_incentives_rate': geography_economy.RE_incentives_rate
             },
             'system_config': system_config and {
+                'lifetime': system_config.lifetime,
                 'LPSP_max_rate': system_config.LPSP_max_rate,
                 'RE_min_rate': system_config.RE_min_rate,
+                'annualData': system_config.annualData,
                 'PV': system_config.PV,
                 'WT': system_config.WT,
                 'DG': system_config.DG,
@@ -267,6 +271,12 @@ class SessionData(db.Model):
                 'Li_ion': system_config.Li_ion
             },
             'pv_system': pv_system and {
+                'system_capacity': pv_system.system_capacity,
+                'azimuth': pv_system.azimuth,
+                'tilt': pv_system.tilt,
+                'array_type': pv_system.array_type,
+                'module_type': pv_system.module_type,
+                'losses': pv_system.losses,
                 'fpv': pv_system.fpv,
                 'Tcof': pv_system.Tcof,
                 'Tref': pv_system.Tref,
@@ -276,6 +286,7 @@ class SessionData(db.Model):
                 'n_PV': pv_system.n_PV,
                 'Gref': pv_system.Gref,
                 'L_PV': pv_system.L_PV,
+                'gama': pv_system.gama,
                 'C_PV': pv_system.C_PV,
                 'R_PV': pv_system.R_PV,
                 'MO_PV': pv_system.MO_PV,
@@ -300,11 +311,13 @@ class SessionData(db.Model):
             'diesel_generator': diesel_generator and {
                 'a': diesel_generator.a,
                 'b': diesel_generator.b,
+                'min_load_ratio': diesel_generator.min_load_ratio,
                 'C_DG': diesel_generator.C_DG,
                 'R_DG': diesel_generator.R_DG,
                 'MO_DG': diesel_generator.MO_DG,
                 'C_fuel': diesel_generator.C_fuel,
-                'C_fuel_adj_rate': diesel_generator.C_fuel_adj_rate
+                'C_fuel_adj_rate': diesel_generator.C_fuel_adj_rate,
+                'diesel_lifetime': diesel_generator.diesel_lifetime
             },
             'battery': battery and {
                 'SOC_min': battery.SOC_min,
@@ -346,3 +359,11 @@ class SessionData(db.Model):
                 'c2': optimization.c2
             }
         } 
+
+class GridBuying(db.Model):
+    session_id = db.Column(db.String(100), primary_key=True)
+    
+    buyStructure = db.Column(db.Integer, default=3)  # Buying structure type (1=Flat, 2=Monthly, 3=1:1)
+    flat_compensation = db.Column(db.Float, default=0.049)  # Flat compensation rate ($/kWh)
+    monthly_buy_prices = db.Column(db.JSON, default=lambda: [0.0638, 0.14538, 0.09079, 0.07914, 0.06469, 0.05336, 0.04612, 0.04411, 0.04737, 0.04591, 0.04512, 0.04415])  # Monthly compensation rates array
+    one_to_one_compensation = db.Column(db.Boolean, default=True)  # Whether 1:1 compensation is used 

@@ -174,6 +174,20 @@ def create_app(config_class=Config):
             
             print(f"[get_components] --- Using session_id: {session_id} ---")
             
+            # Check if session exists first
+            session_data = SessionData.query.get(session_id)
+            if not session_data:
+                # Initialize session using the dedicated endpoint only if it doesn't exist
+                with app.test_client() as client:
+                    init_response = client.post('/api/session/initialize', json={'session_id': session_id})
+                    if init_response.status_code != 200:
+                        raise Exception(f"Failed to initialize session: {init_response.get_json()}")
+                    print(f"[get_components] --- Initialized new session {session_id} ---")
+                # Get the newly created session
+                session_data = SessionData.query.get(session_id)
+            else:
+                print(f"[get_components] --- Using existing session {session_id} ---")
+            
             # Get or create records for the session
             geo_economy = GeographyEconomy.query.get(session_id)
             if not geo_economy:
@@ -229,112 +243,160 @@ def create_app(config_class=Config):
                 db.session.add(optimization)
                 db.session.commit()
             
-            # Group fields by section
-            result = {
-                'geo_economy': {
-                    'nomDiscRate': convert_numpy(geo_economy.n_ir_rate),
-                    'expInfRate': convert_numpy(geo_economy.e_ir_rate),
-                    'equipSalePercent': convert_numpy(geo_economy.Tax_rate),
-                    'invTaxCredit': convert_numpy(geo_economy.RE_incentives_rate),
-                },
-                'system_config': {
-                    'lifetime': 25,  # Default project lifetime
-                    'maxPL': convert_numpy(system_config.LPSP_max_rate),
-                    'minRenewEC': convert_numpy(system_config.RE_min_rate),
-                    'annualData': 9,  # Default load type
-                    'PV': convert_numpy(system_config.PV),
-                    'WT': convert_numpy(system_config.WT),
-                    'DG': convert_numpy(system_config.DG),
-                    'Bat': convert_numpy(system_config.Bat),
-                    'Lead_acid': convert_numpy(system_config.Lead_acid),
-                    'Li_ion': convert_numpy(system_config.Li_ion),
-                },
-                'battery': {
-                    'SOC_min': convert_numpy(battery.SOC_min),
-                    'SOC_max': convert_numpy(battery.SOC_max),
-                    'SOC_initial': convert_numpy(battery.SOC_initial),
-                    'self_discharge_rate': convert_numpy(battery.self_discharge_rate),
-                    'battery_lifetime': convert_numpy(battery.L_B),
-                    'Cnom_Leadacid': convert_numpy(battery.Cnom_Leadacid),
-                    'alfa_battery_leadacid': convert_numpy(battery.alfa_battery_leadacid),
-                    'c': convert_numpy(battery.c),
-                    'k': convert_numpy(battery.k),
-                    'Ich_max_leadacid': convert_numpy(battery.Ich_max_leadacid),
-                    'Vnom_leadacid': convert_numpy(battery.Vnom_leadacid),
-                    'ef_bat_leadacid': convert_numpy(battery.ef_bat_leadacid),
-                    'Q_lifetime_leadacid': convert_numpy(battery.Q_lifetime_leadacid),
-                    'Ich_max_Li_ion': convert_numpy(battery.Ich_max_Li_ion),
-                    'Idch_max_Li_ion': convert_numpy(battery.Idch_max_Li_ion),
-                    'alfa_battery_Li_ion': convert_numpy(battery.alfa_battery_Li_ion),
-                },
-                'pv': {
-                    'pv_derating': convert_numpy(pv.fpv),
-                    'temp_coef': convert_numpy(pv.Tcof),
-                    'temp_ref': convert_numpy(pv.Tref),
-                    'temp_noct': convert_numpy(pv.Tc_noct),
-                    'pv_efficiency': convert_numpy(pv.n_PV),
-                    'pv_lifetime': convert_numpy(pv.L_PV),
-                    'Ta_noct': convert_numpy(pv.Ta_noct),
-                    'G_noct': convert_numpy(pv.G_noct),
-                    'gama': 0.0,  # Default value
-                    'Gref': convert_numpy(pv.Gref),
-                    'C_PV': convert_numpy(pv.C_PV),
-                    'R_PV': convert_numpy(pv.R_PV),
-                    'MO_PV': convert_numpy(pv.MO_PV),
-                },
-                'inverter': {
-                    'inverter_efficiency': convert_numpy(inverter.n_I),
-                    'inverter_lifetime': convert_numpy(inverter.L_I),
-                    'dc_ac_ratio': convert_numpy(inverter.DC_AC_ratio),
-                    'C_I': convert_numpy(inverter.C_I),
-                    'R_I': convert_numpy(inverter.R_I),
-                    'MO_I': convert_numpy(inverter.MO_I),
-                },
-                'wind': {
-                    'hub_height': convert_numpy(wind.h_hub),
-                    'anemometer_height': convert_numpy(wind.h0),
-                    'wind_efficiency': convert_numpy(wind.nw),
-                    'cut_out_speed': convert_numpy(wind.v_cut_out),
-                    'cut_in_speed': convert_numpy(wind.v_cut_in),
-                    'rated_speed': convert_numpy(wind.v_rated),
-                    'wind_lifetime': convert_numpy(wind.L_WT),
-                    'alfa_wind_turbine': convert_numpy(wind.alfa_wind_turbine),
-                    'C_WT': convert_numpy(wind.C_WT),
-                    'R_WT': convert_numpy(wind.R_WT),
-                    'MO_WT': convert_numpy(wind.MO_WT),
-                },
-                'diesel': {
-                    'min_load_ratio': 0.0,  # Default value
-                    'fuel_curve_a': convert_numpy(diesel.a),
-                    'fuel_curve_b': convert_numpy(diesel.b),
-                    'diesel_lifetime': 25.0,  # Default value
-                    'C_DG': convert_numpy(diesel.C_DG),
-                    'R_DG': convert_numpy(diesel.R_DG),
-                    'MO_DG': convert_numpy(diesel.MO_DG),
-                    'C_fuel': convert_numpy(diesel.C_fuel),
-                    'C_fuel_adj_rate': convert_numpy(diesel.C_fuel_adj_rate),
-                },
-                'grid': {
-                    'grid_sale_tax': convert_numpy(grid.Grid_sale_tax_rate),
-                    'grid_tax_amount': convert_numpy(grid.Grid_Tax_amount),
-                    'grid_credit': convert_numpy(grid.Grid_credit),
-                    'nem_fee': convert_numpy(grid.NEM_fee),
-                    'Annual_expenses': convert_numpy(grid.Annual_expenses),
-                    'Grid_escalation_rate': convert_numpy(grid.Grid_escalation_rate),
-                    'SC_flat': convert_numpy(grid.SC_flat),
-                    'Pbuy_max': convert_numpy(grid.Pbuy_max),
-                    'Psell_max': convert_numpy(grid.Psell_max),
-                },
-                'optimization': {
-                    'max_iterations': convert_numpy(optimization.MaxIt),
-                    'population_size': convert_numpy(optimization.nPop),
-                    'inertia_weight': convert_numpy(optimization.w),
-                    'inertia_weight_damping': convert_numpy(optimization.wdamp),
-                    'personal_learning_coeff': convert_numpy(optimization.c1),
-                    'global_learning_coeff': convert_numpy(optimization.c2),
-                    'run_time': 0  # Default value
-                }
-            }
+            # Use the to_dict method from SessionData which already includes all components
+            result = session_data.to_dict()
+            
+            # Print the full contents of to_dict
+            print("\n=== Full to_dict() Output ===")
+            print("Session Data:")
+            print(f"  session_id: {result['session_id']}")
+            print(f"  created_at: {result['created_at']}")
+            print(f"  updated_at: {result['updated_at']}")
+            
+            print("\nResults:")
+            print(f"  ac_monthly: {result['results']['ac_monthly']}")
+            print(f"  solrad_monthly: {result['results']['solrad_monthly']}")
+            print(f"  dc_monthly: {result['results']['dc_monthly']}")
+            print(f"  poa_monthly: {result['results']['poa_monthly']}")
+            
+            print("\nGeography & Economy:")
+            if result['geography_economy']:
+                print(f"  latitude: {result['geography_economy']['latitude']}")
+                print(f"  longitude: {result['geography_economy']['longitude']}")
+                print(f"  n_ir_rate: {result['geography_economy']['n_ir_rate']}")
+                print(f"  e_ir_rate: {result['geography_economy']['e_ir_rate']}")
+                print(f"  Tax_rate: {result['geography_economy']['Tax_rate']}")
+                print(f"  RE_incentives_rate: {result['geography_economy']['RE_incentives_rate']}")
+            
+            print("\nSystem Configuration:")
+            if result['system_config']:
+                print(f"  lifetime: {result['system_config']['lifetime']}")
+                print(f"  LPSP_max_rate: {result['system_config']['LPSP_max_rate']}")
+                print(f"  RE_min_rate: {result['system_config']['RE_min_rate']}")
+                print(f"  annualData: {result['system_config']['annualData']}")
+                print(f"  PV: {result['system_config']['PV']}")
+                print(f"  WT: {result['system_config']['WT']}")
+                print(f"  DG: {result['system_config']['DG']}")
+                print(f"  Bat: {result['system_config']['Bat']}")
+                print(f"  Lead_acid: {result['system_config']['Lead_acid']}")
+                print(f"  Li_ion: {result['system_config']['Li_ion']}")
+            
+            print("\nPV System:")
+            if result['pv_system']:
+                print("  System Configuration:")
+                print(f"    system_capacity: {result['pv_system']['system_capacity']}")
+                print(f"    azimuth: {result['pv_system']['azimuth']}")
+                print(f"    tilt: {result['pv_system']['tilt']}")
+                print(f"    array_type: {result['pv_system']['array_type']}")
+                print(f"    module_type: {result['pv_system']['module_type']}")
+                print(f"    losses: {result['pv_system']['losses']}")
+                
+                print("  Technical Parameters:")
+                print(f"    fpv: {result['pv_system']['fpv']}")
+                print(f"    Tcof: {result['pv_system']['Tcof']}")
+                print(f"    Tref: {result['pv_system']['Tref']}")
+                print(f"    Tc_noct: {result['pv_system']['Tc_noct']}")
+                print(f"    Ta_noct: {result['pv_system']['Ta_noct']}")
+                print(f"    G_noct: {result['pv_system']['G_noct']}")
+                print(f"    n_PV: {result['pv_system']['n_PV']}")
+                print(f"    Gref: {result['pv_system']['Gref']}")
+                print(f"    L_PV: {result['pv_system']['L_PV']}")
+                print(f"    gama: {result['pv_system']['gama']}")
+                
+                print("  Economic Parameters:")
+                print(f"    C_PV: {result['pv_system']['C_PV']}")
+                print(f"    R_PV: {result['pv_system']['R_PV']}")
+                print(f"    MO_PV: {result['pv_system']['MO_PV']}")
+                
+                print("  Engineering Costs:")
+                print(f"    Installation_cost: {result['pv_system']['Installation_cost']}")
+                print(f"    Overhead: {result['pv_system']['Overhead']}")
+                print(f"    Sales_and_marketing: {result['pv_system']['Sales_and_marketing']}")
+                print(f"    Permiting_and_Inspection: {result['pv_system']['Permiting_and_Inspection']}")
+                print(f"    Electrical_BoS: {result['pv_system']['Electrical_BoS']}")
+                print(f"    Structural_BoS: {result['pv_system']['Structural_BoS']}")
+                print(f"    Supply_Chain_costs: {result['pv_system']['Supply_Chain_costs']}")
+                print(f"    Profit_costs: {result['pv_system']['Profit_costs']}")
+                print(f"    Sales_tax: {result['pv_system']['Sales_tax']}")
+            
+            print("\nBattery:")
+            if result['battery']:
+                print(f"  SOC_min: {result['battery']['SOC_min']}")
+                print(f"  SOC_max: {result['battery']['SOC_max']}")
+                print(f"  SOC_initial: {result['battery']['SOC_initial']}")
+                print(f"  self_discharge_rate: {result['battery']['self_discharge_rate']}")
+                print(f"  L_B: {result['battery']['L_B']}")
+                print(f"  Cnom_Leadacid: {result['battery']['Cnom_Leadacid']}")
+                print(f"  alfa_battery_leadacid: {result['battery']['alfa_battery_leadacid']}")
+                print(f"  c: {result['battery']['c']}")
+                print(f"  k: {result['battery']['k']}")
+                print(f"  Ich_max_leadacid: {result['battery']['Ich_max_leadacid']}")
+                print(f"  Vnom_leadacid: {result['battery']['Vnom_leadacid']}")
+                print(f"  ef_bat_leadacid: {result['battery']['ef_bat_leadacid']}")
+                print(f"  Q_lifetime_leadacid: {result['battery']['Q_lifetime_leadacid']}")
+                print(f"  Ich_max_Li_ion: {result['battery']['Ich_max_Li_ion']}")
+                print(f"  Idch_max_Li_ion: {result['battery']['Idch_max_Li_ion']}")
+                print(f"  alfa_battery_Li_ion: {result['battery']['alfa_battery_Li_ion']}")
+            
+            print("\nInverter:")
+            if result['inverter']:
+                print(f"  n_I: {result['inverter']['n_I']}")
+                print(f"  L_I: {result['inverter']['L_I']}")
+                print(f"  DC_AC_ratio: {result['inverter']['DC_AC_ratio']}")
+                print(f"  C_I: {result['inverter']['C_I']}")
+                print(f"  R_I: {result['inverter']['R_I']}")
+                print(f"  MO_I: {result['inverter']['MO_I']}")
+            
+            print("\nWind Turbine:")
+            if result['wind_turbine']:
+                print(f"  h_hub: {result['wind_turbine']['h_hub']}")
+                print(f"  h0: {result['wind_turbine']['h0']}")
+                print(f"  nw: {result['wind_turbine']['nw']}")
+                print(f"  v_cut_out: {result['wind_turbine']['v_cut_out']}")
+                print(f"  v_cut_in: {result['wind_turbine']['v_cut_in']}")
+                print(f"  v_rated: {result['wind_turbine']['v_rated']}")
+                print(f"  L_WT: {result['wind_turbine']['L_WT']}")
+                print(f"  alfa_wind_turbine: {result['wind_turbine']['alfa_wind_turbine']}")
+                print(f"  C_WT: {result['wind_turbine']['C_WT']}")
+                print(f"  R_WT: {result['wind_turbine']['R_WT']}")
+                print(f"  MO_WT: {result['wind_turbine']['MO_WT']}")
+            
+            print("\nDiesel Generator:")
+            if result['diesel_generator']:
+                print(f"  a: {result['diesel_generator']['a']}")
+                print(f"  b: {result['diesel_generator']['b']}")
+                print(f"  min_load_ratio: {result['diesel_generator']['min_load_ratio']}")
+                print(f"  diesel_lifetime: {result['diesel_generator']['diesel_lifetime']}")
+                print(f"  C_DG: {result['diesel_generator']['C_DG']}")
+                print(f"  R_DG: {result['diesel_generator']['R_DG']}")
+                print(f"  MO_DG: {result['diesel_generator']['MO_DG']}")
+                print(f"  C_fuel: {result['diesel_generator']['C_fuel']}")
+                print(f"  C_fuel_adj_rate: {result['diesel_generator']['C_fuel_adj_rate']}")
+            
+            print("\nGrid:")
+            if result['grid']:
+                print(f"  Grid: {result['grid']['Grid']}")
+                print(f"  NEM: {result['grid']['NEM']}")
+                print(f"  Annual_expenses: {result['grid']['Annual_expenses']}")
+                print(f"  Grid_sale_tax_rate: {result['grid']['Grid_sale_tax_rate']}")
+                print(f"  Grid_Tax_amount: {result['grid']['Grid_Tax_amount']}")
+                print(f"  Grid_escalation_rate: {result['grid']['Grid_escalation_rate']}")
+                print(f"  Grid_credit: {result['grid']['Grid_credit']}")
+                print(f"  NEM_fee: {result['grid']['NEM_fee']}")
+                print(f"  SC_flat: {result['grid']['SC_flat']}")
+                print(f"  Pbuy_max: {result['grid']['Pbuy_max']}")
+                print(f"  Psell_max: {result['grid']['Psell_max']}")
+            
+            print("\nOptimization:")
+            if result['optimization']:
+                print(f"  MaxIt: {result['optimization']['MaxIt']}")
+                print(f"  nPop: {result['optimization']['nPop']}")
+                print(f"  w: {result['optimization']['w']}")
+                print(f"  wdamp: {result['optimization']['wdamp']}")
+                print(f"  c1: {result['optimization']['c1']}")
+                print(f"  c2: {result['optimization']['c2']}")
+            
+            print("\n=== End of to_dict() Output ===\n")
             
             print("[get_components] --- Successfully created result dictionary ---")
             return jsonify(result)
@@ -563,6 +625,7 @@ def create_app(config_class=Config):
             inverter = Inverter.query.filter_by(session_id=session_id).first()
             grid = Grid.query.filter_by(session_id=session_id).first()
             optimization = Optimization.query.filter_by(session_id=session_id).first()
+            charge_controller = ChargeController.query.filter_by(session_id=session_id).first()
             
             print(f"[get_results] --- Retrieved database models for session {session_id} ---")
             
@@ -605,6 +668,16 @@ def create_app(config_class=Config):
             if system_config.PV:
                 if not pv_system:
                     raise ValueError("PV system is enabled but no PV data provided")
+                
+                # Map System Configuration Parameters
+                InData.system_capacity = pv_system.system_capacity
+                InData.azimuth = pv_system.azimuth
+                InData.tilt = pv_system.tilt
+                InData.array_type = pv_system.array_type
+                InData.module_type = pv_system.module_type
+                InData.losses = pv_system.losses
+                
+                # Map Technical Parameters
                 InData.fpv = pv_system.fpv
                 InData.Tcof = pv_system.Tcof
                 InData.Tref = pv_system.Tref
@@ -614,9 +687,25 @@ def create_app(config_class=Config):
                 InData.n_PV = pv_system.n_PV
                 InData.Gref = pv_system.Gref
                 InData.L_PV = pv_system.L_PV
+                InData.gama = pv_system.gama
+                
+                # Map Economic Parameters
                 InData.C_PV = pv_system.C_PV
                 InData.R_PV = pv_system.R_PV
                 InData.MO_PV = pv_system.MO_PV
+                
+                # Calculate total engineering costs for PV
+                InData.Engineering_Costs = (
+                    pv_system.Installation_cost +
+                    pv_system.Overhead +
+                    pv_system.Sales_and_marketing +
+                    pv_system.Permiting_and_Inspection +
+                    pv_system.Electrical_BoS +
+                    pv_system.Structural_BoS +
+                    pv_system.Supply_Chain_costs +
+                    pv_system.Profit_costs +
+                    pv_system.Sales_tax
+                )
                 print(f"[get_results] --- Mapped PV parameters ---")
             
             # Map Wind Turbine parameters if enabled
@@ -703,6 +792,13 @@ def create_app(config_class=Config):
                 InData.Psell_max = grid.Psell_max
                 print(f"[get_results] --- Mapped grid parameters ---")
             
+            # Map Charge Controller parameters if battery is enabled
+            if system_config.Bat and charge_controller:
+                InData.C_CH = charge_controller.C_CH
+                InData.R_CH = charge_controller.R_CH
+                InData.MO_CH = charge_controller.MO_CH
+                print(f"[get_results] --- Mapped charge controller parameters ---")
+            
             # Map Optimization parameters
             InData.MaxIt = optimization.MaxIt
             InData.nPop = optimization.nPop
@@ -717,13 +813,13 @@ def create_app(config_class=Config):
             
             # Set component sizes based on system configuration
             if system_config.PV:
-                X[0] = 10.0  # Example: 10 kW of PV
+                X[0] = 10.0  # Default PV capacity in kW
             if system_config.WT:
-                X[1] = 5.0   # Example: 5 kW of Wind Turbine
+                X[1] = 5.0   # Default Wind Turbine capacity in kW
             if system_config.Bat:
-                X[2] = 10.0  # Example: 10 kWh of Battery capacity
+                X[2] = 10.0  # Default Battery capacity in kWh
             if system_config.DG:
-                X[3] = 5.0   # Example: 5 kW of Diesel Generator
+                X[3] = 5.0   # Default Diesel Generator capacity in kW
             
             # Set inverter capacity based on generation capacity
             if system_config.PV or system_config.WT or system_config.Bat:
