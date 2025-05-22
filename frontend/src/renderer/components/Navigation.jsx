@@ -57,31 +57,71 @@ import Faq from '@pages/Faq';
 
 const DRAWER_WIDTH = 280;
 
+// All steps in order
 const steps = [
   {
     label: 'Geography & Economy',
     path: '/geo',
     icon: PlaceIcon,
     completedKey: 'geography_economy',
+    required: true
   },
   {
     label: 'Optimization',
     path: '/optim',
     icon: BuildIcon,
     completedKey: 'optimization',
+    required: true
   },
   {
     label: 'System Configuration',
     path: '/system',
     icon: SettingsIcon,
     completedKey: 'system_config',
+    required: true
+  },
+  {
+    label: 'PV System',
+    path: '/components',
+    icon: SolarIcon,
+    completedKey: 'pv_system',
+    required: false
+  },
+  {
+    label: 'Wind Turbine',
+    path: '/components',
+    icon: WindIcon,
+    completedKey: 'wind_turbine',
+    required: false
+  },
+  {
+    label: 'Battery',
+    path: '/components',
+    icon: BatteryIcon,
+    completedKey: 'battery',
+    required: false
+  },
+  {
+    label: 'Inverter',
+    path: '/components',
+    icon: ElectricIcon,
+    completedKey: 'inverter',
+    required: false
+  },
+  {
+    label: 'Diesel Generator',
+    path: '/components',
+    icon: PowerIcon,
+    completedKey: 'diesel_generator',
+    required: false
   },
   {
     label: 'Grid Information',
     path: '/grid',
     icon: GridIcon,
     completedKey: 'grid',
-  },
+    required: true
+  }
 ];
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
@@ -143,10 +183,12 @@ const NavigationContent = () => {
     const fetchCompletedModels = async () => {
       const sessionId = localStorage.getItem('session_id');
       if (!sessionId) return;
+      
       try {
         const response = await fetch(`${API_URL}/api/component/completed_models?session_id=${sessionId}`);
         if (!response.ok) throw new Error('Failed to fetch completed models');
         const data = await response.json();
+        console.log('Completed models:', data);
         setCompletedModels(data);
       } catch (error) {
         console.error('Error fetching completed models:', error);
@@ -166,6 +208,9 @@ const NavigationContent = () => {
   const handleStepClick = (stepIndex) => {
     navigate(steps[stepIndex].path);
   };
+
+  // Filter steps to show required ones and completed optional ones
+  const visibleSteps = steps.filter(step => step.required || completedModels[step.completedKey]);
 
   return (
     <>
@@ -190,7 +235,7 @@ const NavigationContent = () => {
       <Divider />
       <List component="nav" sx={{ p: 1 }}>
         <SectionTitle>Configuration Steps</SectionTitle>
-        {steps.map((step, index) => {
+        {visibleSteps.map((step, index) => {
           const Icon = step.icon;
           const isCompleted = completedModels[step.completedKey];
           return (
