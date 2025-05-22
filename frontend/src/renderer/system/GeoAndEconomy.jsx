@@ -36,16 +36,6 @@ function GeoAndEconomy() {
     invTaxCredit: true
   });
 
-  const [myData, setMyData] = useState({
-    latitude: '',
-    longitude: '',
-    discountRate: '',
-    projectLifetime: '',
-    capitalCost: '',
-    replacementCost: '',
-    OMCost: ''
-  });
-
   const [selectedSystems, setSelectedSystems] = useState([]);
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
@@ -58,33 +48,44 @@ function GeoAndEconomy() {
           return;
         }
 
-        const response = await fetch(`${API_URL}/api/defaults`);
-        if (!response.ok) throw new Error('Failed to fetch defaults');
+        console.log("Fetching defaults from /api/get");
+        const response = await fetch(`${API_URL}/api/get`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error response:", errorData);
+          throw new Error(errorData.error || 'Failed to fetch defaults');
+        }
         const data = await response.json();
+        console.log("Received data:", data);
         setDefaults(data);
         
-        // Set form data with backend defaults
+        // Set form data with backend defaults from geo_economy section
+        const geoEconomyData = data.geo_economy || {};
+        console.log("Geo economy data:", geoEconomyData);
+        
         setFormData({
-          nomDiscRate: data.nomDiscRate?.toString() || '',
-          expInfRate: data.expInfRate?.toString() || '',
-          equipSalePercent: data.equipSalePercent?.toString() || '',
-          invTaxCredit: data.invTaxCredit?.toString() || ''
+            nomDiscRate: geoEconomyData.nomDiscRate?.toString() || '',
+            expInfRate: geoEconomyData.expInfRate?.toString() || '',
+            equipSalePercent: geoEconomyData.equipSalePercent?.toString() || '',
+            invTaxCredit: geoEconomyData.invTaxCredit?.toString() || ''
         });
 
-        // Set myData with backend defaults
-        setMyData({
-          latitude: data.latitude?.toString() || '',
-          longitude: data.longitude?.toString() || '',
-          discountRate: data.discount_rate?.toString() || '',
-          projectLifetime: data.project_lifetime?.toString() || '',
-          capitalCost: data.capital_cost?.toString() || '1000',
-          replacementCost: data.replacement_cost?.toString() || '1000',
-          OMCost: data.om_cost?.toString() || '10'
-        });
+        // If we have coordinates in the data, set the position
+        if (data.latitude && data.longitude) {
+            setSelectPosition({
+                lat: parseFloat(data.latitude),
+                lng: parseFloat(data.longitude)
+            });
+        }
 
         setIsConfigLoaded(true);
       } catch (error) {
         console.error('Error fetching defaults:', error);
+        setErrorDialog({
+          open: true,
+          title: 'Error Loading Defaults',
+          message: error.message || 'Failed to load default values. Please try again.'
+        });
       }
     };
     fetchDefaults();
@@ -113,13 +114,15 @@ function GeoAndEconomy() {
         throw new Error("No session ID found");
       }
 
-      // Prepare only the required data for the GeographyEconomy component
+      // Prepare the data using the new field names from the backend
       const geoEconomyData = {
         session_id: sessionId,
-        n_ir_rate: parseFloat(formData.nomDiscRate),
-        e_ir_rate: parseFloat(formData.expInfRate),
-        Tax_rate: parseFloat(formData.equipSalePercent),
-        RE_incentives_rate: parseFloat(formData.invTaxCredit)
+        n_ir_rate: parseFloat(formData.nomDiscRate) || 0,
+        e_ir_rate: parseFloat(formData.expInfRate) || 0,
+        Tax_rate: parseFloat(formData.equipSalePercent) || 0,
+        RE_incentives_rate: parseFloat(formData.invTaxCredit) || 0,
+        latitude: selectPosition.lat,
+        longitude: selectPosition.lng
       };
 
       const response = await fetch(`${API_URL}/api/component/geography_economy`, {
@@ -159,13 +162,13 @@ function GeoAndEconomy() {
     }
 
     const Geo_Data = {
-      latitude: myData.latitude,
-      longitude: myData.longitude,
-      discountRate: myData.discountRate,
-      projectLifetime: myData.projectLifetime,
-      capitalCost: myData.capitalCost,
-      replacementCost: myData.replacementCost,
-      OMCost: myData.OMCost
+      latitude: selectPosition.lat,
+      longitude: selectPosition.lng,
+      discountRate: formData.equipSalePercent,
+      projectLifetime: defaults?.system_config?.lifetime?.toString() || '',
+      capitalCost: '1000', // Default value
+      replacementCost: '1000', // Default value
+      OMCost: '10' // Default value
     };
 
     try {

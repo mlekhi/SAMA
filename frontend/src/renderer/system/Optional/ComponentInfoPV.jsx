@@ -6,21 +6,26 @@ import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
 import Navigation from '@components/Navigation'
 
-function ComponentInfoPV() {
+function ComponentInfoPV({ onNext }) {
     const navigate = useNavigate()
     const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
+    const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' })
 
     const [myData, setMyData] = useState({
-        pvLifetime: '',
-        pvDerating: '',
-        tempCoeff: '',
-        tempRef: '',
-        tempNoct: '',
-        pvEfficiency: '',
-        capitalCostPV: '',
-        replacementCostPV: '',
-        OMCostPV: ''
+        pv_lifetime: '',
+        pv_derating: '',
+        temp_coef: '',
+        temp_ref: '',
+        temp_noct: '',
+        pv_efficiency: '',
+        C_PV: '',
+        R_PV: '',
+        MO_PV: '',
+        Ta_noct: '',
+        G_noct: '',
+        gama: '',
+        Gref: ''
     })
 
     function handleChange(e) {
@@ -31,7 +36,7 @@ function ComponentInfoPV() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        navigate('/grid')
+        onNext()
     }
 
     useEffect(() => {
@@ -43,58 +48,72 @@ function ComponentInfoPV() {
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/api/defaults`)
-                if (!response.ok) throw new Error('Failed to fetch defaults')
-                const data = await response.json()
-                setDefaults(data)
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
+                const data = await response.json();
+                console.log("Received data:", data);
+                setDefaults(data);
                 
-                // Set form data with backend defaults
+                // Set form data with backend defaults from pv section
+                const pvData = data.pv || {};
+                console.log("PV data:", pvData);
+                
                 setMyData({
-                    pvLifetime: data.pv_lifetime?.toString() || '',
-                    pvDerating: data.pv_derating?.toString() || '',
-                    tempCoeff: data.temp_coef?.toString() || '',
-                    tempRef: data.temp_ref?.toString() || '',
-                    tempNoct: data.temp_noct?.toString() || '',
-                    pvEfficiency: data.pv_efficiency?.toString() || '',
-                    capitalCostPV: data.pv_capital_cost?.toString() || '1000',
-                    replacementCostPV: data.pv_replacement_cost?.toString() || '1000',
-                    OMCostPV: data.pv_om_cost?.toString() || '10'
-                })
+                    pv_lifetime: pvData.pv_lifetime?.toString() || '',
+                    pv_derating: pvData.pv_derating?.toString() || '',
+                    temp_coef: pvData.temp_coef?.toString() || '',
+                    temp_ref: pvData.temp_ref?.toString() || '',
+                    temp_noct: pvData.temp_noct?.toString() || '',
+                    pv_efficiency: pvData.pv_efficiency?.toString() || '',
+                    C_PV: pvData.C_PV?.toString() || '',
+                    R_PV: pvData.R_PV?.toString() || '',
+                    MO_PV: pvData.MO_PV?.toString() || '',
+                    Ta_noct: pvData.Ta_noct?.toString() || '',
+                    G_noct: pvData.G_noct?.toString() || '',
+                    gama: pvData.gama?.toString() || '0.0',
+                    Gref: pvData.Gref?.toString() || ''
+                });
 
-                setIsConfigLoaded(true)
+                setIsConfigLoaded(true);
             } catch (error) {
-                console.error('Error fetching defaults:', error)
+                console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
-        }
-        fetchDefaults()
-    }, [])
+        };
+        fetchDefaults();
+    }, []);
 
     const sendComponentInfo = async () => {
-        const PV_Data = {
-            pvLifetime: myData.pvLifetime,
-            pvDerating: myData.pvDerating,
-            tempCoeff: myData.tempCoeff,
-            tempRef: myData.tempRef,
-            tempNoct: myData.tempNoct,
-            pvEfficiency: myData.pvEfficiency,
-            capitalCostPV: myData.capitalCostPV,
-            replacementCostPV: myData.replacementCostPV,
-            OMCostPV: myData.OMCostPV
-        }
-
         try {
-            const response = await fetch(`${API_URL}/pv`, {
+            const response = await fetch(`${API_URL}/api/component/pv_system`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(PV_Data)
-            })
+                body: JSON.stringify({
+                    session_id: localStorage.getItem("session_id"),
+                    ...myData
+                })
+            });
 
-            const result = await response.json()
-            console.log('Response from server:', result)
+            const result = await response.json();
+            console.log('Response from server:', result);
         } catch (error) {
-            console.error('Error sending PV info:', error)
+            console.error('Error sending PV info:', error);
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save PV data. Please try again.'
+            });
         }
     }
 
@@ -119,47 +138,47 @@ function ComponentInfoPV() {
 
                         <FormInputField
                             label="PV Lifetime"
-                            name="pvLifetime"
-                            value={myData.pvLifetime}
+                            name="pv_lifetime"
+                            value={myData.pv_lifetime}
                             onChange={handleChange}
                             endAdornment="years"
                         />
 
                         <FormInputField
                             label="PV Derating"
-                            name="pvDerating"
-                            value={myData.pvDerating}
+                            name="pv_derating"
+                            value={myData.pv_derating}
                             onChange={handleChange}
                         />
 
                         <FormInputField
                             label="Temperature Coefficient"
-                            name="tempCoeff"
-                            value={myData.tempCoeff}
+                            name="temp_coef"
+                            value={myData.temp_coef}
                             onChange={handleChange}
                             endAdornment="%/°C"
                         />
 
                         <FormInputField
                             label="Reference Temperature"
-                            name="tempRef"
-                            value={myData.tempRef}
+                            name="temp_ref"
+                            value={myData.temp_ref}
                             onChange={handleChange}
                             endAdornment="°C"
                         />
 
                         <FormInputField
                             label="Nominal Operating Cell Temperature"
-                            name="tempNoct"
-                            value={myData.tempNoct}
+                            name="temp_noct"
+                            value={myData.temp_noct}
                             onChange={handleChange}
                             endAdornment="°C"
                         />
 
                         <FormInputField
                             label="PV Efficiency"
-                            name="pvEfficiency"
-                            value={myData.pvEfficiency}
+                            name="pv_efficiency"
+                            value={myData.pv_efficiency}
                             onChange={handleChange}
                         />
 
@@ -169,24 +188,24 @@ function ComponentInfoPV() {
 
                         <FormInputField
                             label="Capital Cost"
-                            name="capitalCostPV"
-                            value={myData.capitalCostPV}
+                            name="C_PV"
+                            value={myData.C_PV}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="Replacement Cost"
-                            name="replacementCostPV"
-                            value={myData.replacementCostPV}
+                            name="R_PV"
+                            value={myData.R_PV}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="O&M Cost"
-                            name="OMCostPV"
-                            value={myData.OMCostPV}
+                            name="MO_PV"
+                            value={myData.MO_PV}
                             onChange={handleChange}
                             endAdornment="$/kW/year"
                         />

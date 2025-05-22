@@ -6,17 +6,19 @@ import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
 import Navigation from '@components/Navigation'
 
-function ComponentInfoInverter() {
+function ComponentInfoInverter({ onNext }) {
     const navigate = useNavigate()
     const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
+    const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' })
 
     const [myData, setMyData] = useState({
-        inverterEfficiency: '',
-        inverterLifetime: '',
-        capitalCostInverter: '',
-        replacementCostInverter: '',
-        OMCostInverter: ''
+        n_I: '',
+        L_I: '',
+        DC_AC_ratio: '',
+        C_I: '',
+        R_I: '',
+        MO_I: ''
     })
 
     function handleChange(e) {
@@ -27,7 +29,7 @@ function ComponentInfoInverter() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        navigate('/grid')
+        onNext()
     }
 
     useEffect(() => {
@@ -39,50 +41,65 @@ function ComponentInfoInverter() {
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/api/defaults`)
-                if (!response.ok) throw new Error('Failed to fetch defaults')
-                const data = await response.json()
-                setDefaults(data)
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
+                const data = await response.json();
+                console.log("Received data:", data);
+                setDefaults(data);
                 
-                // Set form data with backend defaults
+                // Set form data with backend defaults from inverter section
+                const inverterData = data.inverter || {};
+                console.log("Inverter data:", inverterData);
+                
                 setMyData({
-                    inverterEfficiency: data.inverter_efficiency?.toString() || '',
-                    inverterLifetime: data.inverter_lifetime?.toString() || '',
-                    capitalCostInverter: data.inverter_capital_cost?.toString() || '1000',
-                    replacementCostInverter: data.inverter_replacement_cost?.toString() || '1000',
-                    OMCostInverter: data.inverter_om_cost?.toString() || '10'
-                })
+                    n_I: inverterData.inverter_efficiency?.toString() || '',
+                    L_I: inverterData.inverter_lifetime?.toString() || '',
+                    DC_AC_ratio: inverterData.dc_ac_ratio?.toString() || '',
+                    C_I: inverterData.C_I?.toString() || '',
+                    R_I: inverterData.R_I?.toString() || '',
+                    MO_I: inverterData.MO_I?.toString() || ''
+                });
 
-                setIsConfigLoaded(true)
+                setIsConfigLoaded(true);
             } catch (error) {
-                console.error('Error fetching defaults:', error)
+                console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
-        }
-        fetchDefaults()
-    }, [])
+        };
+        fetchDefaults();
+    }, []);
 
     const sendComponentInfo = async () => {
-        const Inverter_Data = {
-            inverterEfficiency: myData.inverterEfficiency,
-            inverterLifetime: myData.inverterLifetime,
-            capitalCostInverter: myData.capitalCostInverter,
-            replacementCostInverter: myData.replacementCostInverter,
-            OMCostInverter: myData.OMCostInverter
-        }
-
         try {
-            const response = await fetch(`${API_URL}/inverter`, {
+            const response = await fetch(`${API_URL}/api/component/inverter`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(Inverter_Data)
-            })
+                body: JSON.stringify({
+                    session_id: localStorage.getItem("session_id"),
+                    ...myData
+                })
+            });
 
-            const result = await response.json()
-            console.log('Response from server:', result)
+            const result = await response.json();
+            console.log('Response from server:', result);
         } catch (error) {
-            console.error('Error sending inverter info:', error)
+            console.error('Error sending inverter info:', error);
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save inverter data. Please try again.'
+            });
         }
     }
 
@@ -107,17 +124,24 @@ function ComponentInfoInverter() {
 
                         <FormInputField
                             label="Inverter Efficiency"
-                            name="inverterEfficiency"
-                            value={myData.inverterEfficiency}
+                            name="n_I"
+                            value={myData.n_I}
                             onChange={handleChange}
                         />
 
                         <FormInputField
                             label="Inverter Lifetime"
-                            name="inverterLifetime"
-                            value={myData.inverterLifetime}
+                            name="L_I"
+                            value={myData.L_I}
                             onChange={handleChange}
                             endAdornment="years"
+                        />
+
+                        <FormInputField
+                            label="DC/AC Ratio"
+                            name="DC_AC_ratio"
+                            value={myData.DC_AC_ratio}
+                            onChange={handleChange}
                         />
 
                         <Typography variant="h5" gutterBottom>
@@ -126,24 +150,24 @@ function ComponentInfoInverter() {
 
                         <FormInputField
                             label="Capital Cost"
-                            name="capitalCostInverter"
-                            value={myData.capitalCostInverter}
+                            name="C_I"
+                            value={myData.C_I}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="Replacement Cost"
-                            name="replacementCostInverter"
-                            value={myData.replacementCostInverter}
+                            name="R_I"
+                            value={myData.R_I}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="O&M Cost"
-                            name="OMCostInverter"
-                            value={myData.OMCostInverter}
+                            name="MO_I"
+                            value={myData.MO_I}
                             onChange={handleChange}
                             endAdornment="$/kW/year"
                         />

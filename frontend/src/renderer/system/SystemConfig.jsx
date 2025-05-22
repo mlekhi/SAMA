@@ -69,18 +69,55 @@ function SystemConfig(){
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch(`${API_URL}/api/defaults`);
-                if (!response.ok) throw new Error('Failed to fetch defaults');
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
                 const data = await response.json();
+                console.log("Received data:", data);
                 setDefaults(data);
+                
+                // Set form data with backend defaults from system_config section
+                const systemConfigData = data.system_config || {};
+                console.log("System config data:", systemConfigData);
+                
                 setFormData({
-                    lifetime: data.lifetime.toString(),
-                    maxPL: data.maxPL.toString(),
-                    minRenewEC: data.minRenewEC.toString(),
-                    annualData: data.annualData.toString()
+                    lifetime: systemConfigData.lifetime?.toString() || '',
+                    maxPL: systemConfigData.maxPL?.toString() || '',
+                    minRenewEC: systemConfigData.minRenewEC?.toString() || '',
+                    annualData: systemConfigData.annualData?.toString() || ''
                 });
+
+                // Set selected systems based on backend data
+                setSelectedSystems({
+                    PV: systemConfigData.PV || false,
+                    WT: systemConfigData.WT || false,
+                    DG: systemConfigData.DG || false,
+                    Battery: systemConfigData.Bat || false
+                });
+
+                // Set battery type if battery is selected
+                if (systemConfigData.Bat) {
+                    setBatteryType(systemConfigData.Li_ion ? 'Li-Ion' : 'Lead-Acid');
+                }
+
+                setIsConfigLoaded(true);
             } catch (error) {
                 console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
         };
         fetchDefaults();
@@ -192,6 +229,9 @@ function SystemConfig(){
                 Li_ion: batteryType === 'Li-Ion'
             };
 
+            // Save selected systems to localStorage for the wizard
+            localStorage.setItem('selectedSystems', JSON.stringify(selectedSystems));
+
             const response = await fetch(`${API_URL}/api/component/system_config`, {
                 method: "POST",
                 headers: {
@@ -210,17 +250,8 @@ function SystemConfig(){
             }
 
             window.scrollTo(0, 0);
-            if (selectedSystems.Battery) {
-                navigate('/battery');
-            } else if (selectedSystems.PV) {
-                navigate('/inverter');
-            } else if (selectedSystems.WT) {
-                navigate('/inverter');
-            } else if (selectedSystems.DG) {
-                navigate('/inverter');
-            } else {
-                navigate('/grid')
-            }
+            // Always go to the wizard after system config
+            navigate('/components');
         } catch (error) {
             setErrorMessage(error.message || "Failed to save system configuration. Please try again.");
             setSnackbarOpen(true);

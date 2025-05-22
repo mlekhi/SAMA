@@ -36,25 +36,49 @@ function OptimizationParams() {
         globalLearningCoeff: true
     });
 
+    const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch(`${API_URL}/api/defaults`);
-                if (!response.ok) throw new Error('Failed to fetch defaults');
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
                 const data = await response.json();
+                console.log("Received data:", data);
                 setDefaults(data);
                 
-                // Set default values from backend
+                // Set form data with backend defaults from optimization section
+                const optimizationData = data.optimization || {};
+                console.log("Optimization data:", optimizationData);
+                
                 setFormData({
-                    maxIterations: data.max_iterations?.toString() || '',
-                    populationSize: data.population_size?.toString() || '',
-                    inertiaWeight: data.inertia_weight?.toString() || '',
-                    inertiaWeightDamping: data.inertia_weight_damping?.toString() || '',
-                    personalLearningCoeff: data.personal_learning_coeff?.toString() || '',
-                    globalLearningCoeff: data.global_learning_coeff?.toString() || ''
+                    maxIterations: optimizationData.max_iterations?.toString() || '100',
+                    populationSize: optimizationData.population_size?.toString() || '50',
+                    inertiaWeight: optimizationData.inertia_weight?.toString() || '1.0',
+                    inertiaWeightDamping: optimizationData.inertia_weight_damping?.toString() || '0.99',
+                    personalLearningCoeff: optimizationData.personal_learning_coeff?.toString() || '1.5',
+                    globalLearningCoeff: optimizationData.global_learning_coeff?.toString() || '2.0'
                 });
+
+                setIsConfigLoaded(true);
             } catch (error) {
                 console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
         };
         fetchDefaults();

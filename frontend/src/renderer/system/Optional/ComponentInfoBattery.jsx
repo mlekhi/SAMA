@@ -6,19 +6,29 @@ import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
 import Navigation from '@components/Navigation'
 
-function ComponentInfoBattery() {
+function ComponentInfoBattery({ onNext }) {
     const navigate = useNavigate()
     const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
+    const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' })
 
     const [myData, setMyData] = useState({
-        batteryLifetime: '',
-        batteryMinSOC: '',
-        batteryMaxSOC: '',
-        batteryEfficiency: '',
-        capitalCostBattery: '',
-        replacementCostBattery: '',
-        OMCostBattery: ''
+        SOC_min: '',
+        SOC_max: '',
+        SOC_initial: '',
+        self_discharge_rate: '',
+        L_B: '',
+        Cnom_Leadacid: '',
+        alfa_battery_leadacid: '',
+        c: '',
+        k: '',
+        Ich_max_leadacid: '',
+        Vnom_leadacid: '',
+        ef_bat_leadacid: '',
+        Q_lifetime_leadacid: '',
+        Ich_max_Li_ion: '',
+        Idch_max_Li_ion: '',
+        alfa_battery_Li_ion: ''
     })
 
     function handleChange(e) {
@@ -29,7 +39,7 @@ function ComponentInfoBattery() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        navigate('/grid')
+        onNext()
     }
 
     useEffect(() => {
@@ -41,55 +51,75 @@ function ComponentInfoBattery() {
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/api/defaults`)
-                if (!response.ok) throw new Error('Failed to fetch defaults')
-                const data = await response.json()
-                setDefaults(data)
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
+                const data = await response.json();
+                console.log("Received data:", data);
+                setDefaults(data);
                 
-                // Set form data with backend defaults
+                // Set form data with backend defaults from battery section
+                const batteryData = data.battery || {};
+                console.log("Battery data:", batteryData);
+                
                 setMyData({
-                    batteryLifetime: data.battery_lifetime?.toString() || '',
-                    batteryMinSOC: data.SOC_min?.toString() || '',
-                    batteryMaxSOC: data.SOC_max?.toString() || '',
-                    batteryEfficiency: data.battery_efficiency?.toString() || '0.9',
-                    capitalCostBattery: data.battery_capital_cost?.toString() || '1000',
-                    replacementCostBattery: data.battery_replacement_cost?.toString() || '1000',
-                    OMCostBattery: data.battery_om_cost?.toString() || '10'
-                })
+                    SOC_min: batteryData.SOC_min?.toString() || '',
+                    SOC_max: batteryData.SOC_max?.toString() || '',
+                    SOC_initial: batteryData.SOC_initial?.toString() || '',
+                    self_discharge_rate: batteryData.self_discharge_rate?.toString() || '',
+                    L_B: batteryData.battery_lifetime?.toString() || '',
+                    Cnom_Leadacid: batteryData.Cnom_Leadacid?.toString() || '',
+                    alfa_battery_leadacid: batteryData.alfa_battery_leadacid?.toString() || '',
+                    c: batteryData.c?.toString() || '',
+                    k: batteryData.k?.toString() || '',
+                    Ich_max_leadacid: batteryData.Ich_max_leadacid?.toString() || '',
+                    Vnom_leadacid: batteryData.Vnom_leadacid?.toString() || '',
+                    ef_bat_leadacid: batteryData.ef_bat_leadacid?.toString() || '',
+                    Q_lifetime_leadacid: batteryData.Q_lifetime_leadacid?.toString() || '',
+                    Ich_max_Li_ion: batteryData.Ich_max_Li_ion?.toString() || '',
+                    Idch_max_Li_ion: batteryData.Idch_max_Li_ion?.toString() || '',
+                    alfa_battery_Li_ion: batteryData.alfa_battery_Li_ion?.toString() || ''
+                });
 
-                setIsConfigLoaded(true)
+                setIsConfigLoaded(true);
             } catch (error) {
-                console.error('Error fetching defaults:', error)
+                console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
-        }
-        fetchDefaults()
-    }, [])
+        };
+        fetchDefaults();
+    }, []);
 
     const sendComponentInfo = async () => {
-        const Battery_Data = {
-            batteryLifetime: myData.batteryLifetime,
-            batteryMinSOC: myData.batteryMinSOC,
-            batteryMaxSOC: myData.batteryMaxSOC,
-            batteryEfficiency: myData.batteryEfficiency,
-            capitalCostBattery: myData.capitalCostBattery,
-            replacementCostBattery: myData.replacementCostBattery,
-            OMCostBattery: myData.OMCostBattery
-        }
-
         try {
-            console.log(Battery_Data)
-            const response = await fetch(`${API_URL}/battery`, {
+            const response = await fetch(`${API_URL}/api/component/battery`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(Battery_Data)
-            })
+                body: JSON.stringify({
+                    session_id: localStorage.getItem("session_id"),
+                    ...myData
+                })
+            });
 
-            const result = await response.json()
-            console.log('Response from server:', result)
+            const result = await response.json();
+            console.log('Response from server:', result);
         } catch (error) {
-            console.error('Error sending battery info:', error)
+            console.error('Error sending battery info:', error);
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save battery data. Please try again.'
+            });
         }
     }
 
@@ -113,60 +143,131 @@ function ComponentInfoBattery() {
                         </Typography>
 
                         <FormInputField
+                            label="Minimum State of Charge"
+                            name="SOC_min"
+                            value={myData.SOC_min}
+                            onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Maximum State of Charge"
+                            name="SOC_max"
+                            value={myData.SOC_max}
+                            onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Initial State of Charge"
+                            name="SOC_initial"
+                            value={myData.SOC_initial}
+                            onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Self Discharge Rate"
+                            name="self_discharge_rate"
+                            value={myData.self_discharge_rate}
+                            onChange={handleChange}
+                            endAdornment="%/month"
+                        />
+
+                        <FormInputField
                             label="Battery Lifetime"
-                            name="batteryLifetime"
-                            value={myData.batteryLifetime}
+                            name="L_B"
+                            value={myData.L_B}
                             onChange={handleChange}
                             endAdornment="years"
                         />
 
+                        <Typography variant="h5" gutterBottom>
+                            Lead Acid Battery Parameters
+                        </Typography>
+
                         <FormInputField
-                            label="Battery Minimum State of Charge"
-                            name="batteryMinSOC"
-                            value={myData.batteryMinSOC}
+                            label="Nominal Capacity"
+                            name="Cnom_Leadacid"
+                            value={myData.Cnom_Leadacid}
+                            onChange={handleChange}
+                            endAdornment="Ah"
+                        />
+
+                        <FormInputField
+                            label="Battery Aging Factor"
+                            name="alfa_battery_leadacid"
+                            value={myData.alfa_battery_leadacid}
                             onChange={handleChange}
                         />
 
                         <FormInputField
-                            label="Battery Maximum State of Charge"
-                            name="batteryMaxSOC"
-                            value={myData.batteryMaxSOC}
+                            label="Capacity Ratio"
+                            name="c"
+                            value={myData.c}
                             onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Rate Constant"
+                            name="k"
+                            value={myData.k}
+                            onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Maximum Charge Current"
+                            name="Ich_max_leadacid"
+                            value={myData.Ich_max_leadacid}
+                            onChange={handleChange}
+                            endAdornment="A"
+                        />
+
+                        <FormInputField
+                            label="Nominal Voltage"
+                            name="Vnom_leadacid"
+                            value={myData.Vnom_leadacid}
+                            onChange={handleChange}
+                            endAdornment="V"
                         />
 
                         <FormInputField
                             label="Battery Efficiency"
-                            name="batteryEfficiency"
-                            value={myData.batteryEfficiency}
+                            name="ef_bat_leadacid"
+                            value={myData.ef_bat_leadacid}
                             onChange={handleChange}
+                        />
+
+                        <FormInputField
+                            label="Lifetime Throughput"
+                            name="Q_lifetime_leadacid"
+                            value={myData.Q_lifetime_leadacid}
+                            onChange={handleChange}
+                            endAdornment="Ah"
                         />
 
                         <Typography variant="h5" gutterBottom>
-                            Economic Information
+                            Li-ion Battery Parameters
                         </Typography>
 
                         <FormInputField
-                            label="Capital Cost"
-                            name="capitalCostBattery"
-                            value={myData.capitalCostBattery}
+                            label="Maximum Charge Current"
+                            name="Ich_max_Li_ion"
+                            value={myData.Ich_max_Li_ion}
                             onChange={handleChange}
-                            endAdornment="$/kWh"
+                            endAdornment="A"
                         />
 
                         <FormInputField
-                            label="Replacement Cost"
-                            name="replacementCostBattery"
-                            value={myData.replacementCostBattery}
+                            label="Maximum Discharge Current"
+                            name="Idch_max_Li_ion"
+                            value={myData.Idch_max_Li_ion}
                             onChange={handleChange}
-                            endAdornment="$/kWh"
+                            endAdornment="A"
                         />
 
                         <FormInputField
-                            label="O&M Cost"
-                            name="OMCostBattery"
-                            value={myData.OMCostBattery}
+                            label="Battery Aging Factor"
+                            name="alfa_battery_Li_ion"
+                            value={myData.alfa_battery_Li_ion}
                             onChange={handleChange}
-                            endAdornment="($/kWh)/year"
                         />
 
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

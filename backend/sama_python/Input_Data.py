@@ -727,5 +727,3 @@ class Input_Data:
         self.Pbuy_max = 6 # ceil(1.2 * max(self.Eload))  # kWh
         self.Psell_max = 200 # self.Pbuy_max
         
-
-InData = Input_Data()

@@ -6,19 +6,20 @@ import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
 import Navigation from '@components/Navigation'
 
-function ComponentInfoDG() {
+function ComponentInfoDG({ onNext }) {
     const navigate = useNavigate()
     const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
+    const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' })
 
     const [myData, setMyData] = useState({
-        slope: '',
-        interceptCoefficient: '',
-        capitalCostDG: '',
-        replacementCostDG: '',
-        OMCostDG: '',
-        fuelCostDG: '',
-        DGFuelCostRate: ''
+        a: '',
+        b: '',
+        C_DG: '',
+        R_DG: '',
+        MO_DG: '',
+        C_fuel: '',
+        C_fuel_adj_rate: ''
     })
 
     function handleChange(e) {
@@ -29,7 +30,7 @@ function ComponentInfoDG() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        navigate('/grid')
+        onNext()
     }
 
     useEffect(() => {
@@ -41,54 +42,66 @@ function ComponentInfoDG() {
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/api/defaults`)
-                if (!response.ok) throw new Error('Failed to fetch defaults')
-                const data = await response.json()
-                setDefaults(data)
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
+                const data = await response.json();
+                console.log("Received data:", data);
+                setDefaults(data);
                 
-                // Set form data with backend defaults
+                // Set form data with backend defaults from diesel section
+                const dieselData = data.diesel || {};
+                console.log("Diesel data:", dieselData);
+                
                 setMyData({
-                    slope: data.fuel_curve_a?.toString() || '',
-                    interceptCoefficient: data.fuel_curve_b?.toString() || '',
-                    capitalCostDG: data.dg_capital_cost?.toString() || '1000',
-                    replacementCostDG: data.dg_replacement_cost?.toString() || '1000',
-                    OMCostDG: data.dg_om_cost?.toString() || '10',
-                    fuelCostDG: data.dg_fuel_cost?.toString() || '1',
-                    DGFuelCostRate: data.dg_fuel_cost_rate?.toString() || '0'
-                })
+                    a: dieselData.fuel_curve_a?.toString() || '',
+                    b: dieselData.fuel_curve_b?.toString() || '',
+                    C_DG: dieselData.C_DG?.toString() || '',
+                    R_DG: dieselData.R_DG?.toString() || '',
+                    MO_DG: dieselData.MO_DG?.toString() || '',
+                    C_fuel: dieselData.C_fuel?.toString() || '',
+                    C_fuel_adj_rate: dieselData.C_fuel_adj_rate?.toString() || ''
+                });
 
-                setIsConfigLoaded(true)
+                setIsConfigLoaded(true);
             } catch (error) {
-                console.error('Error fetching defaults:', error)
+                console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
-        }
-        fetchDefaults()
-    }, [])
+        };
+        fetchDefaults();
+    }, []);
 
     const sendComponentInfo = async () => {
-        const DG_Data = {
-            slope: myData.slope,
-            interceptCoefficient: myData.interceptCoefficient,
-            capitalCostDG: myData.capitalCostDG,
-            replacementCostDG: myData.replacementCostDG,
-            OMCostDG: myData.OMCostDG,
-            fuelCostDG: myData.fuelCostDG,
-            DGFuelCostRate: myData.DGFuelCostRate
-        }
-
         try {
-            const response = await fetch(`${API_URL}/dg`, {
+            const response = await fetch(`${API_URL}/api/component/diesel_generator`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(DG_Data)
-            })
+                body: JSON.stringify({
+                    session_id: localStorage.getItem("session_id"),
+                    ...myData
+                })
+            });
 
-            const result = await response.json()
-            console.log('Response from server:', result)
+            const result = await response.json();
+            console.log('Response from server:', result);
         } catch (error) {
-            console.error('Error sending diesel generator info:', error)
+            console.error('Error sending diesel generator info:', error);
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save diesel generator data. Please try again.'
+            });
         }
     }
 
@@ -108,23 +121,21 @@ function ComponentInfoDG() {
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <Typography variant="h5" gutterBottom>
-                            Diesel Generator Fuel Information
+                            Technical Information
                         </Typography>
 
                         <FormInputField
-                            label="Slope"
-                            name="slope"
-                            value={myData.slope}
+                            label="Fuel Curve Coefficient A"
+                            name="a"
+                            value={myData.a}
                             onChange={handleChange}
-                            endAdornment="Liter/hr/kW output"
                         />
 
                         <FormInputField
-                            label="Intercept Coefficient"
-                            name="interceptCoefficient"
-                            value={myData.interceptCoefficient}
+                            label="Fuel Curve Coefficient B"
+                            name="b"
+                            value={myData.b}
                             onChange={handleChange}
-                            endAdornment="Liter/hr/kW rate"
                         />
 
                         <Typography variant="h5" gutterBottom>
@@ -133,42 +144,42 @@ function ComponentInfoDG() {
 
                         <FormInputField
                             label="Capital Cost"
-                            name="capitalCostDG"
-                            value={myData.capitalCostDG}
+                            name="C_DG"
+                            value={myData.C_DG}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="Replacement Cost"
-                            name="replacementCostDG"
-                            value={myData.replacementCostDG}
+                            name="R_DG"
+                            value={myData.R_DG}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="O&M Cost"
-                            name="OMCostDG"
-                            value={myData.OMCostDG}
+                            name="MO_DG"
+                            value={myData.MO_DG}
                             onChange={handleChange}
-                            endAdornment="$/op.h"
+                            endAdornment="$/kW/year"
                         />
 
                         <FormInputField
                             label="Fuel Cost"
-                            name="fuelCostDG"
-                            value={myData.fuelCostDG}
+                            name="C_fuel"
+                            value={myData.C_fuel}
                             onChange={handleChange}
                             endAdornment="$/L"
                         />
 
                         <FormInputField
-                            label="DG Fuel Cost Yearly Escalation/Reduction Rate"
-                            name="DGFuelCostRate"
-                            value={myData.DGFuelCostRate}
+                            label="Fuel Cost Adjustment Rate"
+                            name="C_fuel_adj_rate"
+                            value={myData.C_fuel_adj_rate}
                             onChange={handleChange}
-                            endAdornment="%"
+                            endAdornment="%/year"
                         />
 
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

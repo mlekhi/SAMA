@@ -165,33 +165,47 @@ function GridInfo() {
     useEffect(() => {
         const fetchDefaults = async () => {
             try {
-                const response = await fetch(`${API_URL}/api/defaults`);
-                if (!response.ok) throw new Error('Failed to fetch defaults');
+                const sessionId = localStorage.getItem("session_id");
+                if (!sessionId) {
+                    console.error("No session ID found");
+                    return;
+                }
+
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
                 const data = await response.json();
+                console.log("Received data:", data);
                 setDefaults(data);
                 
-                // Set default values from backend
-                setAnnualExpense(data.grid_annual_expense?.toString() || '');
-                setSaleTaxPrecentage(data.grid_sale_tax?.toString() || '');
-                setGridAdjust(data.grid_adjustment?.toString() || '');
-                setYearlyEscRate(data.grid_yearly_esc_rate?.toString() || '');
-                setAnnualCredits(data.grid_annual_credits?.toString() || '');
-                setNetMetering(data.grid_net_metering?.toString() || '');
-                setMonthlyFixedCharge(data.grid_monthly_fixed_charge?.toString() || '');
-                setSellCapacity(data.grid_sell_capacity?.toString() || '');
-                setPurchaseCapacity(data.grid_purchase_capacity?.toString() || '');
+                // Set form data with backend defaults from grid section
+                const gridData = data.grid || {};
+                console.log("Grid data:", gridData);
                 
-                // Set default prices
-                setPrices(prev => ({
-                    ...prev,
-                    flatPrice: data.grid_flat_price?.toString() || '',
-                    summerPrice: data.grid_summer_price?.toString() || '',
-                    winterPrice: data.grid_winter_price?.toString() || '',
-                    flatComp: data.grid_flat_comp?.toString() || '',
-                    // Add other price defaults as needed
-                }));
+                setFormData({
+                    gridSaleTax: gridData.grid_sale_tax?.toString() || '',
+                    gridTaxAmount: gridData.grid_tax_amount?.toString() || '',
+                    gridCredit: gridData.grid_credit?.toString() || '',
+                    nemFee: gridData.nem_fee?.toString() || '',
+                    annualExpenses: gridData.Annual_expenses?.toString() || '',
+                    gridEscalationRate: gridData.Grid_escalation_rate?.toString() || '',
+                    scFlat: gridData.SC_flat?.toString() || '',
+                    pbuyMax: gridData.Pbuy_max?.toString() || '',
+                    psellMax: gridData.Psell_max?.toString() || ''
+                });
+
+                setIsConfigLoaded(true);
             } catch (error) {
                 console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
         };
         fetchDefaults();

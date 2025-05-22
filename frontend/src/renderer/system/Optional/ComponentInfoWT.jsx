@@ -6,22 +6,24 @@ import NextButton from '@components/form/NextButton'
 import { API_URL } from "@utils/config"
 import Navigation from '@components/Navigation'
 
-function ComponentInfoWT() {
+function ComponentInfoWT({ onNext }) {
     const navigate = useNavigate()
     const [defaults, setDefaults] = useState(null)
     const [isConfigLoaded, setIsConfigLoaded] = useState(false)
+    const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' })
 
     const [myData, setMyData] = useState({
-        hubHeight: '',
-        anemometerHeight: '',
-        windEfficiency: '',
-        cutOutSpeed: '',
-        cutInSpeed: '',
-        ratedSpeed: '',
-        windLifetime: '',
-        capitalCostWT: '',
-        replacementCostWT: '',
-        OMCostWT: ''
+        h_hub: '',
+        h0: '',
+        nw: '',
+        v_cut_out: '',
+        v_cut_in: '',
+        v_rated: '',
+        alfa_wind_turbine: '',
+        L_WT: '',
+        C_WT: '',
+        R_WT: '',
+        MO_WT: ''
     })
 
     function handleChange(e) {
@@ -32,7 +34,7 @@ function ComponentInfoWT() {
     const handleNext = () => {
         sendComponentInfo()
         window.scrollTo(0, 0)
-        navigate('/grid')
+        onNext()
     }
 
     useEffect(() => {
@@ -44,66 +46,70 @@ function ComponentInfoWT() {
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/api/defaults`)
-                if (!response.ok) throw new Error('Failed to fetch defaults')
-                const data = await response.json()
-                setDefaults(data)
+                console.log("Fetching defaults from /api/get");
+                const response = await fetch(`${API_URL}/api/get`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || 'Failed to fetch defaults');
+                }
+                const data = await response.json();
+                console.log("Received data:", data);
+                setDefaults(data);
                 
-                // Set form data with backend defaults
+                // Set form data with backend defaults from wind section
+                const windData = data.wind || {};
+                console.log("Wind data:", windData);
+                
                 setMyData({
-                    hubHeight: data.hub_height?.toString() || '',
-                    anemometerHeight: data.anemometer_height?.toString() || '',
-                    windEfficiency: data.wind_efficiency?.toString() || '',
-                    cutOutSpeed: data.cut_out_speed?.toString() || '',
-                    cutInSpeed: data.cut_in_speed?.toString() || '',
-                    ratedSpeed: data.rated_speed?.toString() || '',
-                    windLifetime: data.wind_lifetime?.toString() || '',
-                    capitalCostWT: data.wind_capital_cost?.toString() || '1000',
-                    replacementCostWT: data.wind_replacement_cost?.toString() || '1000',
-                    OMCostWT: data.wind_om_cost?.toString() || '10'
-                })
+                    h_hub: windData.hub_height?.toString() || '',
+                    h0: windData.anemometer_height?.toString() || '',
+                    nw: windData.wind_efficiency?.toString() || '',
+                    v_cut_out: windData.cut_out_speed?.toString() || '',
+                    v_cut_in: windData.cut_in_speed?.toString() || '',
+                    v_rated: windData.rated_speed?.toString() || '',
+                    alfa_wind_turbine: windData.alfa_wind_turbine?.toString() || '',
+                    L_WT: windData.wind_lifetime?.toString() || '',
+                    C_WT: windData.C_WT?.toString() || '',
+                    R_WT: windData.R_WT?.toString() || '',
+                    MO_WT: windData.MO_WT?.toString() || ''
+                });
 
-                setIsConfigLoaded(true)
+                setIsConfigLoaded(true);
             } catch (error) {
-                console.error('Error fetching defaults:', error)
+                console.error('Error fetching defaults:', error);
+                setErrorDialog({
+                    open: true,
+                    title: 'Error Loading Defaults',
+                    message: error.message || 'Failed to load default values. Please try again.'
+                });
             }
-        }
-        fetchDefaults()
-    }, [])
+        };
+        fetchDefaults();
+    }, []);
 
     const sendComponentInfo = async () => {
-        const sessionId = localStorage.getItem("session_id");
-        if (!sessionId) {
-            console.error("No session ID found");
-            return;
-        }
-        const WT_Data = {
-            session_id: sessionId,
-            h_hub: myData.hubHeight,
-            h0: myData.anemometerHeight,
-            nw: myData.windEfficiency,
-            v_cut_out: myData.cutOutSpeed,
-            v_cut_in: myData.cutInSpeed,
-            v_rated: myData.ratedSpeed,
-            L_WT: myData.windLifetime,
-            C_WT: myData.capitalCostWT,
-            R_WT: myData.replacementCostWT,
-            MO_WT: myData.OMCostWT
-        }
-
         try {
             const response = await fetch(`${API_URL}/api/component/wind_turbine`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(WT_Data)
-            })
+                body: JSON.stringify({
+                    session_id: localStorage.getItem("session_id"),
+                    ...myData
+                })
+            });
 
-            const result = await response.json()
-            console.log('Response from server:', result)
+            const result = await response.json();
+            console.log('Response from server:', result);
         } catch (error) {
-            console.error('Error sending wind turbine info:', error)
+            console.error('Error sending wind turbine info:', error);
+            setErrorDialog({
+                open: true,
+                title: 'Error Saving Data',
+                message: error.message || 'Failed to save wind turbine data. Please try again.'
+            });
         }
     }
 
@@ -128,55 +134,55 @@ function ComponentInfoWT() {
 
                         <FormInputField
                             label="Hub Height"
-                            name="hubHeight"
-                            value={myData.hubHeight}
+                            name="h_hub"
+                            value={myData.h_hub}
                             onChange={handleChange}
                             endAdornment="m"
                         />
 
                         <FormInputField
                             label="Anemometer Height"
-                            name="anemometerHeight"
-                            value={myData.anemometerHeight}
+                            name="h0"
+                            value={myData.h0}
                             onChange={handleChange}
                             endAdornment="m"
                         />
 
                         <FormInputField
                             label="Wind Turbine Efficiency"
-                            name="windEfficiency"
-                            value={myData.windEfficiency}
+                            name="nw"
+                            value={myData.nw}
                             onChange={handleChange}
                         />
 
                         <FormInputField
                             label="Cut-out Speed"
-                            name="cutOutSpeed"
-                            value={myData.cutOutSpeed}
+                            name="v_cut_out"
+                            value={myData.v_cut_out}
                             onChange={handleChange}
                             endAdornment="m/s"
                         />
 
                         <FormInputField
                             label="Cut-in Speed"
-                            name="cutInSpeed"
-                            value={myData.cutInSpeed}
+                            name="v_cut_in"
+                            value={myData.v_cut_in}
                             onChange={handleChange}
                             endAdornment="m/s"
                         />
 
                         <FormInputField
                             label="Rated Speed"
-                            name="ratedSpeed"
-                            value={myData.ratedSpeed}
+                            name="v_rated"
+                            value={myData.v_rated}
                             onChange={handleChange}
                             endAdornment="m/s"
                         />
 
                         <FormInputField
                             label="Wind Turbine Lifetime"
-                            name="windLifetime"
-                            value={myData.windLifetime}
+                            name="L_WT"
+                            value={myData.L_WT}
                             onChange={handleChange}
                             endAdornment="years"
                         />
@@ -187,24 +193,24 @@ function ComponentInfoWT() {
 
                         <FormInputField
                             label="Capital Cost"
-                            name="capitalCostWT"
-                            value={myData.capitalCostWT}
+                            name="C_WT"
+                            value={myData.C_WT}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="Replacement Cost"
-                            name="replacementCostWT"
-                            value={myData.replacementCostWT}
+                            name="R_WT"
+                            value={myData.R_WT}
                             onChange={handleChange}
                             endAdornment="$/kW"
                         />
 
                         <FormInputField
                             label="O&M Cost"
-                            name="OMCostWT"
-                            value={myData.OMCostWT}
+                            name="MO_WT"
+                            value={myData.MO_WT}
                             onChange={handleChange}
                             endAdornment="$/kW/year"
                         />

@@ -13,6 +13,7 @@ import Inverter from '@system/Optional/ComponentInfoInverter';
 import DieselGenerator from '@system/Optional/ComponentInfoDG';
 import PhotovoltaicSystem from '@system/Optional/ComponentInfoPV';
 import FAQ from '@pages/FAQ';
+import ComponentWizard from '@system/ComponentWizard';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/system" element={<SystemConfig />} />
           <Route path="/results" element={<Results />} />
           <Route path="/battery" element={<Battery />} />
+          <Route path="/components" element={<ComponentWizard />} />
           <Route path="/inverter" element={<Inverter />} />
           <Route path="/wt" element={<WindTurbine />} />
           <Route path="/pv" element={<PhotovoltaicSystem />} />
