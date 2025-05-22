@@ -6,22 +6,15 @@ import {
   ListItem, 
   ListItemText, 
   ListItemIcon,
-  Collapse, 
   Typography,
   Box,
   Divider,
-  useTheme,
-  Tooltip,
-  LinearProgress
+  useTheme
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   Place as PlaceIcon,
   Settings as SettingsIcon,
-  Download as DownloadIcon,
-  HelpCenter as HelpCenterIcon,
-  ExpandLess,
-  ExpandMore,
   GridOn as GridIcon,
   Build as BuildIcon,
   BatteryChargingFull as BatteryIcon,
@@ -29,8 +22,7 @@ import {
   WindPower as WindIcon,
   Power as PowerIcon,
   ElectricBolt as ElectricIcon,
-  CheckCircle as CheckCircleIcon,
-  Lock as LockIcon
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { API_URL } from '@utils/config';
 
@@ -41,11 +33,11 @@ import GridInfo from '@system/GridInfo';
 import OptimizationParams from '@system/OptimizationParams';
 
 // Component Pages
-// import ComponentInfoPV from '@system/Optional/ComponentInfoPV';
-// import ComponentInfoBattery from '@system/Optional/ComponentInfoBattery';
-// import ComponentInfoDG from '@system/Optional/ComponentInfoDG';
-// import ComponentInfoInverter from '@system/Optional/ComponentInfoInverter';
-// import ComponentInfoWindTurbine from '@system/Optional/ComponentInfoWindTurbine';
+import ComponentInfoPV from '@system/Optional/ComponentInfoPV';
+import ComponentInfoBattery from '@system/Optional/ComponentInfoBattery';
+import ComponentInfoDG from '@system/Optional/ComponentInfoDG';
+import ComponentInfoInverter from '@system/Optional/ComponentInfoInverter';
+import ComponentInfoWT from '@system/Optional/ComponentInfoWT';
 
 // // Results Pages
 // import ResultsGraphs from '@components/results/ResultsGraphs';
@@ -57,7 +49,7 @@ import Faq from '@pages/Faq';
 
 const DRAWER_WIDTH = 280;
 
-// All steps in order
+// All possible steps
 const steps = [
   {
     label: 'Geography & Economy',
@@ -82,35 +74,35 @@ const steps = [
   },
   {
     label: 'PV System',
-    path: '/components',
+    path: '/pv',
     icon: SolarIcon,
     completedKey: 'pv_system',
     required: false
   },
   {
     label: 'Wind Turbine',
-    path: '/components',
+    path: '/wt',
     icon: WindIcon,
     completedKey: 'wind_turbine',
     required: false
   },
   {
     label: 'Battery',
-    path: '/components',
+    path: '/battery',
     icon: BatteryIcon,
     completedKey: 'battery',
     required: false
   },
   {
     label: 'Inverter',
-    path: '/components',
+    path: '/inverter',
     icon: ElectricIcon,
     completedKey: 'inverter',
     required: false
   },
   {
     label: 'Diesel Generator',
-    path: '/components',
+    path: '/dg',
     icon: PowerIcon,
     completedKey: 'diesel_generator',
     required: false
@@ -176,7 +168,6 @@ const NavigationContent = () => {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
   const [completedModels, setCompletedModels] = useState({});
 
   useEffect(() => {
@@ -188,29 +179,19 @@ const NavigationContent = () => {
         const response = await fetch(`${API_URL}/api/component/completed_models?session_id=${sessionId}`);
         if (!response.ok) throw new Error('Failed to fetch completed models');
         const data = await response.json();
-        console.log('Completed models:', data);
         setCompletedModels(data);
       } catch (error) {
         console.error('Error fetching completed models:', error);
       }
     };
+
     fetchCompletedModels();
   }, []);
 
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const stepIndex = steps.findIndex(step => step.path === currentPath);
-    if (stepIndex !== -1) {
-      setCurrentStep(stepIndex);
-    }
-  }, [location]);
-
-  const handleStepClick = (stepIndex) => {
-    navigate(steps[stepIndex].path);
-  };
-
-  // Filter steps to show required ones and completed optional ones
-  const visibleSteps = steps.filter(step => step.required || completedModels[step.completedKey]);
+  // Filter steps to show required ones and enabled optional ones
+  const visibleSteps = steps.filter(step => 
+    step.required || completedModels[step.completedKey]
+  );
 
   return (
     <>
@@ -235,14 +216,14 @@ const NavigationContent = () => {
       <Divider />
       <List component="nav" sx={{ p: 1 }}>
         <SectionTitle>Configuration Steps</SectionTitle>
-        {visibleSteps.map((step, index) => {
+        {visibleSteps.map((step) => {
           const Icon = step.icon;
           const isCompleted = completedModels[step.completedKey];
           return (
             <Box key={step.path}>
               <StyledListItem
                 button
-                onClick={() => handleStepClick(index)}
+                onClick={() => navigate(step.path)}
               >
                 <ListItemIcon>
                   {isCompleted ? (

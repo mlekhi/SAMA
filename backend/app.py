@@ -167,61 +167,65 @@ def create_app(config_class=Config):
         try:
             print("[get_components] --- Starting function ---")
             
-            # Create a default session ID for system defaults
-            default_session_id = "system_defaults"
+            # Get session_id from query parameters
+            session_id = request.args.get("session_id")
+            if not session_id:
+                session_id = "system_defaults"  # Fallback to defaults if no session_id provided
             
-            # Get or create default records for each component
-            geo_economy = GeographyEconomy.query.get(default_session_id)
+            print(f"[get_components] --- Using session_id: {session_id} ---")
+            
+            # Get or create records for the session
+            geo_economy = GeographyEconomy.query.get(session_id)
             if not geo_economy:
-                geo_economy = GeographyEconomy(session_id=default_session_id)
+                geo_economy = GeographyEconomy(session_id=session_id)
                 db.session.add(geo_economy)
                 db.session.commit()
             
-            system_config = SystemConfiguration.query.get(default_session_id)
+            system_config = SystemConfiguration.query.get(session_id)
             if not system_config:
-                system_config = SystemConfiguration(session_id=default_session_id)
+                system_config = SystemConfiguration(session_id=session_id)
                 db.session.add(system_config)
                 db.session.commit()
             
-            battery = Battery.query.get(default_session_id)
+            battery = Battery.query.get(session_id)
             if not battery:
-                battery = Battery(session_id=default_session_id)
+                battery = Battery(session_id=session_id)
                 db.session.add(battery)
                 db.session.commit()
             
-            pv = PhotovoltaicSystem.query.get(default_session_id)
+            pv = PhotovoltaicSystem.query.get(session_id)
             if not pv:
-                pv = PhotovoltaicSystem(session_id=default_session_id)
+                pv = PhotovoltaicSystem(session_id=session_id)
                 db.session.add(pv)
                 db.session.commit()
             
-            inverter = Inverter.query.get(default_session_id)
+            inverter = Inverter.query.get(session_id)
             if not inverter:
-                inverter = Inverter(session_id=default_session_id)
+                inverter = Inverter(session_id=session_id)
                 db.session.add(inverter)
                 db.session.commit()
             
-            wind = WindTurbine.query.get(default_session_id)
+            wind = WindTurbine.query.get(session_id)
             if not wind:
-                wind = WindTurbine(session_id=default_session_id)
+                wind = WindTurbine(session_id=session_id)
                 db.session.add(wind)
                 db.session.commit()
             
-            diesel = DieselGenerator.query.get(default_session_id)
+            diesel = DieselGenerator.query.get(session_id)
             if not diesel:
-                diesel = DieselGenerator(session_id=default_session_id)
+                diesel = DieselGenerator(session_id=session_id)
                 db.session.add(diesel)
                 db.session.commit()
             
-            grid = Grid.query.get(default_session_id)
+            grid = Grid.query.get(session_id)
             if not grid:
-                grid = Grid(session_id=default_session_id)
+                grid = Grid(session_id=session_id)
                 db.session.add(grid)
                 db.session.commit()
             
-            optimization = Optimization.query.get(default_session_id)
+            optimization = Optimization.query.get(session_id)
             if not optimization:
-                optimization = Optimization(session_id=default_session_id)
+                optimization = Optimization(session_id=session_id)
                 db.session.add(optimization)
                 db.session.commit()
             

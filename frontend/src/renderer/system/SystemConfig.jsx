@@ -76,7 +76,7 @@ function SystemConfig(){
                 }
 
                 console.log("Fetching defaults from /api/get");
-                const response = await fetch(`${API_URL}/api/get`);
+                const response = await fetch(`${API_URL}/api/get?session_id=${sessionId}`);
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error("Error response:", errorData);
