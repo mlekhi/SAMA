@@ -12,7 +12,7 @@ class GeographyEconomy(db.Model):
     address = db.Column(db.String(500), nullable=True)  # Full address from geocoding
     
     # Economic parameters (from user input in Geography & Economy page)
-    n_ir_rate = db.Column(db.Float, default=5.5)  # Nominal discount rate (%)
-    e_ir_rate = db.Column(db.Float, default=2.0)  # Expected inflation rate (%)
-    Tax_rate = db.Column(db.Float, default=0.0)   # Equipment sales tax rate (%)
-    RE_incentives_rate = db.Column(db.Float, default=30.0)  # Renewable energy incentives rate (%) 
+    n_ir_rate = db.Column(db.Float, nullable=True)  # Nominal discount rate (%)
+    e_ir_rate = db.Column(db.Float, nullable=True)  # Expected inflation rate (%)
+    Tax_rate = db.Column(db.Float, nullable=True)   # Equipment sales tax rate (%)
+    RE_incentives_rate = db.Column(db.Float, nullable=True)  # Renewable energy incentives rate (%) 
