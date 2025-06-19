@@ -44,7 +44,7 @@ pip install -r requirements.txt
 #### Run the Flask server
 
 ```bash
-flask run
+python app.py
 ```
 
 ### 3. **Frontend Setup (Electron)**
