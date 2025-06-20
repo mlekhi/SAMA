@@ -44,9 +44,9 @@ function Optimization({ auth, user }) {
       
       if (response.ok) {
         setSaveMessage('Optimization data saved successfully!')
-        // Navigate to analysis page after successful save
+        // Navigate to geography page after successful save
         setTimeout(() => {
-          navigate('/analysis')
+          navigate('/geography')
         }, 1500)
       } else {
         setSaveMessage('Failed to save data')
@@ -166,7 +166,8 @@ function Optimization({ auth, user }) {
           <SaveMessageAlert message={saveMessage} />
           
           <NextPageButton
-            navigateTo="/analysis"
+            onClick={saveOptimizationData}
+            saving={saving}
           />
         </Box>
       </div>

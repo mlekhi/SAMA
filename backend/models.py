@@ -25,4 +25,19 @@ class Optimization(db.Model):
     w = db.Column(db.Float, nullable=False)  # Inertia Weight
     wdamp = db.Column(db.Float, nullable=False)  # Inertia Weight Damping Ratio
     c1 = db.Column(db.Float, nullable=False)  # Personal Learning Coefficient
-    c2 = db.Column(db.Float, nullable=False)  # Global Learning Coefficient 
+    c2 = db.Column(db.Float, nullable=False)  # Global Learning Coefficient
+
+class SystemConfig(db.Model):
+    user_id = db.Column(db.String(100), primary_key=True)
+    
+    # System configuration parameters
+    lifetime = db.Column(db.Integer, nullable=False)  # System lifetime
+    LPSP_max_rate = db.Column(db.Float, nullable=False)  # Loss of Power Supply Probability max rate
+    RE_min_rate = db.Column(db.Float, nullable=False)  # Renewable Energy minimum rate
+    annualData = db.Column(db.Float, nullable=False)  # Annual data
+    PV = db.Column(db.Boolean, nullable=False)  # Photovoltaic system
+    WT = db.Column(db.Boolean, nullable=False)  # Wind Turbine
+    DG = db.Column(db.Boolean, nullable=False)  # Diesel Generator
+    Bat = db.Column(db.Boolean, nullable=False)  # Battery
+    Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
+    Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery 
