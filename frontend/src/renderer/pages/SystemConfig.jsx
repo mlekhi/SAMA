@@ -223,26 +223,6 @@ function SystemConfig({ auth, user }) {
               }
               label="Battery Storage (Bat)"
             />
-            
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={systemData.Lead_acid}
-                  onChange={handleCheckboxChange('Lead_acid')}
-                />
-              }
-              label="Lead Acid Battery"
-            />
-            
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={systemData.Li_ion}
-                  onChange={handleCheckboxChange('Li_ion')}
-                />
-              }
-              label="Lithium Ion Battery"
-            />
           </FormGroup>
         </Box>
 
