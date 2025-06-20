@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import Login from './pages/Login'
 import Geography from './pages/Geography'
 import Optimization from './pages/Optimization'
+import SystemConfig from './pages/SystemConfig'
 import Header from './components/Header'
 
 // Firebase config from environment variables
@@ -66,6 +67,12 @@ function App() {
               path="/optimization" 
               element={
                 user ? <Optimization auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/system-config" 
+              element={
+                user ? <SystemConfig auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 

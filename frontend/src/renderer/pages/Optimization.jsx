@@ -46,7 +46,7 @@ function Optimization({ auth, user }) {
         setSaveMessage('Optimization data saved successfully!')
         // Navigate to geography page after successful save
         setTimeout(() => {
-          navigate('/geography')
+          navigate('/system-config')
         }, 1500)
       } else {
         setSaveMessage('Failed to save data')
