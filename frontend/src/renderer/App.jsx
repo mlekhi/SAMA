@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { initializeApp } from 'firebase/app'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import Login from './components/Login'
-import Geography from './components/Geography'
+import Login from './pages/Login'
+import Geography from './pages/Geography'
 
 // Firebase config from environment variables
 const firebaseConfig = {
