@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Typography, 
   Button, 
-  Grid, 
   Card, 
   CardContent, 
   Box,
   Alert,
   LinearProgress,
-  TextField
+  TextField,
+  Divider
 } from "@mui/material"
 import { 
   TrendingUp, 
@@ -71,8 +71,8 @@ function Optimization({ auth, user }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-roboto">
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <Button 
@@ -92,248 +92,206 @@ function Optimization({ auth, user }) {
         </div>
 
         {/* Optimization Settings */}
-        <Card className="mb-6">
-          <CardContent>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Optimization Parameters
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
-            </Typography>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h2" gutterBottom>
+            Optimization Parameters
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              fullWidth
+              label="Maximum Number of Iterations *"
+              type="number"
+              value={optimizationSettings.maxIterations}
+              onChange={handleSettingChange('maxIterations')}
+              variant="outlined"
+              inputProps={{ min: 10, max: 1000 }}
+              helperText="Number of optimization iterations (10-1000)"
+            />
             
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Maximum Number of Iterations *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.maxIterations}
-                  onChange={handleSettingChange('maxIterations')}
-                  variant="outlined"
-                  inputProps={{ min: 10, max: 1000 }}
-                  helperText="Number of optimization iterations (10-1000)"
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Population Size (Swarm Size) *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.populationSize}
-                  onChange={handleSettingChange('populationSize')}
-                  variant="outlined"
-                  inputProps={{ min: 5, max: 100 }}
-                  helperText="Number of particles in swarm (5-100)"
-                />
-              </Grid>
+            <TextField
+              fullWidth
+              label="Population Size (Swarm Size) *"
+              type="number"
+              value={optimizationSettings.populationSize}
+              onChange={handleSettingChange('populationSize')}
+              variant="outlined"
+              inputProps={{ min: 5, max: 100 }}
+              helperText="Number of particles in swarm (5-100)"
+            />
 
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Inertia Weight *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.inertiaWeight}
-                  onChange={handleSettingChange('inertiaWeight')}
-                  variant="outlined"
-                  inputProps={{ min: 0.1, max: 1.0, step: 0.1 }}
-                  helperText="Inertia weight (0.1-1.0)"
-                />
-              </Grid>
+            <TextField
+              fullWidth
+              label="Inertia Weight *"
+              type="number"
+              value={optimizationSettings.inertiaWeight}
+              onChange={handleSettingChange('inertiaWeight')}
+              variant="outlined"
+              inputProps={{ min: 0.1, max: 1.0, step: 0.1 }}
+              helperText="Inertia weight (0.1-1.0)"
+            />
 
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Inertia Weight Damping Ratio *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.inertiaWeightDamping}
-                  onChange={handleSettingChange('inertiaWeightDamping')}
-                  variant="outlined"
-                  inputProps={{ min: 0.8, max: 1.0, step: 0.01 }}
-                  helperText="Damping ratio (0.8-1.0)"
-                />
-              </Grid>
+            <TextField
+              fullWidth
+              label="Inertia Weight Damping Ratio *"
+              type="number"
+              value={optimizationSettings.inertiaWeightDamping}
+              onChange={handleSettingChange('inertiaWeightDamping')}
+              variant="outlined"
+              inputProps={{ min: 0.8, max: 1.0, step: 0.01 }}
+              helperText="Damping ratio (0.8-1.0)"
+            />
 
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Personal Learning Coefficient *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.personalLearningCoeff}
-                  onChange={handleSettingChange('personalLearningCoeff')}
-                  variant="outlined"
-                  inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
-                  helperText="Personal learning coefficient (0.5-3.0)"
-                />
-              </Grid>
+            <TextField
+              fullWidth
+              label="Personal Learning Coefficient *"
+              type="number"
+              value={optimizationSettings.personalLearningCoeff}
+              onChange={handleSettingChange('personalLearningCoeff')}
+              variant="outlined"
+              inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
+              helperText="Personal learning coefficient (0.5-3.0)"
+            />
 
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>
-                  Global Learning Coefficient *
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={optimizationSettings.globalLearningCoeff}
-                  onChange={handleSettingChange('globalLearningCoeff')}
-                  variant="outlined"
-                  inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
-                  helperText="Global learning coefficient (0.5-3.0)"
-                />
-              </Grid>
-            </Grid>
-            
-            <Box sx={{ mt: 3 }}>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={runOptimization}
-                disabled={optimizationProgress > 0 && optimizationProgress < 100}
-                size="large"
-                startIcon={<Settings />}
-              >
-                Run Optimization
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+            <TextField
+              fullWidth
+              label="Global Learning Coefficient *"
+              type="number"
+              value={optimizationSettings.globalLearningCoeff}
+              onChange={handleSettingChange('globalLearningCoeff')}
+              variant="outlined"
+              inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
+              helperText="Global learning coefficient (0.5-3.0)"
+            />
+          </Box>
+          
+          <Box sx={{ mt: 3 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={runOptimization}
+              disabled={optimizationProgress > 0 && optimizationProgress < 100}
+              size="large"
+              startIcon={<Settings />}
+            >
+              Run Optimization
+            </Button>
+          </Box>
+        </Box>
 
         {/* Progress Bar */}
         {optimizationProgress > 0 && optimizationProgress < 100 && (
-          <Card className="mb-6">
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Optimizing System Configuration...
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={optimizationProgress} 
-                sx={{ height: 10, borderRadius: 5 }}
-              />
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                {optimizationProgress}% Complete
-              </Typography>
-            </CardContent>
-          </Card>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Optimizing System Configuration...
+            </Typography>
+            <LinearProgress 
+              variant="determinate" 
+              value={optimizationProgress} 
+              sx={{ height: 10, borderRadius: 5 }}
+            />
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              {optimizationProgress}% Complete
+            </Typography>
+          </Box>
         )}
 
         {/* Results */}
         {optimizationComplete && optimizationResults && (
           <>
-            <Alert severity="success" sx={{ mb: 3 }} icon={<CheckCircle />}>
+            <Divider sx={{ my: 4 }} />
+            
+            <Alert severity="success" sx={{ mb: 4 }} icon={<CheckCircle />}>
               Optimization completed successfully! Here are your optimal system specifications.
             </Alert>
             
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <SolarPower color="primary" sx={{ mr: 1 }} />
-                      <Typography variant="h6">
-                        Optimal Panel Configuration
-                      </Typography>
-                    </Box>
-                    <Typography variant="h3" color="primary" gutterBottom>
-                      {optimizationResults.optimalPanelCount} Panels
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Optimized panel count for maximum energy production at your location.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'primary.50', borderRadius: 2 }}>
+                <SolarPower color="primary" sx={{ mr: 2, fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6" color="primary">
+                    Optimal Panel Configuration
+                  </Typography>
+                  <Typography variant="h3" color="primary">
+                    {optimizationResults.optimalPanelCount} Panels
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Optimized panel count for maximum energy production at your location.
+                  </Typography>
+                </Box>
+              </Box>
 
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <AttachMoney color="success" sx={{ mr: 1 }} />
-                      <Typography variant="h6">
-                        System Cost
-                      </Typography>
-                    </Box>
-                    <Typography variant="h3" color="success.main" gutterBottom>
-                      ${optimizationResults.estimatedCost.toLocaleString()}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Total estimated cost for the optimized solar system.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'success.50', borderRadius: 2 }}>
+                <AttachMoney color="success" sx={{ mr: 2, fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6" color="success.main">
+                    System Cost
+                  </Typography>
+                  <Typography variant="h3" color="success.main">
+                    ${optimizationResults.estimatedCost.toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Total estimated cost for the optimized solar system.
+                  </Typography>
+                </Box>
+              </Box>
 
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <TrendingUp color="info" sx={{ mr: 1 }} />
-                      <Typography variant="h6">
-                        Return on Investment
-                      </Typography>
-                    </Box>
-                    <Typography variant="h3" color="info.main" gutterBottom>
-                      {optimizationResults.roi}%
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Expected annual return on investment from energy savings.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'info.50', borderRadius: 2 }}>
+                <TrendingUp color="info" sx={{ mr: 2, fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6" color="info.main">
+                    Return on Investment
+                  </Typography>
+                  <Typography variant="h3" color="info.main">
+                    {optimizationResults.roi}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Expected annual return on investment from energy savings.
+                  </Typography>
+                </Box>
+              </Box>
 
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Settings color="secondary" sx={{ mr: 1 }} />
-                      <Typography variant="h6">
-                        Battery Storage
-                      </Typography>
-                    </Box>
-                    <Typography variant="h3" color="secondary.main" gutterBottom>
-                      {optimizationResults.optimalBatterySize}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Recommended battery capacity for optimal energy storage.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'secondary.50', borderRadius: 2 }}>
+                <Settings color="secondary" sx={{ mr: 2, fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6" color="secondary.main">
+                    Battery Storage
+                  </Typography>
+                  <Typography variant="h3" color="secondary.main">
+                    {optimizationResults.optimalBatterySize}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Recommended battery capacity for optimal energy storage.
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 4 }} />
 
             {/* Action Buttons */}
-            <Card sx={{ mt: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Next Steps
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Your optimized system is ready. Choose your next action.
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button variant="contained" color="primary">
-                    Generate Quote
-                  </Button>
-                  <Button variant="outlined" color="primary">
-                    Download Specifications
-                  </Button>
-                  <Button variant="outlined" color="secondary">
-                    Schedule Consultation
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Next Steps
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Your optimized system is ready. Choose your next action.
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Button variant="contained" color="primary" size="large">
+                  Generate Quote
+                </Button>
+                <Button variant="outlined" color="primary" size="large">
+                  Download Specifications
+                </Button>
+                <Button variant="outlined" color="secondary" size="large">
+                  Schedule Consultation
+                </Button>
+              </Box>
+            </Box>
           </>
         )}
       </div>

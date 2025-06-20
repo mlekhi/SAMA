@@ -1,8 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure Space Grotesk is applied to all elements */
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Override Material-UI default fonts */
+.MuiTypography-root {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.MuiButton-root {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.MuiTextField-root {
+  font-family: 'Space Grotesk', sans-serif !important;
 } 
