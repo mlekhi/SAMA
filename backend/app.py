@@ -5,7 +5,7 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization
+from models import db, GeographyEconomy, Optimization, SystemConfig
 from config import Config
 
 # Initialize Flask app
@@ -148,6 +148,38 @@ def save_optimization():
         return jsonify({'id': optimization.user_id, 'message': 'Optimization data saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving optimization data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/system-config', methods=['POST'])
+@require_auth
+@log_function_input
+def save_system_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        
+        # Check if record exists
+        system_config = SystemConfig.query.get(user_id)
+        if not system_config:
+            system_config = SystemConfig(user_id=user_id)
+            db.session.add(system_config)
+        
+        # Update fields
+        system_config.lifetime = data.get('lifetime')
+        system_config.LPSP_max_rate = data.get('LPSP_max_rate')
+        system_config.RE_min_rate = data.get('RE_min_rate')
+        system_config.annualData = data.get('annualData')
+        system_config.PV = data.get('PV')
+        system_config.WT = data.get('WT')
+        system_config.DG = data.get('DG')
+        system_config.Bat = data.get('Bat')
+        system_config.Lead_acid = data.get('Lead_acid')
+        system_config.Li_ion = data.get('Li_ion')
+        
+        db.session.commit()
+        return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
+    except Exception as e:
+        logger.error(f"Error saving system configuration data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
