@@ -9,7 +9,8 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
-  FormGroup
+  FormGroup,
+  InputAdornment
 } from "@mui/material"
 
 function SystemConfig({ auth, user }) {
@@ -88,50 +89,75 @@ function SystemConfig({ auth, user }) {
             System Parameters
           </Typography>
           
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              fullWidth
-              label="System Lifetime (years)"
-              type="number"
-              value={systemData.lifetime}
-              onChange={(e) => setSystemData({...systemData, lifetime: e.target.value})}
-              variant="outlined"
-              inputProps={{ min: 1, max: 50 }}
-              helperText="Expected lifetime of the system (1-50 years)"
-            />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {/* Lifetime of System */}
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Lifetime of System
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={systemData.lifetime}
+                onChange={(e) => setSystemData({...systemData, lifetime: e.target.value})}
+                variant="outlined"
+                inputProps={{ min: 1, max: 50 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">years</InputAdornment>,
+                }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="LPSP Max Rate"
-              type="number"
-              value={systemData.LPSP_max_rate}
-              onChange={(e) => setSystemData({...systemData, LPSP_max_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ min: 0, max: 1, step: 0.01 }}
-              helperText="Loss of Power Supply Probability maximum rate (0-1)"
-            />
+            {/* Max Loss of Power */}
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Max Loss of Power %
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={systemData.LPSP_max_rate}
+                onChange={(e) => setSystemData({...systemData, LPSP_max_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="RE Min Rate"
-              type="number"
-              value={systemData.RE_min_rate}
-              onChange={(e) => setSystemData({...systemData, RE_min_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ min: 0, max: 1, step: 0.01 }}
-              helperText="Renewable Energy minimum rate (0-1)"
-            />
+            {/* Min Renewable Energy */}
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Min Renewable Energy %
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={systemData.RE_min_rate}
+                onChange={(e) => setSystemData({...systemData, RE_min_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Annual Data (hours)"
-              type="number"
-              value={systemData.annualData}
-              onChange={(e) => setSystemData({...systemData, annualData: e.target.value})}
-              variant="outlined"
-              inputProps={{ min: 8760, max: 8760 }}
-              helperText="Annual hours (typically 8760 hours)"
-            />
+            {/* Annual Data */}
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Annual Data (hours)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={systemData.annualData}
+                onChange={(e) => setSystemData({...systemData, annualData: e.target.value})}
+                variant="outlined"
+                inputProps={{ min: 8760, max: 8760 }}
+              />
+            </Box>
           </Box>
         </Box>
 

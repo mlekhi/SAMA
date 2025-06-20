@@ -128,46 +128,62 @@ function Geography({ auth, user }) {
             Economic Parameters
           </Typography>
           
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              fullWidth
-              label="Nominal Discount Rate (%)"
-              type="number"
-              value={geoData.n_ir_rate}
-              onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ step: 0.1 }}
-            />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Nominal Discount Rate (%)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={geoData.n_ir_rate}
+                onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ step: 0.1 }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Expected Inflation Rate (%)"
-              type="number"
-              value={geoData.e_ir_rate}
-              onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ step: 0.1 }}
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Expected Inflation Rate (%)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={geoData.e_ir_rate}
+                onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ step: 0.1 }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Tax Rate (%)"
-              type="number"
-              value={geoData.Tax_rate}
-              onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ step: 0.1 }}
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Tax Rate (%)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={geoData.Tax_rate}
+                onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ step: 0.1 }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Renewable Energy Incentives Rate (%)"
-              type="number"
-              value={geoData.RE_incentives_rate}
-              onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
-              variant="outlined"
-              inputProps={{ step: 0.1 }}
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Renewable Energy Incentives Rate (%)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={geoData.RE_incentives_rate}
+                onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
+                variant="outlined"
+                inputProps={{ step: 0.1 }}
+              />
+            </Box>
           </Box>
         </Box>
 

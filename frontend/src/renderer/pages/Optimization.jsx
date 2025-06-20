@@ -76,72 +76,93 @@ function Optimization({ auth, user }) {
 
         {/* Optimization Settings */}
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              fullWidth
-              label="Maximum Number of Iterations *"
-              type="number"
-              value={optimizationSettings.maxIterations}
-              onChange={handleSettingChange('maxIterations')}
-              variant="outlined"
-              inputProps={{ min: 10, max: 1000 }}
-              helperText="Number of optimization iterations (10-1000)"
-            />
+          <Typography variant="h5" component="h2" gutterBottom>
+            Optimization Parameters
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Maximum Number of Iterations
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.maxIterations}
+                onChange={handleSettingChange('maxIterations')}
+                variant="outlined"
+                inputProps={{ min: 10, max: 1000 }}
+              />
+            </Box>
             
-            <TextField
-              fullWidth
-              label="Population Size (Swarm Size) *"
-              type="number"
-              value={optimizationSettings.populationSize}
-              onChange={handleSettingChange('populationSize')}
-              variant="outlined"
-              inputProps={{ min: 5, max: 100 }}
-              helperText="Number of particles in swarm (5-100)"
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Population Size (Swarm Size)
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.populationSize}
+                onChange={handleSettingChange('populationSize')}
+                variant="outlined"
+                inputProps={{ min: 5, max: 100 }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Inertia Weight *"
-              type="number"
-              value={optimizationSettings.inertiaWeight}
-              onChange={handleSettingChange('inertiaWeight')}
-              variant="outlined"
-              inputProps={{ min: 0.1, max: 1.0, step: 0.1 }}
-              helperText="Inertia weight (0.1-1.0)"
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Inertia Weight
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.inertiaWeight}
+                onChange={handleSettingChange('inertiaWeight')}
+                variant="outlined"
+                inputProps={{ min: 0.1, max: 1.0, step: 0.1 }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Inertia Weight Damping Ratio *"
-              type="number"
-              value={optimizationSettings.inertiaWeightDamping}
-              onChange={handleSettingChange('inertiaWeightDamping')}
-              variant="outlined"
-              inputProps={{ min: 0.8, max: 1.0, step: 0.01 }}
-              helperText="Damping ratio (0.8-1.0)"
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Inertia Weight Damping Ratio
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.inertiaWeightDamping}
+                onChange={handleSettingChange('inertiaWeightDamping')}
+                variant="outlined"
+                inputProps={{ min: 0.8, max: 1.0, step: 0.01 }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Personal Learning Coefficient *"
-              type="number"
-              value={optimizationSettings.personalLearningCoeff}
-              onChange={handleSettingChange('personalLearningCoeff')}
-              variant="outlined"
-              inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
-              helperText="Personal learning coefficient (0.5-3.0)"
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Personal Learning Coefficient
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.personalLearningCoeff}
+                onChange={handleSettingChange('personalLearningCoeff')}
+                variant="outlined"
+                inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Global Learning Coefficient *"
-              type="number"
-              value={optimizationSettings.globalLearningCoeff}
-              onChange={handleSettingChange('globalLearningCoeff')}
-              variant="outlined"
-              inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
-              helperText="Global learning coefficient (0.5-3.0)"
-            />
+            <Box>
+              <Typography variant="subtitle1" component="h3" gutterBottom>
+                Global Learning Coefficient
+              </Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={optimizationSettings.globalLearningCoeff}
+                onChange={handleSettingChange('globalLearningCoeff')}
+                variant="outlined"
+                inputProps={{ min: 0.5, max: 3.0, step: 0.1 }}
+              />
+            </Box>
           </Box>
         </Box>
 
