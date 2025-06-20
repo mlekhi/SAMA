@@ -39,7 +39,7 @@ function Geography({ auth, user }) {
     
     try {
       const token = await user.getIdToken()
-      const response = await fetch('/api/geography-economy', {
+      const response = await fetch('http://127.0.0.1:5000/api/geography-economy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

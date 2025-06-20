@@ -66,22 +66,6 @@ def require_auth(f):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
-# Geography and Economy endpoints
-@app.route('/api/geography-economy', methods=['GET'])
-@require_auth
-def get_geography_economy():
-    try:
-        user_id = request.user['uid']
-        data = GeographyEconomy.query.get(user_id)
-        if not data:
-            data = GeographyEconomy(user_id=user_id)
-            db.session.add(data)
-            db.session.commit()
-        return jsonify(data.__dict__), 200
-    except Exception as e:
-        logger.error(f"Error fetching geography economy data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
 def save_geography_economy():
