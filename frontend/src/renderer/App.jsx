@@ -8,6 +8,7 @@ import Optimization from './pages/Optimization'
 import SystemConfig from './pages/SystemConfig'
 import FAQ from './pages/FAQ'
 import Grid from './pages/Grid'
+import Results from './pages/Results'
 import Header from './components/Header'
 
 // Firebase config from environment variables
@@ -87,6 +88,12 @@ function App() {
               path="/grid-config" 
               element={
                 user ? <Grid auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/results" 
+              element={
+                user ? <Results /> : <Navigate to="/login" replace />
               } 
             />
             <Route 

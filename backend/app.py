@@ -5,8 +5,12 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization, SystemConfig, Grid
+from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery
 from config import Config
+from sama_python.Results import Gen_Results
+import pandas as pd
+from types import SimpleNamespace
+import numpy as np
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -205,6 +209,190 @@ def save_grid():
         return jsonify({'id': grid.user_id, 'message': 'Grid data saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving grid data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+class InData:
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.load_user_data()
+        self.load_static_data()
+
+    def load_user_data(self):
+        # Load data from database
+        geo_econ = GeographyEconomy.query.get(self.user_id)
+        opt = Optimization.query.get(self.user_id)
+        sys_config = SystemConfig.query.get(self.user_id)
+        pv_system = PhotovoltaicSystem.query.get(self.user_id)
+        inverter = Inverter.query.get(self.user_id)
+        diesel = DieselGenerator.query.get(self.user_id)
+        battery = Battery.query.get(self.user_id)
+        grid = Grid.query.get(self.user_id)
+
+        # --- SystemConfig ---
+        self.WT = sys_config.WT
+        self.n = sys_config.lifetime
+        self.LPSP_max = sys_config.LPSP_max_rate
+        self.RE_min = sys_config.RE_min_rate
+        self.Lead_acid = sys_config.Lead_acid
+        self.Li_ion = sys_config.Li_ion
+
+        # --- Grid ---
+        self.Grid = grid.Grid
+        self.NEM = grid.NEM
+        self.Annual_expenses = grid.Annual_expenses
+        self.Grid_Tax = grid.Grid_sale_tax_rate / 100
+        self.Grid_Tax_amount = grid.Grid_Tax_amount
+        self.Grid_escalation = grid.Grid_escalation_rate / 100
+        self.Grid_credit = grid.Grid_credit
+        self.NEM_fee = grid.NEM_fee
+        self.Service_charge = grid.SC_flat 
+        self.Pbuy_max = grid.Pbuy_max
+        self.Psell_max = grid.Psell_max
+
+        # --- PhotovoltaicSystem ---
+        self.fpv = pv_system.fpv
+        self.Tcof = pv_system.Tcof
+        self.Tref = pv_system.Tref
+        self.Tc_noct = pv_system.Tc_noct
+        self.Ta_noct = pv_system.Ta_noct
+        self.G_noct = pv_system.G_noct
+        self.n_PV = pv_system.n_PV
+        self.Gref = pv_system.Gref
+        self.L_PV = pv_system.L_PV
+        self.gama = pv_system.gama
+        self.C_PV = pv_system.C_PV
+        self.R_PV = pv_system.R_PV
+        self.MO_PV = pv_system.MO_PV
+        self.Engineering_Costs = sum([
+            pv_system.Installation_cost, pv_system.Overhead, pv_system.Sales_and_marketing,
+            pv_system.Permiting_and_Inspection, pv_system.Electrical_BoS, pv_system.Structural_BoS,
+            pv_system.Supply_Chain_costs, pv_system.Profit_costs, pv_system.Sales_tax
+        ])
+
+        # --- Inverter ---
+        self.n_I = inverter.n_I
+        self.L_I = inverter.L_I
+        self.DC_AC_ratio = inverter.DC_AC_ratio
+        self.C_I = inverter.C_I
+        self.R_I = inverter.R_I
+        self.MO_I = inverter.MO_I
+        
+        # --- DieselGenerator ---
+        self.a = diesel.a
+        self.b = diesel.b
+        self.LR_DG = diesel.min_load_ratio
+        self.C_DG = diesel.C_DG
+        self.R_DG = diesel.R_DG
+        self.MO_DG = diesel.MO_DG
+        self.C_fuel = diesel.C_fuel
+        self.C_fuel_adj = diesel.C_fuel_adj_rate / 100
+        self.TL_DG = diesel.diesel_lifetime
+
+        # --- Battery ---
+        self.SOC_min = battery.SOC_min
+        self.SOC_max = battery.SOC_max
+        self.SOC_initial = battery.SOC_initial
+        self.self_discharge_rate = battery.self_discharge_rate
+        self.L_B = battery.L_B
+        self.Cnom_Leadacid = battery.Cnom_Leadacid
+        self.alfa_battery_leadacid = battery.alfa_battery_leadacid
+        self.c = battery.c
+        self.k = battery.k
+        self.Ich_max_leadacid = battery.Ich_max_leadacid
+        self.Vnom_leadacid = battery.Vnom_leadacid
+        self.ef_bat_leadacid = battery.ef_bat_leadacid
+        self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid
+        self.Ich_max_Li_ion = battery.Ich_max_Li_ion
+        self.Idch_max_Li_ion = battery.Idch_max_Li_ion
+        self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
+
+        # --- GeographyEconomy ---
+        self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
+        self.System_Tax = geo_econ.Tax_rate / 100
+        self.RE_incentives = geo_econ.RE_incentives_rate / 100
+
+    def load_static_data(self):
+        # Load data from CSV files
+        weather_data = pd.read_csv('backend/sama_python/data/USA_CA_PALO-ALTO_724937S_2022.csv')
+        self.Eload = weather_data['Power'].values if 'Power' in weather_data.columns else np.random.rand(8760) * 3
+        self.T = weather_data['Temperature'].values
+        self.G = weather_data['GHI'].values if 'GHI' in weather_data.columns else weather_data['DNI'].values * np.cos(np.radians(30)) + weather_data['DHI'].values
+        self.Vw = weather_data['Wind Speed'].values
+        
+        # Placeholder/default values for variables not in the database
+        self.daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.Ppv_r = 1.0  # Rated power of a single PV panel
+        self.Pwt_r = 1.0  # Rated power of a single wind turbine
+        self.Cbt_r = 1.0  # Capacity of a single battery
+        self.Cdg_r = 1.0  # Capacity of a single diesel generator
+        self.h_hub = 50
+        self.h0 = 10
+        self.alfa_wind_turbine = 0.14
+        self.v_cut_in = 3
+        self.v_cut_out = 25
+        self.v_rated = 15
+        self.R_B = 200
+        self.C_WT = 1200
+        self.C_B = 200
+        self.C_CH = 100
+        self.L_WT = 20
+        self.R_WT = 1000
+        self.R_CH = 80
+        self.L_CH = 10
+        self.MO_WT = 20
+        self.MO_B = 10
+        self.MO_CH = 5
+        self.RT_PV = 1
+        self.RT_WT = 1
+        self.RT_B = 3
+        self.RT_I = 2
+        self.RT_CH = 2
+        self.CO2 = 2.6
+        self.NOx = 0.006
+        self.SO2 = 0.00013
+        self.E_CO2 = 0.2
+        self.E_SO2 = 0.0001
+        self.E_NOx = 0.0002
+        self.Cbuy = np.full(8760, 0.15)
+        self.Csell = np.full(8760, 0.05)
+        self.EM = 'default_em'
+        self.Budget = 100000
+        self.Vnom_Li_ion = 48
+        self.Cnom_Li = 100
+        self.ef_bat_Li = 0.9
+        self.Q_lifetime_Li = 3000
+        self.Cash_Flow_adv = 0
+        
+
+@app.route('/api/submit', methods=['POST'])
+@require_auth
+@log_function_input
+def submit_results():
+    try:
+        user_id = request.user['uid']
+        
+        # 1. Prepare data
+        in_data = InData(user_id)
+        
+        # 2. Get optimization variables (using defaults for now)
+        # These would eventually come from the frontend or another process
+        X = [
+            in_data.PV, # Npv
+            in_data.WT, # Nwt
+            in_data.Bat, # Nbat
+            in_data.DG, # N_DG
+            1 # Cn_I, placeholder
+        ]
+
+        # 3. Run the results generation
+        # The Gen_Results function will handle its own logging internally
+        Gen_Results(X, in_data)
+        
+        # 4. Return a success message (logs are handled internally by Gen_Results)
+        return jsonify({'message': 'Analysis completed successfully'})
+
+    except Exception as e:
+        logger.error(f"Error submitting results: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

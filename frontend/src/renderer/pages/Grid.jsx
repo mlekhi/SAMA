@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import NextPageButton from '../components/NextPageButton'
 import SaveMessageAlert from '../components/SaveMessageAlert'
 import {
   Typography,
@@ -10,6 +9,7 @@ import {
   FormControlLabel,
   Checkbox,
   FormGroup,
+  Button
 } from "@mui/material"
 
 function Grid({ auth, user }) {
@@ -30,38 +30,57 @@ function Grid({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
-  const saveGridData = async () => {
-    if (!user) return
-    
-    setSaving(true)
-    setSaveMessage('')
-    
+  const handleSubmit = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    setSaveMessage('');
+
     try {
-      const token = await user.getIdToken()
-      const response = await fetch('http://127.0.0.1:5000/api/grid', {
+      const token = await user.getIdToken();
+      
+      // Step 1: Save the Grid data first.
+      const saveResponse = await fetch('http://127.0.0.1:5000/api/grid', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(gridData)
-      })
+      });
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        throw new Error(errorData.error || 'Failed to save grid data.');
+      }
       
-      if (response.ok) {
-        setSaveMessage('Grid configuration saved successfully!')
-        // Navigate to analysis page after successful save
+      setSaveMessage('Grid configuration saved. Submitting for analysis...');
+
+      // Step 2: Call the results endpoint.
+      const submitResponse = await fetch('http://127.0.0.1:5000/api/submit', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (submitResponse.ok) {
+        const results = await submitResponse.json();
+        console.log('SAMA Analysis Results:', results.logs);
+        setSaveMessage('Analysis complete! Navigating to results...');
         setTimeout(() => {
-          navigate('/analysis') // Or another page as needed
-        }, 1500)
+          navigate('/results', { state: { results: results.logs } });
+        }, 1500);
       } else {
-        setSaveMessage('Failed to save data')
+        const errorData = await submitResponse.json();
+        throw new Error(errorData.error || 'Failed to submit for analysis.');
       }
     } catch (error) {
-      setSaveMessage('Error saving data: ' + error.message)
+      setSaveMessage(`Error: ${error.message}`);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleCheckboxChange = (field) => (event) => {
     setGridData(prev => ({
@@ -173,10 +192,16 @@ function Grid({ auth, user }) {
         <Box sx={{ mb: 4 }}>
           <SaveMessageAlert message={saveMessage} />
           
-          <NextPageButton
-            onClick={saveGridData}
-            saving={saving}
-          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={saving}
+            fullWidth
+            sx={{ py: 1.5 }}
+          >
+            {saving ? 'Submitting...' : 'Submit for Analysis'}
+          </Button>
         </Box>
       </div>
     </div>
