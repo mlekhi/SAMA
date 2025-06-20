@@ -42,6 +42,10 @@ class SystemConfig(db.Model):
     Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
     Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery
 
+# --------------------------
+# optional modules
+# --------------------------
+
 class PhotovoltaicSystem(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
     
