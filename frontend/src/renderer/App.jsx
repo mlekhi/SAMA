@@ -40,26 +40,51 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={
-            user ? <Navigate to="/geography" replace /> : <Login auth={auth} onLoginSuccess={handleLoginSuccess} />
-          } 
-        />
-        <Route 
-          path="/geography" 
-          element={
-            user ? <Geography auth={auth} user={user} /> : <Navigate to="/login" replace />
-          } 
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to={user ? "/geography" : "/login"} replace />} 
-        />
-      </Routes>
-    </Router>
+    <div className="min-h-screen bg-gray-50">
+      {/* Persistent Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-900 font-roboto">
+                Solar Alone Multiobjective Advisor
+              </h1>
+            </div>
+            {user && (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600 font-roboto">
+                  Welcome, {user.email}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="pt-0">
+        <Router>
+          <Routes>
+            <Route 
+              path="/login" 
+              element={
+                user ? <Navigate to="/geography" replace /> : <Login auth={auth} onLoginSuccess={handleLoginSuccess} />
+              } 
+            />
+            <Route 
+              path="/geography" 
+              element={
+                user ? <Geography auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/" 
+              element={<Navigate to={user ? "/geography" : "/login"} replace />} 
+            />
+          </Routes>
+        </Router>
+      </main>
+    </div>
   )
 }
 
