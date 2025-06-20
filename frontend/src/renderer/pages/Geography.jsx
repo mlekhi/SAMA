@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Map from '../components/Map'
 import Search from '../components/Search'
-import { Typography, TextField, Button, Alert, CircularProgress, Box, Divider } from "@mui/material"
+import NextPageButton from '../components/NextPageButton'
+import SaveMessageAlert from '../components/SaveMessageAlert'
+import { Typography, TextField, Box, Divider } from "@mui/material"
 
 function Geography({ auth, user }) {
   const navigate = useNavigate()
@@ -173,22 +175,13 @@ function Geography({ auth, user }) {
 
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
-          {saveMessage && (
-            <Alert severity={saveMessage.includes('successfully') ? 'success' : 'error'} sx={{ mb: 2 }}>
-              {saveMessage}
-            </Alert>
-          )}
+          <SaveMessageAlert message={saveMessage} />
           
-          <Button
-            fullWidth
-            variant="contained"
-            color="success"
+          <NextPageButton
             onClick={saveGeoData}
-            disabled={!selectedPosition || saving}
-            size="large"
-          >
-            Next Page
-          </Button>
+            disabled={!selectedPosition}
+            saving={saving}
+          />
           
           {!selectedPosition && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>

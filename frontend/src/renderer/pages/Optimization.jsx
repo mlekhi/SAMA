@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import NextPageButton from '../components/NextPageButton'
+import SaveMessageAlert from '../components/SaveMessageAlert'
 import { 
   Typography, 
   Button, 
   Box,
-  TextField,
-  Alert,
-  CircularProgress
+  TextField
 } from "@mui/material"
 import { 
   ArrowBack
@@ -167,29 +167,11 @@ function Optimization({ auth, user }) {
 
         {/* Next Page Button */}
         <Box sx={{ mb: 4 }}>
-          {saveMessage && (
-            <Alert severity={saveMessage.includes('successfully') ? 'success' : 'error'} sx={{ mb: 2 }}>
-              {saveMessage}
-            </Alert>
-          )}
+          <SaveMessageAlert message={saveMessage} />
           
-          <Button
-            fullWidth
-            variant="contained"
-            color="success"
-            onClick={saveOptimizationData}
-            disabled={saving}
-            size="large"
-          >
-            {saving ? (
-              <span style={{ display: 'flex', alignItems: 'center' }}>
-                <CircularProgress size="1rem" color="inherit" style={{ marginRight: 8 }} />
-                Saving Data...
-              </span>
-            ) : (
-              'Next Page'
-            )}
-          </Button>
+          <NextPageButton
+            navigateTo="/analysis"
+          />
         </Box>
       </div>
     </div>
