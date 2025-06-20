@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { signOut } from 'firebase/auth'
 import Map from '../components/Map'
 import Search from '../components/Search'
 
@@ -14,12 +13,6 @@ function Geography({ auth, user }) {
     RE_incentives_rate: 30.0
   })
   const [selectedPosition, setSelectedPosition] = useState(null)
-
-  const handleLogout = () => {
-    if (auth) {
-      signOut(auth)
-    }
-  }
 
   const handlePositionSelect = (position) => {
     setSelectedPosition({
@@ -63,17 +56,9 @@ function Geography({ auth, user }) {
     <div className="min-h-screen bg-gray-50 font-roboto">
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 font-roboto">Geography & Economy</h1>
-            <p className="text-gray-600 font-roboto">Configure your location and economic parameters</p>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 font-roboto"
-          >
-            Logout
-          </button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 font-roboto">Geography & Economy</h1>
+          <p className="text-gray-600 font-roboto">Configure your location and economic parameters</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
