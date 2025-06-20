@@ -42,6 +42,32 @@ with open('firebase_service_account.json') as f:
 cred = credentials.Certificate(service_account)
 firebase_app = initialize_app(cred)
 
+# Logging decorator to show function inputs
+# GET RID OF LATER!!!!
+def log_function_input(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        func_name = f.__name__
+        logger.info(f"=== {func_name} called ===")
+        logger.info(f"Args: {args}")
+        logger.info(f"Kwargs: {kwargs}")
+        
+        # Log request data if it's a Flask request
+        if hasattr(request, 'get_json'):
+            try:
+                request_data = request.get_json()
+                logger.info(f"Request JSON: {request_data}")
+            except:
+                logger.info("No JSON data in request")
+        
+        if hasattr(request, 'headers'):
+            logger.info(f"Headers: {dict(request.headers)}")
+        
+        result = f(*args, **kwargs)
+        logger.info(f"=== {func_name} completed ===")
+        return result
+    return decorated_function
+
 # Authentication decorator
 def require_auth(f):
     @wraps(f)
@@ -63,11 +89,13 @@ def require_auth(f):
 
 # Health check endpoint
 @app.route('/api/health', methods=['GET'])
+@log_function_input
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
+@log_function_input
 def save_geography_economy():
     try:
         user_id = request.user['uid']
