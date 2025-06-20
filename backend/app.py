@@ -5,7 +5,7 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy
+from models import db, GeographyEconomy, Optimization
 from config import Config
 
 # Initialize Flask app
@@ -120,6 +120,34 @@ def save_geography_economy():
         return jsonify({'id': geo_economy.user_id, 'message': 'Geography and economy data saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving geography economy data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/optimization', methods=['POST'])
+@require_auth
+@log_function_input
+def save_optimization():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        
+        # Check if record exists
+        optimization = Optimization.query.get(user_id)
+        if not optimization:
+            optimization = Optimization(user_id=user_id)
+            db.session.add(optimization)
+        
+        # Update fields
+        optimization.MaxIt = data.get('maxIterations')
+        optimization.nPop = data.get('populationSize')
+        optimization.w = data.get('inertiaWeight')
+        optimization.wdamp = data.get('inertiaWeightDamping')
+        optimization.c1 = data.get('personalLearningCoeff')
+        optimization.c2 = data.get('globalLearningCoeff')
+        
+        db.session.commit()
+        return jsonify({'id': optimization.user_id, 'message': 'Optimization data saved successfully'}), 200
+    except Exception as e:
+        logger.error(f"Error saving optimization data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
