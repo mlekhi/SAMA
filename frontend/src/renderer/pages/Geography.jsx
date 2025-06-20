@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Map from '../components/Map'
 import Search from '../components/Search'
 import { Typography, TextField, Button, Grid, Alert, CircularProgress } from "@mui/material"
 
 function Geography({ auth, user }) {
+  const navigate = useNavigate()
   const [geoData, setGeoData] = useState({
     latitude: '',
     longitude: '',
@@ -50,6 +52,10 @@ function Geography({ auth, user }) {
       
       if (response.ok) {
         setSaveMessage('Geography data saved successfully!')
+        // Navigate to optimization page after successful save
+        setTimeout(() => {
+          navigate('/optimization')
+        }, 1500)
       } else {
         setSaveMessage('Failed to save data')
       }
@@ -204,14 +210,14 @@ function Geography({ auth, user }) {
                       Saving Data...
                     </span>
                   ) : (
-                    'Save Data'
+                    'Next Page'
                   )}
                 </Button>
               </Grid>
               {!selectedPosition && (
                 <Grid item>
                   <Typography variant="body2" color="textSecondary" align="center">
-                    Please search and select a location to save data
+                    Please search and select a location to continue
                   </Typography>
                 </Grid>
               )}
