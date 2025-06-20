@@ -159,10 +159,6 @@ function Optimization({ auth, user }) {
               helperText="Global learning coefficient (0.5-3.0)"
             />
           </Box>
-          
-          <Box sx={{ mt: 3 }}>
-            {/* Placeholder for save message */}
-          </Box>
         </Box>
 
         {/* Next Page Button */}
