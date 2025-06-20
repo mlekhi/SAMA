@@ -15,25 +15,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-// Initialize Firebase only if config is provided
-let app, auth
-try {
-  app = initializeApp(firebaseConfig)
-  auth = getAuth(app)
-} catch (error) {
-  console.warn('Firebase not configured:', error.message)
-}
+// Initialize Firebase
+const app = initializeApp(firebaseConfig)
+const auth = getAuth(app)
 
 function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false)
-      return
-    }
-    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
       setLoading(false)
@@ -47,26 +37,6 @@ function App() {
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>
-  }
-
-  if (!auth) {
-    return (
-      <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-        <h1>SAMA - Geography & Economy</h1>
-        <div style={{ 
-          padding: '20px', 
-          backgroundColor: '#f0f0f0', 
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
-          <h3>Firebase Configuration Required</h3>
-          <p>Please add your Firebase configuration to the <code>firebaseConfig</code> object in <code>App.jsx</code>.</p>
-          <p>You can get this from your Firebase Console → Project Settings → General → Your Apps.</p>
-        </div>
-        
-        <Geography auth={null} user={null} />
-      </div>
-    )
   }
 
   return (
