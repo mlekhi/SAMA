@@ -44,13 +44,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Persistent Header */}
-      <Header auth={auth} user={user} />
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        {/* Persistent Header */}
+        <Header auth={auth} user={user} />
 
-      {/* Main Content */}
-      <main className="pt-0">
-        <Router>
+        {/* Main Content */}
+        <main className="pt-0">
           <Routes>
             <Route 
               path="/login" 
@@ -87,9 +87,9 @@ function App() {
               element={<Navigate to={user ? "/geography" : "/login"} replace />} 
             />
           </Routes>
-        </Router>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Router>
   )
 }
 
