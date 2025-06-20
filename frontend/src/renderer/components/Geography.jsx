@@ -43,110 +43,141 @@ function Geography({ auth, user }) {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Geography & Economy</h1>
-        <button 
-          onClick={handleLogout}
-          style={{ 
-            padding: '8px 16px', 
-            backgroundColor: '#dc3545', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Logout
-        </button>
-      </div>
-      
-      <div style={{ marginBottom: '30px' }}>
-        <h2>Location</h2>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Latitude:</label>
-          <input
-            type="number"
-            value={geoData.latitude}
-            onChange={(e) => setGeoData({...geoData, latitude: e.target.value})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
+    <div className="min-h-screen bg-gray-50 font-roboto">
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 font-roboto">Geography & Economy</h1>
+            <p className="text-gray-600 font-roboto">Configure your location and economic parameters</p>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 font-roboto"
+          >
+            Logout
+          </button>
         </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Longitude:</label>
-          <input
-            type="number"
-            value={geoData.longitude}
-            onChange={(e) => setGeoData({...geoData, longitude: e.target.value})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Address:</label>
-          <input
-            type="text"
-            value={geoData.address}
-            onChange={(e) => setGeoData({...geoData, address: e.target.value})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-      </div>
+        
+        <div className="bg-white shadow rounded-lg">
+          {/* Location Section */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 font-roboto mb-4">Location</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={geoData.latitude}
+                  onChange={(e) => setGeoData({...geoData, latitude: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter latitude"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={geoData.longitude}
+                  onChange={(e) => setGeoData({...geoData, longitude: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter longitude"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={geoData.address}
+                  onChange={(e) => setGeoData({...geoData, address: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter full address"
+                />
+              </div>
+            </div>
+          </div>
 
-      <div style={{ marginBottom: '30px' }}>
-        <h2>Economic Parameters</h2>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Nominal Discount Rate (%):</label>
-          <input
-            type="number"
-            value={geoData.n_ir_rate}
-            onChange={(e) => setGeoData({...geoData, n_ir_rate: parseFloat(e.target.value)})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Expected Inflation Rate (%):</label>
-          <input
-            type="number"
-            value={geoData.e_ir_rate}
-            onChange={(e) => setGeoData({...geoData, e_ir_rate: parseFloat(e.target.value)})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Tax Rate (%):</label>
-          <input
-            type="number"
-            value={geoData.Tax_rate}
-            onChange={(e) => setGeoData({...geoData, Tax_rate: parseFloat(e.target.value)})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Renewable Energy Incentives Rate (%):</label>
-          <input
-            type="number"
-            value={geoData.RE_incentives_rate}
-            onChange={(e) => setGeoData({...geoData, RE_incentives_rate: parseFloat(e.target.value)})}
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
+          {/* Economic Parameters Section */}
+          <div className="px-6 py-4">
+            <h2 className="text-xl font-semibold text-gray-900 font-roboto mb-4">Economic Parameters</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Nominal Discount Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={geoData.n_ir_rate}
+                  onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter discount rate"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Expected Inflation Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={geoData.e_ir_rate}
+                  onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter inflation rate"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Tax Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={geoData.Tax_rate}
+                  onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter tax rate"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
+                  Renewable Energy Incentives Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={geoData.RE_incentives_rate}
+                  onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
+                  placeholder="Enter incentives rate"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="px-6 py-4 bg-gray-50 rounded-b-lg">
+            <button 
+              onClick={saveGeoData} 
+              className="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 font-roboto"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Save Data
+            </button>
+          </div>
         </div>
       </div>
-
-      <button 
-        onClick={saveGeoData} 
-        style={{ 
-          width: '100%',
-          padding: '12px', 
-          backgroundColor: '#28a745', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '16px'
-        }}
-      >
-        Save Data
-      </button>
     </div>
   )
 }
