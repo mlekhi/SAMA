@@ -250,61 +250,61 @@ class InData:
         self.Psell_max = grid.Psell_max
 
         # --- PhotovoltaicSystem ---
-        self.fpv = pv_system.fpv
-        self.Tcof = pv_system.Tcof
-        self.Tref = pv_system.Tref
-        self.Tc_noct = pv_system.Tc_noct
-        self.Ta_noct = pv_system.Ta_noct
-        self.G_noct = pv_system.G_noct
-        self.n_PV = pv_system.n_PV
-        self.Gref = pv_system.Gref
-        self.L_PV = pv_system.L_PV
-        self.gama = pv_system.gama
-        self.C_PV = pv_system.C_PV
-        self.R_PV = pv_system.R_PV
-        self.MO_PV = pv_system.MO_PV
+        self.fpv = pv_system.fpv if pv_system else 0.9
+        self.Tcof = pv_system.Tcof if pv_system else -0.4
+        self.Tref = pv_system.Tref if pv_system else 25
+        self.Tc_noct = pv_system.Tc_noct if pv_system else 45
+        self.Ta_noct = pv_system.Ta_noct if pv_system else 20
+        self.G_noct = pv_system.G_noct if pv_system else 800
+        self.n_PV = pv_system.n_PV if pv_system else 0.15
+        self.Gref = pv_system.Gref if pv_system else 1000
+        self.L_PV = pv_system.L_PV if pv_system else 25
+        self.gama = pv_system.gama if pv_system else 0.9
+        self.C_PV = pv_system.C_PV if pv_system else 1000
+        self.R_PV = pv_system.R_PV if pv_system else 800
+        self.MO_PV = pv_system.MO_PV if pv_system else 10
         self.Engineering_Costs = sum([
-            pv_system.Installation_cost, pv_system.Overhead, pv_system.Sales_and_marketing,
-            pv_system.Permiting_and_Inspection, pv_system.Electrical_BoS, pv_system.Structural_BoS,
-            pv_system.Supply_Chain_costs, pv_system.Profit_costs, pv_system.Sales_tax
-        ])
+            pv_system.Installation_cost or 0, pv_system.Overhead or 0, pv_system.Sales_and_marketing or 0,
+            pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
+            pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
+        ]) if pv_system else 0
 
         # --- Inverter ---
-        self.n_I = inverter.n_I
-        self.L_I = inverter.L_I
-        self.DC_AC_ratio = inverter.DC_AC_ratio
-        self.C_I = inverter.C_I
-        self.R_I = inverter.R_I
-        self.MO_I = inverter.MO_I
+        self.n_I = inverter.n_I if inverter else 0.95
+        self.L_I = inverter.L_I if inverter else 15
+        self.DC_AC_ratio = inverter.DC_AC_ratio if inverter else 1.2
+        self.C_I = inverter.C_I if inverter else 500
+        self.R_I = inverter.R_I if inverter else 400
+        self.MO_I = inverter.MO_I if inverter else 5
         
         # --- DieselGenerator ---
-        self.a = diesel.a
-        self.b = diesel.b
-        self.LR_DG = diesel.min_load_ratio
-        self.C_DG = diesel.C_DG
-        self.R_DG = diesel.R_DG
-        self.MO_DG = diesel.MO_DG
-        self.C_fuel = diesel.C_fuel
-        self.C_fuel_adj = diesel.C_fuel_adj_rate / 100
-        self.TL_DG = diesel.diesel_lifetime
+        self.a = diesel.a if diesel else 0.246
+        self.b = diesel.b if diesel else 0.08145
+        self.LR_DG = diesel.min_load_ratio if diesel else 0.3
+        self.C_DG = diesel.C_DG if diesel else 500
+        self.R_DG = diesel.R_DG if diesel else 400
+        self.MO_DG = diesel.MO_DG if diesel else 0.02
+        self.C_fuel = diesel.C_fuel if diesel else 1.2
+        self.C_fuel_adj = (diesel.C_fuel_adj_rate / 100) if diesel else 0.03
+        self.TL_DG = diesel.diesel_lifetime if diesel else 15000
 
         # --- Battery ---
-        self.SOC_min = battery.SOC_min
-        self.SOC_max = battery.SOC_max
-        self.SOC_initial = battery.SOC_initial
-        self.self_discharge_rate = battery.self_discharge_rate
-        self.L_B = battery.L_B
-        self.Cnom_Leadacid = battery.Cnom_Leadacid
-        self.alfa_battery_leadacid = battery.alfa_battery_leadacid
-        self.c = battery.c
-        self.k = battery.k
-        self.Ich_max_leadacid = battery.Ich_max_leadacid
-        self.Vnom_leadacid = battery.Vnom_leadacid
-        self.ef_bat_leadacid = battery.ef_bat_leadacid
-        self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid
-        self.Ich_max_Li_ion = battery.Ich_max_Li_ion
-        self.Idch_max_Li_ion = battery.Idch_max_Li_ion
-        self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
+        self.SOC_min = battery.SOC_min if battery else 0.2
+        self.SOC_max = battery.SOC_max if battery else 0.8
+        self.SOC_initial = battery.SOC_initial if battery else 0.5
+        self.self_discharge_rate = battery.self_discharge_rate if battery else 0.02
+        self.L_B = battery.L_B if battery else 5
+        self.Cnom_Leadacid = battery.Cnom_Leadacid if battery else 100
+        self.alfa_battery_leadacid = battery.alfa_battery_leadacid if battery else 0.002
+        self.c = battery.c if battery else 0.305
+        self.k = battery.k if battery else 0.027
+        self.Ich_max_leadacid = battery.Ich_max_leadacid if battery else 20
+        self.Vnom_leadacid = battery.Vnom_leadacid if battery else 48
+        self.ef_bat_leadacid = battery.ef_bat_leadacid if battery else 0.8
+        self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid if battery else 1000
+        self.Ich_max_Li_ion = battery.Ich_max_Li_ion if battery else 50
+        self.Idch_max_Li_ion = battery.Idch_max_Li_ion if battery else 50
+        self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion if battery else 0.001
 
         # --- GeographyEconomy ---
         self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
