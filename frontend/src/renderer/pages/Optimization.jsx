@@ -4,13 +4,9 @@ import NextPageButton from '../components/NextPageButton'
 import SaveMessageAlert from '../components/SaveMessageAlert'
 import { 
   Typography, 
-  Button, 
   Box,
   TextField
 } from "@mui/material"
-import { 
-  ArrowBack
-} from '@mui/icons-material'
 
 function Optimization({ auth, user }) {
   const navigate = useNavigate()
@@ -58,10 +54,6 @@ function Optimization({ auth, user }) {
     }
   }
 
-  const goBack = () => {
-    navigate('/geography')
-  }
-
   const handleSettingChange = (setting) => (event) => {
     setOptimizationSettings(prev => ({
       ...prev,
@@ -74,14 +66,6 @@ function Optimization({ auth, user }) {
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Button 
-            startIcon={<ArrowBack />}
-            onClick={goBack}
-            variant="outlined"
-            sx={{ mb: 2 }}
-          >
-            Back to Geography
-          </Button>
           <Typography variant="h3" component="h1" gutterBottom>
             Optimization Parameters
           </Typography>
