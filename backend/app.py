@@ -5,7 +5,7 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization, SystemConfig
+from models import db, GeographyEconomy, Optimization, SystemConfig, Grid
 from config import Config
 
 # Initialize Flask app
@@ -180,6 +180,31 @@ def save_system_config():
         return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving system configuration data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/grid', methods=['POST'])
+@require_auth
+@log_function_input
+def save_grid():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        
+        # Check if record exists
+        grid = Grid.query.get(user_id)
+        if not grid:
+            grid = Grid(user_id=user_id)
+            db.session.add(grid)
+        
+        # Update fields dynamically
+        for key, value in data.items():
+            if hasattr(grid, key):
+                setattr(grid, key, value)
+        
+        db.session.commit()
+        return jsonify({'id': grid.user_id, 'message': 'Grid data saved successfully'}), 200
+    except Exception as e:
+        logger.error(f"Error saving grid data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

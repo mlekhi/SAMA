@@ -42,6 +42,27 @@ class SystemConfig(db.Model):
     Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
     Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery
 
+class Grid(db.Model):
+    user_id = db.Column(db.String(100), primary_key=True)
+    
+    # Grid Connection Parameters
+    Grid = db.Column(db.Boolean, default=True)  # Is grid connected
+    NEM = db.Column(db.Boolean, default=True)  # Is net metered
+    
+    # Economic Parameters
+    Annual_expenses = db.Column(db.Float, default=0.0)  # Annual expenses for Grid interconnection ($)
+    Grid_sale_tax_rate = db.Column(db.Float, default=6.88)  # Sale tax percentage of grid electricity (%)
+    Grid_Tax_amount = db.Column(db.Float, default=0.0016)  # Grid adjustments in kWh (kWh)
+    Grid_escalation_rate = db.Column(db.Float, default=5.7)  # Yearly escalation rate in grid electricity price (%)
+    Grid_credit = db.Column(db.Float, default=121.4)  # Annual Credits offered by utility grid to user ($)
+    NEM_fee = db.Column(db.Float, default=0.0)  # Net metering one time setup fee ($)
+    SC_flat = db.Column(db.Float, default=0.0)  # Grid monthly fixed charge ($/kWh)
+    
+    # Technical Parameters
+    Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)
+    Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW) 
+
+    
 # --------------------------
 # optional modules
 # --------------------------
@@ -138,23 +159,3 @@ class Battery(db.Model):
     Ich_max_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum charge current (A)
     Idch_max_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum discharge current (A)
     alfa_battery_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum charge rate (A/Ah)
-
-class Grid(db.Model):
-    user_id = db.Column(db.String(100), primary_key=True)
-    
-    # Grid Connection Parameters
-    Grid = db.Column(db.Boolean, default=True)  # Is grid connected
-    NEM = db.Column(db.Boolean, default=True)  # Is net metered
-    
-    # Economic Parameters
-    Annual_expenses = db.Column(db.Float, default=0.0)  # Annual expenses for Grid interconnection ($)
-    Grid_sale_tax_rate = db.Column(db.Float, default=6.88)  # Sale tax percentage of grid electricity (%)
-    Grid_Tax_amount = db.Column(db.Float, default=0.0016)  # Grid adjustments in kWh (kWh)
-    Grid_escalation_rate = db.Column(db.Float, default=5.7)  # Yearly escalation rate in grid electricity price (%)
-    Grid_credit = db.Column(db.Float, default=121.4)  # Annual Credits offered by utility grid to user ($)
-    NEM_fee = db.Column(db.Float, default=0.0)  # Net metering one time setup fee ($)
-    SC_flat = db.Column(db.Float, default=0.0)  # Grid monthly fixed charge ($/kWh)
-    
-    # Technical Parameters
-    Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)
-    Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW) 
