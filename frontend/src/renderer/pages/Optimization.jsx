@@ -3,28 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Typography, 
   Button, 
-  Card, 
-  CardContent, 
   Box,
-  Alert,
-  LinearProgress,
   TextField,
-  Divider
+  Alert,
+  CircularProgress
 } from "@mui/material"
 import { 
-  TrendingUp, 
-  SolarPower, 
-  AttachMoney, 
-  Settings,
-  ArrowBack,
-  CheckCircle
+  ArrowBack
 } from '@mui/icons-material'
 
 function Optimization({ auth, user }) {
   const navigate = useNavigate()
-  const [optimizationComplete, setOptimizationComplete] = useState(false)
-  const [optimizationProgress, setOptimizationProgress] = useState(0)
-  const [optimizationResults, setOptimizationResults] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
   const [optimizationSettings, setOptimizationSettings] = useState({
     maxIterations: 100,
     populationSize: 30,
@@ -34,29 +25,37 @@ function Optimization({ auth, user }) {
     globalLearningCoeff: 2.0
   })
 
-  const runOptimization = () => {
-    setOptimizationProgress(0)
-    setOptimizationComplete(false)
+  const saveOptimizationData = async () => {
+    if (!user) return
     
-    // Simulate optimization progress
-    const interval = setInterval(() => {
-      setOptimizationProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setOptimizationComplete(true)
-          setOptimizationResults({
-            optimalPanelCount: 24,
-            optimalBatterySize: '10kWh',
-            estimatedCost: 45000,
-            annualSavings: 8500,
-            roi: 18.9,
-            carbonOffset: 15.2
-          })
-          return 100
-        }
-        return prev + 8
+    setSaving(true)
+    setSaveMessage('')
+    
+    try {
+      const token = await user.getIdToken()
+      const response = await fetch('http://127.0.0.1:5000/api/optimization', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(optimizationSettings)
       })
-    }, 300)
+      
+      if (response.ok) {
+        setSaveMessage('Optimization data saved successfully!')
+        // Navigate to analysis page after successful save
+        setTimeout(() => {
+          navigate('/analysis')
+        }, 1500)
+      } else {
+        setSaveMessage('Failed to save data')
+      }
+    } catch (error) {
+      setSaveMessage('Error saving data: ' + error.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const goBack = () => {
@@ -84,22 +83,15 @@ function Optimization({ auth, user }) {
             Back to Geography
           </Button>
           <Typography variant="h3" component="h1" gutterBottom>
-            Solar System Optimization
+            Optimization Parameters
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Optimize your solar system configuration for maximum efficiency and cost savings
+            Configure your optimization settings for the analysis
           </Typography>
         </div>
 
         {/* Optimization Settings */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Optimization Parameters
-          </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Default values are provided for some questions, but please review and adjust as necessary for more accurate results.
-          </Typography>
-          
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               fullWidth
@@ -169,131 +161,36 @@ function Optimization({ auth, user }) {
           </Box>
           
           <Box sx={{ mt: 3 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={runOptimization}
-              disabled={optimizationProgress > 0 && optimizationProgress < 100}
-              size="large"
-              startIcon={<Settings />}
-            >
-              Run Optimization
-            </Button>
+            {/* Placeholder for save message */}
           </Box>
         </Box>
 
-        {/* Progress Bar */}
-        {optimizationProgress > 0 && optimizationProgress < 100 && (
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Optimizing System Configuration...
-            </Typography>
-            <LinearProgress 
-              variant="determinate" 
-              value={optimizationProgress} 
-              sx={{ height: 10, borderRadius: 5 }}
-            />
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {optimizationProgress}% Complete
-            </Typography>
-          </Box>
-        )}
-
-        {/* Results */}
-        {optimizationComplete && optimizationResults && (
-          <>
-            <Divider sx={{ my: 4 }} />
-            
-            <Alert severity="success" sx={{ mb: 4 }} icon={<CheckCircle />}>
-              Optimization completed successfully! Here are your optimal system specifications.
+        {/* Next Page Button */}
+        <Box sx={{ mb: 4 }}>
+          {saveMessage && (
+            <Alert severity={saveMessage.includes('successfully') ? 'success' : 'error'} sx={{ mb: 2 }}>
+              {saveMessage}
             </Alert>
-            
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'primary.50', borderRadius: 2 }}>
-                <SolarPower color="primary" sx={{ mr: 2, fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h6" color="primary">
-                    Optimal Panel Configuration
-                  </Typography>
-                  <Typography variant="h3" color="primary">
-                    {optimizationResults.optimalPanelCount} Panels
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Optimized panel count for maximum energy production at your location.
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'success.50', borderRadius: 2 }}>
-                <AttachMoney color="success" sx={{ mr: 2, fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h6" color="success.main">
-                    System Cost
-                  </Typography>
-                  <Typography variant="h3" color="success.main">
-                    ${optimizationResults.estimatedCost.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Total estimated cost for the optimized solar system.
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'info.50', borderRadius: 2 }}>
-                <TrendingUp color="info" sx={{ mr: 2, fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h6" color="info.main">
-                    Return on Investment
-                  </Typography>
-                  <Typography variant="h3" color="info.main">
-                    {optimizationResults.roi}%
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Expected annual return on investment from energy savings.
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'secondary.50', borderRadius: 2 }}>
-                <Settings color="secondary" sx={{ mr: 2, fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h6" color="secondary.main">
-                    Battery Storage
-                  </Typography>
-                  <Typography variant="h3" color="secondary.main">
-                    {optimizationResults.optimalBatterySize}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Recommended battery capacity for optimal energy storage.
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 4 }} />
-
-            {/* Action Buttons */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Next Steps
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                Your optimized system is ready. Choose your next action.
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Button variant="contained" color="primary" size="large">
-                  Generate Quote
-                </Button>
-                <Button variant="outlined" color="primary" size="large">
-                  Download Specifications
-                </Button>
-                <Button variant="outlined" color="secondary" size="large">
-                  Schedule Consultation
-                </Button>
-              </Box>
-            </Box>
-          </>
-        )}
+          )}
+          
+          <Button
+            fullWidth
+            variant="contained"
+            color="success"
+            onClick={saveOptimizationData}
+            disabled={saving}
+            size="large"
+          >
+            {saving ? (
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <CircularProgress size="1rem" color="inherit" style={{ marginRight: 8 }} />
+                Saving Data...
+              </span>
+            ) : (
+              'Next Page'
+            )}
+          </Button>
+        </Box>
       </div>
     </div>
   )

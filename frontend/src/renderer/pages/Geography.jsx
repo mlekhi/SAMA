@@ -187,14 +187,7 @@ function Geography({ auth, user }) {
             disabled={!selectedPosition || saving}
             size="large"
           >
-            {saving ? (
-              <span style={{ display: 'flex', alignItems: 'center' }}>
-                <CircularProgress size="1rem" color="inherit" style={{ marginRight: 8 }} />
-                Saving Data...
-              </span>
-            ) : (
-              'Next Page'
-            )}
+            Next Page
           </Button>
           
           {!selectedPosition && (
