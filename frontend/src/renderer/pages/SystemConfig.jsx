@@ -49,9 +49,23 @@ function SystemConfig({ auth, user }) {
       
       if (response.ok) {
         setSaveMessage('System configuration saved successfully!')
-        // Navigate to geography page after successful save
+        
+        // Navigate to the next page based on component selection
         setTimeout(() => {
-          navigate('/geography')
+          const { PV, WT, DG, Bat } = systemData
+          
+          if (PV) {
+            navigate('/pv-config')
+          } else if (WT) {
+            navigate('/wt-config')
+          } else if (DG) {
+            navigate('/dg-config')
+          } else if (Bat) {
+            navigate('/battery-config')
+          } else {
+            // Default navigation if no main component is selected
+            navigate('/geography')
+          }
         }, 1500)
       } else {
         setSaveMessage('Failed to save data')

@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Geography from './pages/Geography'
 import Optimization from './pages/Optimization'
 import SystemConfig from './pages/SystemConfig'
+import FAQ from './pages/FAQ'
 import Header from './components/Header'
 
 // Firebase config from environment variables
@@ -73,6 +74,12 @@ function App() {
               path="/system-config" 
               element={
                 user ? <SystemConfig auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/faq" 
+              element={
+                user ? <FAQ /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
