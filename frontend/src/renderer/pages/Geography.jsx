@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Map from '../components/Map'
 import Search from '../components/Search'
+import { Typography, TextField, Button, Grid, Alert, CircularProgress } from "@mui/material"
 
 function Geography({ auth, user }) {
   const [geoData, setGeoData] = useState({
@@ -13,6 +14,8 @@ function Geography({ auth, user }) {
     RE_incentives_rate: 30.0
   })
   const [selectedPosition, setSelectedPosition] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   const handlePositionSelect = (position) => {
     setSelectedPosition({
@@ -31,6 +34,9 @@ function Geography({ auth, user }) {
   const saveGeoData = async () => {
     if (!user) return
     
+    setSaving(true)
+    setSaveMessage('')
+    
     try {
       const token = await user.getIdToken()
       const response = await fetch('/api/geography-economy', {
@@ -43,12 +49,14 @@ function Geography({ auth, user }) {
       })
       
       if (response.ok) {
-        alert('Geography data saved!')
+        setSaveMessage('Geography data saved successfully!')
       } else {
-        alert('Failed to save data')
+        setSaveMessage('Failed to save data')
       }
     } catch (error) {
-      alert('Error saving data: ' + error.message)
+      setSaveMessage('Error saving data: ' + error.message)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -57,138 +65,157 @@ function Geography({ auth, user }) {
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 font-roboto">Geography & Economy</h1>
-          <p className="text-gray-600 font-roboto">Configure your location and economic parameters</p>
+          <Typography variant="h3" component="h1" gutterBottom>
+            Geography & Economy
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Configure your location and economic parameters
+          </Typography>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           {/* Form Section */}
-          <div className="bg-white shadow rounded-lg">
-            {/* Address Search Section */}
-            <div className="px-6 py-4">
-              <h2 className="text-xl font-semibold text-gray-900 font-roboto mb-4">Address Search</h2>
-              <Search 
-                selectPosition={selectedPosition} 
-                setSelectPosition={handlePositionSelect}
-              />
-            </div>
+          <div className="bg-white shadow rounded-lg p-6">
+            <Typography variant="h5" component="h2" gutterBottom>
+              Address Search
+            </Typography>
+            <Search 
+              selectPosition={selectedPosition} 
+              setSelectPosition={handlePositionSelect}
+            />
           </div>
 
           {/* Map Section */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 font-roboto mb-2">Location Map</h2>
-              <p className="text-sm text-gray-600 font-roboto">Selected location will appear here</p>
+              <Typography variant="h5" component="h2" gutterBottom>
+                Location Map
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Selected location will appear here
+              </Typography>
             </div>
             <div className="h-96 relative">
               <Map selectPosition={selectedPosition} />
             </div>
             {selectedPosition && (
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">Latitude:</span>
-                    <span className="ml-2 text-gray-900">
-                      {typeof selectedPosition.lat === 'number' 
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Latitude: {typeof selectedPosition.lat === 'number' 
                         ? selectedPosition.lat.toFixed(6) 
                         : parseFloat(selectedPosition.lat).toFixed(6)
                       }
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Longitude:</span>
-                    <span className="ml-2 text-gray-900">
-                      {typeof selectedPosition.lon === 'number' 
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Longitude: {typeof selectedPosition.lon === 'number' 
                         ? selectedPosition.lon.toFixed(6) 
                         : parseFloat(selectedPosition.lon).toFixed(6)
                       }
-                    </span>
-                  </div>
-                </div>
+                    </Typography>
+                  </Grid>
+                </Grid>
               </div>
             )}
           </div>
         </div>
 
         {/* Economic Parameters Section */}
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-6 py-4">
-            <h2 className="text-xl font-semibold text-gray-900 font-roboto mb-4">Economic Parameters</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
-                  Nominal Discount Rate (%)
-                </label>
-                <input
+        <div className="bg-white shadow rounded-lg mb-6">
+          <div className="p-6">
+            <Typography variant="h5" component="h2" gutterBottom>
+              Economic Parameters
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Nominal Discount Rate (%)"
                   type="number"
-                  step="0.1"
                   value={geoData.n_ir_rate}
                   onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
-                  placeholder="Enter discount rate"
+                  variant="outlined"
+                  inputProps={{ step: 0.1 }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
-                  Expected Inflation Rate (%)
-                </label>
-                <input
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Expected Inflation Rate (%)"
                   type="number"
-                  step="0.1"
                   value={geoData.e_ir_rate}
                   onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
-                  placeholder="Enter inflation rate"
+                  variant="outlined"
+                  inputProps={{ step: 0.1 }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
-                  Tax Rate (%)
-                </label>
-                <input
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Tax Rate (%)"
                   type="number"
-                  step="0.1"
                   value={geoData.Tax_rate}
                   onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
-                  placeholder="Enter tax rate"
+                  variant="outlined"
+                  inputProps={{ step: 0.1 }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 font-roboto mb-2">
-                  Renewable Energy Incentives Rate (%)
-                </label>
-                <input
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Renewable Energy Incentives Rate (%)"
                   type="number"
-                  step="0.1"
                   value={geoData.RE_incentives_rate}
                   onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-roboto"
-                  placeholder="Enter incentives rate"
+                  variant="outlined"
+                  inputProps={{ step: 0.1 }}
                 />
-              </div>
-            </div>
+              </Grid>
+            </Grid>
           </div>
         </div>
 
         {/* Save Button */}
         <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4">
-            <button 
-              onClick={saveGeoData}
-              disabled={!selectedPosition}
-              className="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-roboto"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Save Data
-            </button>
-            {!selectedPosition && (
-              <p className="mt-2 text-sm text-gray-500 text-center font-roboto">
-                Please search and select a location to save data
-              </p>
-            )}
+          <div className="p-6">
+            <Grid container direction="column" spacing={2}>
+              {saveMessage && (
+                <Grid item>
+                  <Alert severity={saveMessage.includes('successfully') ? 'success' : 'error'}>
+                    {saveMessage}
+                  </Alert>
+                </Grid>
+              )}
+              <Grid item>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="success"
+                  onClick={saveGeoData}
+                  disabled={!selectedPosition || saving}
+                  size="large"
+                >
+                  {saving ? (
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <CircularProgress size="1rem" color="inherit" style={{ marginRight: 8 }} />
+                      Saving Data...
+                    </span>
+                  ) : (
+                    'Save Data'
+                  )}
+                </Button>
+              </Grid>
+              {!selectedPosition && (
+                <Grid item>
+                  <Typography variant="body2" color="textSecondary" align="center">
+                    Please search and select a location to save data
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
           </div>
         </div>
       </div>
