@@ -815,7 +815,7 @@ def Gen_Results(X, InData):
                    ('WT Power', Pwt, '$P_{wt}$ [kW]'),
                    ('Diesel Generator Power', Pdg, '$P_{DG}$ [kW]'),
                    ('Battery Energy Level', Eb, '$E_{b}$ [kWh]'),
-                   ('State of Charge', Eb / Cn_B if not np.all(Eb[t1:t2] == 0) else np.zeros_like(Eb), 'SOC (%)'),
+                   ('State of Charge', Eb / Cn_B if Cn_B > 0 else np.zeros_like(Eb), 'SOC (%)'),
                    ('Loss of Power Supply', Ens, 'LPS[kWh]'),
                    ('Dumped Energy', Edump, '$E_{dump}$ [kWh]'),
                    ('Battery discharge Power', Pdch, '$P_{dch}$ [kW]'),
