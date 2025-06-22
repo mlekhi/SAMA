@@ -13,9 +13,17 @@ import csv
 
 #store output
 output_logs = []
-def log_output(message):
-    print(message)
-    output_logs.append(message)
+def log_output(message, *args):
+    # Handle both log_output(message) and log_output(output_logs, message) calls
+    if args and isinstance(message, list):
+        # Called as log_output(output_logs, message)
+        actual_message = args[0]
+    else:
+        # Called as log_output(message)
+        actual_message = message
+    
+    print(actual_message)
+    output_logs.append(actual_message)
 
 # Loading all inputs
 
