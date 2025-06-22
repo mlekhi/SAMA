@@ -11,6 +11,7 @@ from sama_python.Results import Gen_Results
 import pandas as pd
 from types import SimpleNamespace
 import numpy as np
+from sama_python.generic_load import generic_load
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -235,6 +236,14 @@ class InData:
         self.RE_min = sys_config.RE_min_rate
         self.Lead_acid = sys_config.Lead_acid
         self.Li_ion = sys_config.Li_ion
+        
+        # Add missing variables for optimization
+        self.PV = sys_config.PV if sys_config else 1
+        self.Bat = sys_config.Bat if sys_config else 1
+        self.DG = sys_config.DG if sys_config else 1
+        
+        # Load annual consumption data
+        self.annualData = sys_config.annualData if sys_config else 10000  # Default to 10,000 kWh/year -- is this valid?
 
         # --- Grid ---
         self.Grid = grid.Grid
@@ -310,13 +319,45 @@ class InData:
         self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
         self.System_Tax = geo_econ.Tax_rate / 100
         self.RE_incentives = geo_econ.RE_incentives_rate / 100
+        
+        # --- Optimization ---
+        self.MaxIt = opt.MaxIt if opt else 100  # Maximum Number of Iterations
+        self.nPop = opt.nPop if opt else 50  # Population Size (Swarm Size)
+        self.w = opt.w if opt else 0.9  # Inertia Weight
+        self.wdamp = opt.wdamp if opt else 0.99  # Inertia Weight Damping Ratio
+        self.c1 = opt.c1 if opt else 2.0  # Personal Learning Coefficient
+        self.c2 = opt.c2 if opt else 2.0  # Global Learning Coefficient
 
     def load_static_data(self):
-        # Load data from CSV files
-        weather_data = pd.read_csv('backend/sama_python/data/USA_CA_PALO-ALTO_724937S_2022.csv')
-        self.Eload = weather_data['Power'].values if 'Power' in weather_data.columns else np.random.rand(8760) * 3
+        # IDK IF THIS IS RIGHT
+        try:
+            # Try to load from the specific file first
+            weather_data = pd.read_csv('sama_python/content/Data.csv', header=None)
+            weather_data.columns = ['Power', 'Irradiance', 'Temperature', 'Wind Speed']
+        except FileNotFoundError:
+            # Fallback to individual files if Data.csv doesn't exist
+            temperature_data = pd.read_csv('sama_python/content/Temperature.csv', header=None)
+            irradiance_data = pd.read_csv('sama_python/content/Irradiance.csv', header=None)
+            wind_data = pd.read_csv('sama_python/content/WSPEED.csv', header=None)
+            
+            # Combine the weather data - these files have no headers, just data
+            weather_data = pd.DataFrame({
+                'Temperature': temperature_data.iloc[:, 0],
+                'GHI': irradiance_data.iloc[:, 0],
+                'Wind Speed': wind_data.iloc[:, 0]
+            })
+        
+        # Generate hourly consumption data from annualData using generic_load
+        self.Eload = generic_load(
+            load_type=8,  # Annual consumption
+            load_previous_year_type=1,
+            peakmonth='July',  # Could be made configurable
+            daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+            user_defined_load=self.annualData  # Use the annualData from SystemConfig
+        )
+        
         self.T = weather_data['Temperature'].values
-        self.G = weather_data['GHI'].values if 'GHI' in weather_data.columns else weather_data['DNI'].values * np.cos(np.radians(30)) + weather_data['DHI'].values
+        self.G = weather_data['Irradiance'].values if 'Irradiance' in weather_data.columns else weather_data['GHI'].values
         self.Vw = weather_data['Wind Speed'].values
         
         # Placeholder/default values for variables not in the database
