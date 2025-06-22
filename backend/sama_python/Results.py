@@ -777,7 +777,7 @@ def Gen_Results(X, InData):
     plt.savefig('../backend/sama_python/output/figs/Energy Distribution.png', dpi=300)
 
     # State of charge figure
-    if Nbat > 0:
+    if Nbat > 0 and Cn_B > 0:
         fig, ax = plt.subplots(figsize=(20, 10))  # Increased figure size and resolution
         # Plot 'State of Charge'
         ax.plot(Eb / Cn_B, marker='.', linestyle='-', linewidth=0.5, color='blue')
