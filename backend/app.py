@@ -7,7 +7,7 @@ import logging
 import json
 from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery
 from config import Config
-from sama_python.Results import Gen_Results
+from sama_python.Results import Gen_Results, output_logs
 import pandas as pd
 from types import SimpleNamespace
 import numpy as np
@@ -426,11 +426,22 @@ def submit_results():
         ]
 
         # 3. Run the results generation
-        # The Gen_Results function will handle its own logging internally
-        Gen_Results(X, in_data)
+        # Clear any previous results
+        output_logs.clear()
         
-        # 4. Return a success message (logs are handled internally by Gen_Results)
-        return jsonify({'message': 'Analysis completed successfully'})
+        # Run the analysis (Results.py will create user-specific directories)
+        Gen_Results(X, in_data, user_id=f'{user_id}')
+        
+        # Capture the results
+        results_logs = output_logs.copy()
+        output_logs.clear()
+        
+        # 4. Return the analysis results
+        return jsonify({
+            'message': 'Analysis completed successfully',
+            'logs': results_logs,
+            'user_id': user_id
+        })
 
     except Exception as e:
         logger.error(f"Error submitting results: {str(e)}")

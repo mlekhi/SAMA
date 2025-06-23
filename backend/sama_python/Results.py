@@ -10,6 +10,7 @@ from math import ceil
 from sama_python.EMS import EMS
 import numpy_financial as npf
 import csv
+import os
 
 #store output
 output_logs = []
@@ -29,7 +30,16 @@ def log_output(message, *args):
 
 
 #@jit(nopython=True, fastmath=True)
-def Gen_Results(X, InData):
+def Gen_Results(X, InData, user_id):
+    # Set up user-specific output directories
+    output_base = f'../backend/sama_python/output/{user_id}'
+    figs_dir = f'{output_base}/figs'
+    data_dir = f'{output_base}/data'
+    
+    # Ensure directories exist
+    os.makedirs(figs_dir, exist_ok=True)
+    os.makedirs(data_dir, exist_ok=True)
+
     WT=InData.WT
     daysInMonth = InData.daysInMonth
     Eload = InData.Eload
@@ -400,7 +410,7 @@ def Gen_Results(X, InData):
     # Extracting data for plotting
     data = {'Ppv': Ppv, 'Pdg': Pdg, 'Pch': Pch, 'Pdch': Pdch, 'Pdch_max': Pdch_max, 'Pch_max': Pch_max, 'Eb': Eb[1:8761], 'SOC': Eb[1:8761] / Cn_B if (Cn_B != 0 and not np.isnan(Cn_B)) else 0, 'Pbuy':Pbuy, 'Psell':Psell, 'Eload':Eload,'ENS':Ens ,'Edump':Edump, 'P_RE_served':P_RE_served, 'Csell':Csell, 'Cbuy':Cbuy, 'Pserved':P_served_other_than_grid, 'POA':G, 'Temperature':T, "Wind Speed":Vw}
     df = pd.DataFrame(data)
-    df.to_csv('../backend/sama_python/output/data/Outputforplotting.csv', index=False)
+    df.to_csv(f'{data_dir}/Outputforplotting.csv', index=False)
 
 
     log_output(output_logs, ' ')
@@ -562,7 +572,7 @@ def Gen_Results(X, InData):
     y_margin = (y_max - y_min) * 0.025
     plt.ylim(y_min - y_margin, y_max + y_margin)
     plt.tight_layout()
-    plt.savefig('../backend/sama_python/output/figs/Cash Flow.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Cash Flow.png', dpi=300)
 
     # Cash flow chart ADVANCED
 
@@ -626,7 +636,7 @@ def Gen_Results(X, InData):
     y_margin = (y_max - y_min) * 0.025
     plt.ylim(y_min - y_margin, y_max + y_margin)
     plt.tight_layout()
-    plt.savefig('../backend/sama_python/output/figs/Cash Flow_ADV.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Cash Flow_ADV.png', dpi=300)
 
     # Advanced multi-Cash Flow Chart
     ########################
@@ -723,7 +733,7 @@ def Gen_Results(X, InData):
         y_margin = (y_max - y_min) * 0.025
         plt.ylim(y_min - y_margin, y_max + y_margin)
         plt.tight_layout()
-        plt.savefig('../backend/sama_python/output/figs/Multiple_Cash_Flow_ADV.png', dpi=300)
+        plt.savefig(f'{figs_dir}/Multiple_Cash_Flow_ADV.png', dpi=300)
 
     #Grid purchase and sale figure
     if Grid == 0:
@@ -749,7 +759,7 @@ def Gen_Results(X, InData):
         # Adjust the margins and space between subplots
         plt.subplots_adjust(left=0.05, right=0.85, top=0.95, bottom=0.08)
         plt.tight_layout()
-        plt.savefig('../backend/sama_python/output/figs/Grid Interconnection.png', dpi=300)
+        plt.savefig(f'{figs_dir}/Grid Interconnection.png', dpi=300)
 
     # Energy/Power Distribution figure
     fig, ax = plt.subplots(figsize=(30, 10))  # Increased figure size and resolution
@@ -774,7 +784,7 @@ def Gen_Results(X, InData):
     # Adjust the margins and space between subplots
     plt.subplots_adjust(left=0.08, right=0.78, top=0.95, bottom=0.08)
     plt.tight_layout()
-    plt.savefig('../backend/sama_python/output/figs/Energy Distribution.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Energy Distribution.png', dpi=300)
 
     # State of charge figure
     if Nbat > 0 and Cn_B > 0:
@@ -796,7 +806,7 @@ def Gen_Results(X, InData):
         # Adjust the margins and space between subplots
         plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
         plt.tight_layout()
-        plt.savefig('../backend/sama_python/output/figs/Battery State of Charge.png', dpi=300)
+        plt.savefig(f'{figs_dir}/Battery State of Charge.png', dpi=300)
 
     # Plot results for one specific day
     # Function to filter out data series with sum less than 0.1 in the specified range
@@ -844,7 +854,7 @@ def Gen_Results(X, InData):
         axs[j].axis('off')
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust the layout to make space for the title
-    plt.savefig('../backend/sama_python/output/figs/Specific day results.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Specific day results.png', dpi=300)
 
     # Utility figures
 
@@ -931,7 +941,7 @@ def Gen_Results(X, InData):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average cost of energy system [$]', fontsize=32, rotation=270, x=3.5, y=0.16)
     fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average cost of energy system.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average cost of energy system.png', dpi=300)
 
     # Calculate average hourly grid cost for each day in each month
     Gh_c = np.zeros((12, 31))
@@ -999,7 +1009,7 @@ def Gen_Results(X, InData):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average hourly cost of connecting to the grid [$/kWh]', fontsize=32, rotation=270, x=3.85, y=0.04)
     fig.subplots_adjust(left=0.075, right=0.9, top=0.98, bottom=0.075)
-    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average hourly cost of connecting to the grid.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average hourly cost of connecting to the grid.png', dpi=300)
 
     # Calculate average only grid connected system cost for each day/month/year
     AG_c = np.round(LCOE_Grid * A_l, 2)
@@ -1059,7 +1069,7 @@ def Gen_Results(X, InData):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average cost of only grid-connected system [$]', fontsize=32, rotation=270, x=3.5, y=0.09)
     fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average cost of only grid-connected system.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average cost of only grid-connected system.png', dpi=300)
 
     # Hourly Grid electricity price color bar map
     # Assuming Cbuy is a 1D numpy array
@@ -1080,7 +1090,7 @@ def Gen_Results(X, InData):
     month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     ax.set_xticks(hours_per_month)
     ax.set_xticklabels(month_labels)
-    plt.savefig('../backend/sama_python/output/figs/Grid Hourly Cost.png', dpi=300)
+    plt.savefig(f'{figs_dir}/Grid Hourly Cost.png', dpi=300)
 
     # Calculate average money earned by selling electricity to grid in each day/month/year
     # Calculate average hourly grid sell for each day in each month
@@ -1162,6 +1172,6 @@ def Gen_Results(X, InData):
         cbar_total.ax.tick_params(labelsize=22)
         cbar_total.ax.set_title('Monthly average Sell earning to the Grid [$]', fontsize=32, rotation=270, x=3.5, y=0.225)
         fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-        plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average earning Sell to the Grid.png', dpi=300)
+        plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average earning Sell to the Grid.png', dpi=300)
 
 
