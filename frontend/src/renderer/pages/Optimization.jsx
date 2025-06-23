@@ -21,6 +21,17 @@ function Optimization({ auth, user }) {
     globalLearningCoeff: 2.0
   })
 
+  const isFormValid = () => {
+    return (
+      optimizationSettings.maxIterations !== '' &&
+      optimizationSettings.populationSize !== '' &&
+      optimizationSettings.inertiaWeight !== '' &&
+      optimizationSettings.inertiaWeightDamping !== '' &&
+      optimizationSettings.personalLearningCoeff !== '' &&
+      optimizationSettings.globalLearningCoeff !== ''
+    );
+  };
+
   const saveOptimizationData = async () => {
     if (!user) return
     
@@ -179,7 +190,14 @@ function Optimization({ auth, user }) {
           <NextPageButton
             onClick={saveOptimizationData}
             saving={saving}
+            disabled={!isFormValid()}
           />
+          
+          {!isFormValid() && (
+            <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
+              Please fill in all fields to continue
+            </Typography>
+          )}
         </Box>
       </div>
     </div>

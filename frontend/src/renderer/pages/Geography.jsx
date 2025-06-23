@@ -68,6 +68,23 @@ function Geography({ auth, user }) {
     }
   }
 
+  const isFormValid = () => {
+    return (
+      selectedPosition &&
+      geoData.n_ir_rate !== '' &&
+      geoData.e_ir_rate !== '' &&
+      geoData.Tax_rate !== '' &&
+      geoData.RE_incentives_rate !== ''
+    );
+  };
+
+  const handleEconomicDataChange = (field, value) => {
+    setGeoData(prev => ({
+      ...prev,
+      [field]: value === '' ? '' : parseFloat(value)
+    }));
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -138,7 +155,7 @@ function Geography({ auth, user }) {
                 type="number"
                 placeholder="Nominal Discount Rate*"
                 value={geoData.n_ir_rate}
-                onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
+                onChange={(e) => handleEconomicDataChange('n_ir_rate', e.target.value)}
                 variant="outlined"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -156,7 +173,7 @@ function Geography({ auth, user }) {
                 type="number"
                 placeholder="Expected Inflation Rate*"
                 value={geoData.e_ir_rate}
-                onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
+                onChange={(e) => handleEconomicDataChange('e_ir_rate', e.target.value)}
                 variant="outlined"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -174,7 +191,7 @@ function Geography({ auth, user }) {
                 type="number"
                 placeholder="Tax Rate*"
                 value={geoData.Tax_rate}
-                onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
+                onChange={(e) => handleEconomicDataChange('Tax_rate', e.target.value)}
                 variant="outlined"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -192,7 +209,7 @@ function Geography({ auth, user }) {
                 type="number"
                 placeholder="Renewable Energy Incentives Rate*"
                 value={geoData.RE_incentives_rate}
-                onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
+                onChange={(e) => handleEconomicDataChange('RE_incentives_rate', e.target.value)}
                 variant="outlined"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -211,13 +228,13 @@ function Geography({ auth, user }) {
           
           <NextPageButton
             onClick={saveGeoData}
-            disabled={!selectedPosition}
+            disabled={!isFormValid()}
             saving={saving}
           />
           
-          {!selectedPosition && (
+          {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
-              Please search and select a location to continue
+              Please select a location and fill in all fields to continue
             </Typography>
           )}
         </Box>

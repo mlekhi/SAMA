@@ -30,6 +30,15 @@ function SystemConfig({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
+  const isFormValid = () => {
+    return (
+      systemData.lifetime !== '' &&
+      systemData.LPSP_max_rate !== '' &&
+      systemData.RE_min_rate !== '' &&
+      systemData.annualData !== ''
+    );
+  };
+
   const saveSystemData = async () => {
     if (!user) return
     
@@ -84,6 +93,13 @@ function SystemConfig({ auth, user }) {
     }))
   }
 
+  const handleInputChange = (field) => (event) => {
+    setSystemData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }))
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -114,7 +130,7 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 placeholder="Lifetime of System*"
                 value={systemData.lifetime}
-                onChange={(e) => setSystemData({...systemData, lifetime: e.target.value})}
+                onChange={handleInputChange('lifetime')}
                 variant="outlined"
                 inputProps={{ min: 1, max: 50 }}
                 InputProps={{
@@ -133,7 +149,7 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 placeholder="Max Loss of Power*"
                 value={systemData.LPSP_max_rate}
-                onChange={(e) => setSystemData({...systemData, LPSP_max_rate: e.target.value})}
+                onChange={handleInputChange('LPSP_max_rate')}
                 variant="outlined"
                 inputProps={{ min: 0, max: 100, step: 0.1 }}
                 InputProps={{
@@ -152,7 +168,7 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 placeholder="Min Renewable Energy*"
                 value={systemData.RE_min_rate}
-                onChange={(e) => setSystemData({...systemData, RE_min_rate: e.target.value})}
+                onChange={handleInputChange('RE_min_rate')}
                 variant="outlined"
                 inputProps={{ min: 0, max: 100, step: 0.1 }}
                 InputProps={{
@@ -171,7 +187,7 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 placeholder="Annual Consumption*"
                 value={systemData.annualData}
-                onChange={(e) => setSystemData({...systemData, annualData: e.target.value})}
+                onChange={handleInputChange('annualData')}
                 variant="outlined"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">kWh/yr</InputAdornment>,
@@ -241,7 +257,14 @@ function SystemConfig({ auth, user }) {
           <NextPageButton
             onClick={saveSystemData}
             saving={saving}
+            disabled={!isFormValid()}
           />
+          
+          {!isFormValid() && (
+            <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
+              Please fill in all fields to continue
+            </Typography>
+          )}
         </Box>
       </div>
     </div>

@@ -31,6 +31,20 @@ function Grid({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
+  const isFormValid = () => {
+    return (
+      gridData.Annual_expenses !== '' &&
+      gridData.Grid_sale_tax_rate !== '' &&
+      gridData.Grid_Tax_amount !== '' &&
+      gridData.Grid_escalation_rate !== '' &&
+      gridData.Grid_credit !== '' &&
+      gridData.NEM_fee !== '' &&
+      gridData.SC_flat !== '' &&
+      gridData.Pbuy_max !== '' &&
+      gridData.Psell_max !== ''
+    );
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
 
@@ -93,7 +107,7 @@ function Grid({ auth, user }) {
   const handleInputChange = (field) => (event) => {
     setGridData(prev => ({
       ...prev,
-      [field]: parseFloat(event.target.value)
+      [field]: event.target.value === '' ? '' : parseFloat(event.target.value)
     }))
   }
 
@@ -287,12 +301,18 @@ function Grid({ auth, user }) {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={!isFormValid() || saving}
             fullWidth
             sx={{ py: 1.5 }}
           >
             {saving ? 'Submitting...' : 'Submit for Analysis'}
           </Button>
+          
+          {!isFormValid() && (
+            <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
+              Please fill in all fields to continue
+            </Typography>
+          )}
         </Box>
       </div>
     </div>
