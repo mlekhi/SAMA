@@ -57,6 +57,7 @@ function Search(props){
           required
           label={"Address"}
           variant="outlined"
+          fullWidth
           >
           </TextField>
           </Grid>
