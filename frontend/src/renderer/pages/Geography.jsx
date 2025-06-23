@@ -4,7 +4,7 @@ import Map from '../components/Map'
 import Search from '../components/Search'
 import NextPageButton from '../components/NextPageButton'
 import SaveMessageAlert from '../components/SaveMessageAlert'
-import { Typography, TextField, Box, Divider } from "@mui/material"
+import { Typography, TextField, Box, Divider, InputAdornment } from "@mui/material"
 
 function Geography({ auth, user }) {
   const navigate = useNavigate()
@@ -131,56 +131,72 @@ function Geography({ auth, user }) {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Nominal Discount Rate (%)
+                Nominal Discount Rate
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Nominal Discount Rate*"
                 value={geoData.n_ir_rate}
                 onChange={(e) => setGeoData({...geoData, n_ir_rate: e.target.value})}
                 variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 inputProps={{ step: 0.1 }}
               />
             </Box>
             
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Expected Inflation Rate (%)
+                Expected Inflation Rate
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Expected Inflation Rate*"
                 value={geoData.e_ir_rate}
                 onChange={(e) => setGeoData({...geoData, e_ir_rate: e.target.value})}
                 variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 inputProps={{ step: 0.1 }}
               />
             </Box>
             
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Tax Rate (%)
+                Tax Rate
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Tax Rate*"
                 value={geoData.Tax_rate}
                 onChange={(e) => setGeoData({...geoData, Tax_rate: e.target.value})}
                 variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 inputProps={{ step: 0.1 }}
               />
             </Box>
             
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Renewable Energy Incentives Rate (%)
+                Renewable Energy Incentives Rate
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Renewable Energy Incentives Rate*"
                 value={geoData.RE_incentives_rate}
                 onChange={(e) => setGeoData({...geoData, RE_incentives_rate: e.target.value})}
                 variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 inputProps={{ step: 0.1 }}
               />
             </Box>

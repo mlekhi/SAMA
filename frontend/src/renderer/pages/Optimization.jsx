@@ -87,6 +87,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Maximum Number of Iterations*"
                 value={optimizationSettings.maxIterations}
                 onChange={handleSettingChange('maxIterations')}
                 variant="outlined"
@@ -101,6 +102,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Population Size (Swarm Size)*"
                 value={optimizationSettings.populationSize}
                 onChange={handleSettingChange('populationSize')}
                 variant="outlined"
@@ -115,6 +117,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Inertia Weight*"
                 value={optimizationSettings.inertiaWeight}
                 onChange={handleSettingChange('inertiaWeight')}
                 variant="outlined"
@@ -129,6 +132,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Inertia Weight Damping Ratio*"
                 value={optimizationSettings.inertiaWeightDamping}
                 onChange={handleSettingChange('inertiaWeightDamping')}
                 variant="outlined"
@@ -143,6 +147,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Personal Learning Coefficient*"
                 value={optimizationSettings.personalLearningCoeff}
                 onChange={handleSettingChange('personalLearningCoeff')}
                 variant="outlined"
@@ -157,6 +162,7 @@ function Optimization({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Global Learning Coefficient*"
                 value={optimizationSettings.globalLearningCoeff}
                 onChange={handleSettingChange('globalLearningCoeff')}
                 variant="outlined"

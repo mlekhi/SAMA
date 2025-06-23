@@ -112,6 +112,7 @@ function SystemConfig({ auth, user }) {
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Lifetime of System*"
                 value={systemData.lifetime}
                 onChange={(e) => setSystemData({...systemData, lifetime: e.target.value})}
                 variant="outlined"
@@ -125,11 +126,12 @@ function SystemConfig({ auth, user }) {
             {/* Max Loss of Power */}
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Max Loss of Power %
+                Max Loss of Power
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Max Loss of Power*"
                 value={systemData.LPSP_max_rate}
                 onChange={(e) => setSystemData({...systemData, LPSP_max_rate: e.target.value})}
                 variant="outlined"
@@ -143,11 +145,12 @@ function SystemConfig({ auth, user }) {
             {/* Min Renewable Energy */}
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Min Renewable Energy %
+                Min Renewable Energy
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Min Renewable Energy*"
                 value={systemData.RE_min_rate}
                 onChange={(e) => setSystemData({...systemData, RE_min_rate: e.target.value})}
                 variant="outlined"
@@ -161,15 +164,18 @@ function SystemConfig({ auth, user }) {
             {/* Annual Data */}
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Annual Data (hours)
+                Annual Consumption
               </Typography>
               <TextField
                 fullWidth
                 type="number"
+                placeholder="Annual Consumption*"
                 value={systemData.annualData}
                 onChange={(e) => setSystemData({...systemData, annualData: e.target.value})}
                 variant="outlined"
-                inputProps={{ min: 8760, max: 8760 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">kWh/yr</InputAdornment>,
+                }}
               />
             </Box>
           </Box>

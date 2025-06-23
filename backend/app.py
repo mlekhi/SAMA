@@ -442,7 +442,7 @@ def submit_results():
             'logs': results_logs,
             'user_id': user_id
         })
-
+        
     except Exception as e:
         logger.error(f"Error submitting results: {str(e)}")
         return jsonify({'error': str(e)}), 500

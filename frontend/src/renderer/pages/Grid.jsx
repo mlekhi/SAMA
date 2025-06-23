@@ -9,7 +9,8 @@ import {
   FormControlLabel,
   Checkbox,
   FormGroup,
-  Button
+  Button,
+  InputAdornment
 } from "@mui/material"
 
 function Grid({ auth, user }) {
@@ -137,32 +138,102 @@ function Grid({ auth, user }) {
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Annual Expenses ($)</Typography>
-              <TextField fullWidth type="number" value={gridData.Annual_expenses} onChange={handleInputChange('Annual_expenses')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Annual Expenses</Typography>
+              <TextField 
+                fullWidth 
+                type="number"
+                placeholder="Annual Expenses*"
+                value={gridData.Annual_expenses} 
+                onChange={handleInputChange('Annual_expenses')} 
+                variant="outlined"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Sale Tax Rate (%)</Typography>
-              <TextField fullWidth type="number" value={gridData.Grid_sale_tax_rate} onChange={handleInputChange('Grid_sale_tax_rate')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Sale Tax Rate</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Grid Sale Tax Rate*"
+                value={gridData.Grid_sale_tax_rate} 
+                onChange={handleInputChange('Grid_sale_tax_rate')} 
+                variant="outlined" 
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Tax Amount (kWh)</Typography>
-              <TextField fullWidth type="number" value={gridData.Grid_Tax_amount} onChange={handleInputChange('Grid_Tax_amount')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Tax Amount</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Grid Tax Amount*"
+                value={gridData.Grid_Tax_amount} 
+                onChange={handleInputChange('Grid_Tax_amount')} 
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">$/kWh</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Escalation Rate (%)</Typography>
-              <TextField fullWidth type="number" value={gridData.Grid_escalation_rate} onChange={handleInputChange('Grid_escalation_rate')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Escalation Rate</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Grid Escalation Rate*"
+                value={gridData.Grid_escalation_rate} 
+                onChange={handleInputChange('Grid_escalation_rate')} 
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Credit ($)</Typography>
-              <TextField fullWidth type="number" value={gridData.Grid_credit} onChange={handleInputChange('Grid_credit')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Credit</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Grid Credit*"
+                value={gridData.Grid_credit} 
+                onChange={handleInputChange('Grid_credit')} 
+                variant="outlined"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Net Metering Fee ($)</Typography>
-              <TextField fullWidth type="number" value={gridData.NEM_fee} onChange={handleInputChange('NEM_fee')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Net Metering Fee</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Net Metering Fee*"
+                value={gridData.NEM_fee} 
+                onChange={handleInputChange('NEM_fee')} 
+                variant="outlined"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Monthly Fixed Charge ($/kWh)</Typography>
-              <TextField fullWidth type="number" value={gridData.SC_flat} onChange={handleInputChange('SC_flat')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Grid Monthly Fixed Charge</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Grid Monthly Fixed Charge*"
+                value={gridData.SC_flat} 
+                onChange={handleInputChange('SC_flat')} 
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">$/kWh</InputAdornment>,
+                }}
+              />
             </Box>
           </Box>
         </Box>
@@ -176,12 +247,32 @@ function Grid({ auth, user }) {
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Purchase Capacity (kW)</Typography>
-              <TextField fullWidth type="number" value={gridData.Pbuy_max} onChange={handleInputChange('Pbuy_max')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Purchase Capacity</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Purchase Capacity*"
+                value={gridData.Pbuy_max} 
+                onChange={handleInputChange('Pbuy_max')} 
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">kW</InputAdornment>,
+                }}
+              />
             </Box>
             <Box>
-              <Typography variant="subtitle1" component="h3" gutterBottom>Sell Capacity (kW)</Typography>
-              <TextField fullWidth type="number" value={gridData.Psell_max} onChange={handleInputChange('Psell_max')} variant="outlined" />
+              <Typography variant="subtitle1" component="h3" gutterBottom>Sell Capacity</Typography>
+              <TextField 
+                fullWidth 
+                type="number" 
+                placeholder="Sell Capacity*"
+                value={gridData.Psell_max} 
+                onChange={handleInputChange('Psell_max')} 
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">kW</InputAdornment>,
+                }}
+              />
             </Box>
           </Box>
         </Box>
