@@ -10,7 +10,8 @@ import {
   FormControlLabel,
   Checkbox,
   FormGroup,
-  InputAdornment
+  InputAdornment,
+  Button
 } from "@mui/material"
 
 function SystemConfig({ auth, user }) {
@@ -27,16 +28,29 @@ function SystemConfig({ auth, user }) {
     Lead_acid: true,
     Li_ion: false
   })
+  const [consumptionPath, setConsumptionPath] = useState({ hourly: null, monthly: null, annual: null });
+  const [uploadedFile, setUploadedFile] = useState(null);
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
   const isFormValid = () => {
-    return (
+    const isSystemParamsValid =
       systemData.lifetime !== '' &&
       systemData.LPSP_max_rate !== '' &&
-      systemData.RE_min_rate !== '' &&
-      systemData.annualData !== ''
-    );
+      systemData.RE_min_rate !== '';
+
+    if (!isSystemParamsValid) return false;
+
+    if (consumptionPath.hourly === null) return false;
+    if (consumptionPath.hourly === 'yes') return !!uploadedFile;
+    
+    if (consumptionPath.monthly === null) return false;
+    if (consumptionPath.monthly === 'yes') return !!uploadedFile;
+
+    if (consumptionPath.annual === null) return false;
+    if (consumptionPath.annual === 'yes') return !!uploadedFile;
+
+    return systemData.annualData !== '';
   };
 
   const saveSystemData = async () => {
@@ -44,16 +58,37 @@ function SystemConfig({ auth, user }) {
     
     setSaving(true)
     setSaveMessage('')
+
+    const formData = new FormData();
+    
+    // Append system data
+    Object.keys(systemData).forEach(key => {
+      formData.append(key, systemData[key]);
+    });
+    
+    // Append consumption data source
+    const getConsumptionDataSource = () => {
+      if (consumptionPath.hourly === 'yes') return 'hourly';
+      if (consumptionPath.monthly === 'yes') return 'monthly';
+      if (consumptionPath.annual === 'yes') return 'annual';
+      return 'manual';
+    };
+    formData.append('consumptionDataSource', getConsumptionDataSource());
+
+    // Append file if it exists
+    if (uploadedFile) {
+      formData.append('consumption_csv', uploadedFile);
+    }
     
     try {
       const token = await user.getIdToken()
       const response = await fetch('http://127.0.0.1:5000/api/system-config', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // Content-Type is not set, browser will set it for FormData
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(systemData)
+        body: formData
       })
       
       if (response.ok) {
@@ -86,6 +121,28 @@ function SystemConfig({ auth, user }) {
     }
   }
 
+  const handleConsumptionChoice = (step, choice) => {
+    if (step === 'hourly') {
+      setConsumptionPath({ hourly: choice, monthly: null, annual: null });
+    } else if (step === 'monthly') {
+      setConsumptionPath(p => ({ ...p, monthly: choice, annual: null }));
+    } else if (step === 'annual') {
+      setConsumptionPath(p => ({ ...p, annual: choice }));
+    }
+    setUploadedFile(null); // Reset file on any choice change
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      setUploadedFile(file);
+    } else {
+      setUploadedFile(null);
+      // Optionally, show an error message to the user.
+      alert('Please upload a valid .csv file.');
+    }
+  };
+
   const handleCheckboxChange = (field) => (event) => {
     setSystemData(prev => ({
       ...prev,
@@ -99,6 +156,24 @@ function SystemConfig({ auth, user }) {
       [field]: event.target.value
     }))
   }
+
+  const YesNoQuestion = ({ question, choice, onChoiceChange }) => (
+    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Typography variant="subtitle1" component="h3">
+        {question}
+      </Typography>
+      <FormGroup row>
+        <FormControlLabel
+          control={<Checkbox checked={choice === 'yes'} onChange={() => onChoiceChange('yes')} />}
+          label="Yes"
+        />
+        <FormControlLabel
+          control={<Checkbox checked={choice === 'no'} onChange={() => onChoiceChange('no')} />}
+          label="No"
+        />
+      </FormGroup>
+    </Box>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -176,25 +251,72 @@ function SystemConfig({ auth, user }) {
                 }}
               />
             </Box>
-            
-            {/* Annual Data */}
-            <Box>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 4 }} />
+
+        {/* Consumption Data Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h2" gutterBottom>
+            Consumption Data Source
+          </Typography>
+
+          <YesNoQuestion
+            question="Do you have hourly consumption data?"
+            choice={consumptionPath.hourly}
+            onChoiceChange={(choice) => handleConsumptionChoice('hourly', choice)}
+          />
+
+          {consumptionPath.hourly === 'no' && (
+            <YesNoQuestion
+              question="Do you have monthly power consumption data?"
+              choice={consumptionPath.monthly}
+              onChoiceChange={(choice) => handleConsumptionChoice('monthly', choice)}
+            />
+          )}
+
+          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'no' && (
+            <YesNoQuestion
+              question="Do you have annual power consumption data?"
+              choice={consumptionPath.annual}
+              onChoiceChange={(choice) => handleConsumptionChoice('annual', choice)}
+            />
+          )}
+          
+          {(consumptionPath.hourly === 'yes' || consumptionPath.monthly === 'yes' || consumptionPath.annual === 'yes') && (
+            <Box sx={{ mt: 2 }}>
+              <Button variant="contained" component="label">
+                Upload CSV File
+                <input type="file" hidden accept=".csv" onChange={handleFileChange} />
+              </Button>
+              {uploadedFile && (
+                <Typography sx={{ ml: 2, display: 'inline' }}>
+                  {uploadedFile.name}
+                </Typography>
+              )}
+            </Box>
+          )}
+          
+          {consumptionPath.annual === 'no' && (
+            <Box sx={{ mt: 4 }}>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Annual Consumption
+                Default value for annual power consumption:
               </Typography>
               <TextField
                 fullWidth
                 type="number"
-                placeholder="Annual Consumption*"
+                label="Annual Power Consumption"
+                placeholder="Annual Power Consumption*"
                 value={systemData.annualData}
                 onChange={handleInputChange('annualData')}
                 variant="outlined"
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">kWh/yr</InputAdornment>,
+                  endAdornment: <InputAdornment position="end">kWh</InputAdornment>,
                 }}
               />
             </Box>
-          </Box>
+          )}
         </Box>
 
         <Divider sx={{ my: 4 }} />
