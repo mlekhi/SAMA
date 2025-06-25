@@ -12,7 +12,6 @@ import pandas as pd
 from types import SimpleNamespace
 import numpy as np
 from sama_python.generic_load import generic_load
-from werkzeug.utils import secure_filename
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -169,19 +168,6 @@ def save_system_config():
             system_config = SystemConfig(user_id=user_id)
             db.session.add(system_config)
 
-        # Handle file upload
-        if 'consumption_csv' in request.files:
-            file = request.files['consumption_csv']
-            if file.filename != '':
-                filename = secure_filename(file.filename)
-                # Ensure user-specific upload directory exists
-                user_upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
-                os.makedirs(user_upload_folder, exist_ok=True)
-                
-                file_path = os.path.join(user_upload_folder, filename)
-                file.save(file_path)
-                system_config.consumption_data_path = file_path
-
         # Update fields from form data
         data = request.form
         system_config.lifetime = data.get('lifetime')
@@ -197,7 +183,41 @@ def save_system_config():
         system_config.Lead_acid = data.get('Lead_acid', 'false').lower() == 'true'
         system_config.Li_ion = data.get('Li_ion', 'false').lower() == 'true'
         
-        system_config.consumption_data_source = data.get('consumptionDataSource')
+        # Handle consumption data source and storage
+        consumption_data_source = data.get('consumptionDataSource')
+        system_config.consumption_data_source = consumption_data_source
+        
+        # Handle manual input data (monthly or annual)
+        if consumption_data_source == 'monthly':
+            # Check if monthly data is provided in the form
+            monthly_data = []
+            for i in range(12):
+                month_key = f'month_{i}'
+                if month_key in data and data[month_key]:
+                    monthly_data.append(float(data[month_key]))
+                else:
+                    return jsonify({'error': f'Missing monthly data for month {i+1}'}), 400
+            
+            # Store monthly data in database
+            system_config.monthly_consumption = json.dumps(monthly_data)
+            
+        elif consumption_data_source == 'hourly':
+            # Check if hourly data is provided in the form
+            hourly_data = []
+            for i in range(8760):
+                hour_key = f'hour_{i}'
+                if hour_key in data and data[hour_key]:
+                    hourly_data.append(float(data[hour_key]))
+                else:
+                    return jsonify({'error': f'Missing hourly data for hour {i+1}'}), 400
+            
+            # Store hourly data in database
+            system_config.hourly_consumption = json.dumps(hourly_data)
+            
+        elif consumption_data_source in ['annual', 'manual']:
+            # Annual data is already stored in annualData field
+            if not system_config.annualData or system_config.annualData == '':
+                return jsonify({'error': 'Annual consumption data is required'}), 400
         
         db.session.commit()
         return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
@@ -233,6 +253,7 @@ def save_grid():
 class InData:
     def __init__(self, user_id):
         self.user_id = user_id
+        self.daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.load_user_data()
         self.load_static_data()
 
@@ -260,23 +281,33 @@ class InData:
         self.Bat = sys_config.Bat if sys_config else 1
         self.DG = sys_config.DG if sys_config else 1
         
-        # Load consumption data
-        if sys_config.consumption_data_source and sys_config.consumption_data_path and os.path.exists(sys_config.consumption_data_path):
-            consumption_df = pd.read_csv(sys_config.consumption_data_path, header=None)
-            
-            if sys_config.consumption_data_source == 'hourly':
-                self.Eload = consumption_df.iloc[:, 0].values
-            elif sys_config.consumption_data_source == 'monthly':
-                # Basic conversion from monthly to hourly. Assumes equal distribution.
+        # Load consumption data from database JSON fields
+        if sys_config.consumption_data_source:
+            if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
+                # Load hourly data from JSON array
+                hourly_values = json.loads(sys_config.hourly_consumption)
+                self.Eload = np.array(hourly_values)
+            elif sys_config.consumption_data_source == 'monthly' and sys_config.monthly_consumption:
+                # Load monthly data from JSON array and convert to hourly
+                monthly_values = json.loads(sys_config.monthly_consumption)
                 days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
                 hourly_load = []
-                for month, total_load in enumerate(consumption_df.iloc[:, 0]):
+                for month, total_load in enumerate(monthly_values):
                     days = days_in_month[month]
-                    hourly_avg = total_load / (days * 24)
+                    hourly_avg = float(total_load) / (days * 24)
                     hourly_load.extend([hourly_avg] * (days * 24))
                 self.Eload = np.array(hourly_load)
-            elif sys_config.consumption_data_source == 'annual':
-                self.annualData = consumption_df.iloc[0, 0]
+            elif sys_config.consumption_data_source in ['annual', 'manual'] and sys_config.annualData:
+                # Use annual data from database
+                self.annualData = float(sys_config.annualData)
+                self.Eload = generic_load(
+                    load_type=8, user_defined_load=self.annualData,
+                    load_previous_year_type=1, peakmonth='July',
+                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                )
+            else:
+                # Fallback to default annual data
+                self.annualData = float(sys_config.annualData) if sys_config and sys_config.annualData else 10000
                 self.Eload = generic_load(
                     load_type=8, user_defined_load=self.annualData,
                     load_previous_year_type=1, peakmonth='July',

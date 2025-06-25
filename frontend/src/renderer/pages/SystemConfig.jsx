@@ -33,6 +33,7 @@ function SystemConfig({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [monthlyData, setMonthlyData] = useState(Array(12).fill(''));
+  const [hourlyData, setHourlyData] = useState([]);
 
   const isFormValid = () => {
     const isSystemParamsValid =
@@ -83,9 +84,18 @@ function SystemConfig({ auth, user }) {
     };
     formData.append('consumptionDataSource', getConsumptionDataSource());
 
-    // Append file if it exists
-    if (uploadedFile) {
-      formData.append('consumption_csv', uploadedFile);
+    // Append monthly data if manually entered
+    if (consumptionPath.monthly === 'yes') {
+      monthlyData.forEach((value, index) => {
+        formData.append(`month_${index}`, value);
+      });
+    }
+
+    // Append hourly data if uploaded via CSV
+    if (consumptionPath.hourly === 'yes' && hourlyData.length > 0) {
+      hourlyData.forEach((value, index) => {
+        formData.append(`hour_${index}`, value);
+      });
     }
     
     try {
@@ -116,7 +126,7 @@ function SystemConfig({ auth, user }) {
             navigate('/battery-config')
           } else {
             // Default navigation if no main component is selected
-            navigate('/geography')
+            navigate('/grid-config')
           }
         }, 1500)
       } else {
@@ -149,9 +159,32 @@ function SystemConfig({ auth, user }) {
     const file = event.target.files[0];
     if (file && file.name.endsWith('.csv')) {
       setUploadedFile(file);
+      
+      // Read and convert CSV to JSON array
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvText = e.target.result;
+        const lines = csvText.trim().split('\n');
+        const values = lines.map(line => parseFloat(line.trim()));
+        
+        // Validate the data
+        if (values.length === 8760) {
+          // Store the hourly data
+          setHourlyData(values);
+        } else if (values.length === 12) {
+          // Store the monthly data
+          setMonthlyData(values.map(v => v.toString()));
+        } else if (values.length === 1) {
+          // Store the annual data
+          setSystemData(prev => ({ ...prev, annualData: values[0] }));
+        } else {
+          alert(`Invalid CSV format. Expected 1, 12, or 8760 values, but got ${values.length}.`);
+          setUploadedFile(null);
+        }
+      };
+      reader.readAsText(file);
     } else {
       setUploadedFile(null);
-      // Optionally, show an error message to the user.
       alert('Please upload a valid .csv file.');
     }
   };

@@ -42,8 +42,9 @@ class SystemConfig(db.Model):
     Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
     Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery
     consumption_data_source = db.Column(db.String(50), nullable=True) # hourly, monthly, annual, manual
-    consumption_data_path = db.Column(db.String(500), nullable=True) # path to uploaded csv
-    
+    hourly_consumption = db.Column(db.Text, nullable=True) # path to uploaded csv
+    monthly_consumption = db.Column(db.Text, nullable=True)  # JSON array of 12 monthly values
+
 class Grid(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
     
