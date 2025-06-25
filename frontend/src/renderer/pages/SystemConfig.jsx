@@ -32,6 +32,7 @@ function SystemConfig({ auth, user }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [monthlyData, setMonthlyData] = useState(Array(12).fill(''));
 
   const isFormValid = () => {
     const isSystemParamsValid =
@@ -41,16 +42,23 @@ function SystemConfig({ auth, user }) {
 
     if (!isSystemParamsValid) return false;
 
-    if (consumptionPath.hourly === null) return false;
-    if (consumptionPath.hourly === 'yes') return !!uploadedFile;
-    
-    if (consumptionPath.monthly === null) return false;
-    if (consumptionPath.monthly === 'yes') return !!uploadedFile;
-
-    if (consumptionPath.annual === null) return false;
-    if (consumptionPath.annual === 'yes') return !!uploadedFile;
-
-    return systemData.annualData !== '';
+    if (consumptionPath.hourly === 'yes') {
+      return !!uploadedFile;
+    }
+    if (consumptionPath.hourly === 'no') {
+      if (consumptionPath.monthly === 'yes') {
+        return monthlyData.every(val => val !== '' && !isNaN(parseFloat(val)));
+      }
+      if (consumptionPath.monthly === 'no') {
+        if (consumptionPath.annual === 'yes') {
+          return systemData.annualData !== '' && !isNaN(parseFloat(systemData.annualData));
+        }
+        if (consumptionPath.annual === 'no') {
+          return systemData.annualData !== '' && !isNaN(parseFloat(systemData.annualData));
+        }
+      }
+    }
+    return false;
   };
 
   const saveSystemData = async () => {
@@ -128,6 +136,11 @@ function SystemConfig({ auth, user }) {
       setConsumptionPath(p => ({ ...p, monthly: choice, annual: null }));
     } else if (step === 'annual') {
       setConsumptionPath(p => ({ ...p, annual: choice }));
+      if (choice === 'yes') {
+        setSystemData(prev => ({ ...prev, annualData: '' }));
+      } else if (choice === 'no') {
+        setSystemData(prev => ({ ...prev, annualData: 9 })); // default value
+      }
     }
     setUploadedFile(null); // Reset file on any choice change
   };
@@ -157,6 +170,14 @@ function SystemConfig({ auth, user }) {
     }))
   }
 
+  const handleMonthlyDataChange = (index, value) => {
+    setMonthlyData(prev => {
+      const newData = [...prev];
+      newData[index] = value;
+      return newData;
+    });
+  };
+
   const YesNoQuestion = ({ question, choice, onChoiceChange }) => (
     <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <Typography variant="subtitle1" component="h3">
@@ -174,6 +195,38 @@ function SystemConfig({ auth, user }) {
       </FormGroup>
     </Box>
   );
+
+  const MonthlyConsumptionInputs = () => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return (
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle1" component="h3" gutterBottom>
+          Enter your monthly power consumption data:
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 2 }}>
+          {months.map((month, index) => (
+            <Box key={month}>
+              <Typography variant="subtitle2" component="h4" gutterBottom>{month}</Typography>
+              <TextField
+                fullWidth
+                type="number"
+                placeholder={`${month}*`}
+                value={monthlyData[index]}
+                onChange={(e) => handleMonthlyDataChange(index, e.target.value)}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">kWh</InputAdornment>,
+                }}
+              />
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -268,12 +321,33 @@ function SystemConfig({ auth, user }) {
             onChoiceChange={(choice) => handleConsumptionChoice('hourly', choice)}
           />
 
+          {consumptionPath.hourly === 'yes' && (
+            <Box sx={{ mt: 2 }}>
+              <Button variant="contained" component="label">
+                Upload Hourly CSV File
+                <input type="file" hidden accept=".csv" onChange={handleFileChange} />
+              </Button>
+              {uploadedFile && (
+                <Typography sx={{ ml: 2, display: 'inline' }}>
+                  {uploadedFile.name}
+                </Typography>
+              )}
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                CSV must contain one column with 8760 numerical values and no headers.
+              </Typography>
+            </Box>
+          )}
+
           {consumptionPath.hourly === 'no' && (
             <YesNoQuestion
               question="Do you have monthly power consumption data?"
               choice={consumptionPath.monthly}
               onChoiceChange={(choice) => handleConsumptionChoice('monthly', choice)}
             />
+          )}
+
+          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'yes' && (
+            <MonthlyConsumptionInputs />
           )}
 
           {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'no' && (
@@ -283,25 +357,11 @@ function SystemConfig({ auth, user }) {
               onChoiceChange={(choice) => handleConsumptionChoice('annual', choice)}
             />
           )}
-          
-          {(consumptionPath.hourly === 'yes' || consumptionPath.monthly === 'yes' || consumptionPath.annual === 'yes') && (
-            <Box sx={{ mt: 2 }}>
-              <Button variant="contained" component="label">
-                Upload CSV File
-                <input type="file" hidden accept=".csv" onChange={handleFileChange} />
-              </Button>
-              {uploadedFile && (
-                <Typography sx={{ ml: 2, display: 'inline' }}>
-                  {uploadedFile.name}
-                </Typography>
-              )}
-            </Box>
-          )}
-          
-          {consumptionPath.annual === 'no' && (
+
+          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'no' && consumptionPath.annual !== null && (
             <Box sx={{ mt: 4 }}>
               <Typography variant="subtitle1" component="h3" gutterBottom>
-                Default value for annual power consumption:
+                Enter your annual power consumption:
               </Typography>
               <TextField
                 fullWidth

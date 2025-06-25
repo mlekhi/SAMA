@@ -41,7 +41,9 @@ class SystemConfig(db.Model):
     Bat = db.Column(db.Boolean, nullable=False)  # Battery
     Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
     Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery
-
+    consumption_data_source = db.Column(db.String(50), nullable=True) # hourly, monthly, annual, manual
+    consumption_data_path = db.Column(db.String(500), nullable=True) # path to uploaded csv
+    
 class Grid(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
     

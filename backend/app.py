@@ -12,6 +12,7 @@ import pandas as pd
 from types import SimpleNamespace
 import numpy as np
 from sama_python.generic_load import generic_load
+from werkzeug.utils import secure_filename
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -161,25 +162,42 @@ def save_optimization():
 def save_system_config():
     try:
         user_id = request.user['uid']
-        data = request.get_json()
         
         # Check if record exists
         system_config = SystemConfig.query.get(user_id)
         if not system_config:
             system_config = SystemConfig(user_id=user_id)
             db.session.add(system_config)
-        
-        # Update fields
+
+        # Handle file upload
+        if 'consumption_csv' in request.files:
+            file = request.files['consumption_csv']
+            if file.filename != '':
+                filename = secure_filename(file.filename)
+                # Ensure user-specific upload directory exists
+                user_upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+                os.makedirs(user_upload_folder, exist_ok=True)
+                
+                file_path = os.path.join(user_upload_folder, filename)
+                file.save(file_path)
+                system_config.consumption_data_path = file_path
+
+        # Update fields from form data
+        data = request.form
         system_config.lifetime = data.get('lifetime')
         system_config.LPSP_max_rate = data.get('LPSP_max_rate')
         system_config.RE_min_rate = data.get('RE_min_rate')
         system_config.annualData = data.get('annualData')
-        system_config.PV = data.get('PV')
-        system_config.WT = data.get('WT')
-        system_config.DG = data.get('DG')
-        system_config.Bat = data.get('Bat')
-        system_config.Lead_acid = data.get('Lead_acid')
-        system_config.Li_ion = data.get('Li_ion')
+        
+        # Handle boolean fields from form data
+        system_config.PV = data.get('PV', 'false').lower() == 'true'
+        system_config.WT = data.get('WT', 'false').lower() == 'true'
+        system_config.DG = data.get('DG', 'false').lower() == 'true'
+        system_config.Bat = data.get('Bat', 'false').lower() == 'true'
+        system_config.Lead_acid = data.get('Lead_acid', 'false').lower() == 'true'
+        system_config.Li_ion = data.get('Li_ion', 'false').lower() == 'true'
+        
+        system_config.consumption_data_source = data.get('consumptionDataSource')
         
         db.session.commit()
         return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
@@ -242,8 +260,36 @@ class InData:
         self.Bat = sys_config.Bat if sys_config else 1
         self.DG = sys_config.DG if sys_config else 1
         
-        # Load annual consumption data
-        self.annualData = sys_config.annualData if sys_config else 10000  # Default to 10,000 kWh/year -- is this valid?
+        # Load consumption data
+        if sys_config.consumption_data_source and sys_config.consumption_data_path and os.path.exists(sys_config.consumption_data_path):
+            consumption_df = pd.read_csv(sys_config.consumption_data_path, header=None)
+            
+            if sys_config.consumption_data_source == 'hourly':
+                self.Eload = consumption_df.iloc[:, 0].values
+            elif sys_config.consumption_data_source == 'monthly':
+                # Basic conversion from monthly to hourly. Assumes equal distribution.
+                days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                hourly_load = []
+                for month, total_load in enumerate(consumption_df.iloc[:, 0]):
+                    days = days_in_month[month]
+                    hourly_avg = total_load / (days * 24)
+                    hourly_load.extend([hourly_avg] * (days * 24))
+                self.Eload = np.array(hourly_load)
+            elif sys_config.consumption_data_source == 'annual':
+                self.annualData = consumption_df.iloc[0, 0]
+                self.Eload = generic_load(
+                    load_type=8, user_defined_load=self.annualData,
+                    load_previous_year_type=1, peakmonth='July',
+                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                )
+        else:
+            # Fallback to manual annual data from the form
+            self.annualData = float(sys_config.annualData) if sys_config and sys_config.annualData else 10000
+            self.Eload = generic_load(
+                load_type=8, user_defined_load=self.annualData,
+                load_previous_year_type=1, peakmonth='July',
+                daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            )
 
         # --- Grid ---
         self.Grid = grid.Grid
@@ -329,81 +375,8 @@ class InData:
         self.c2 = opt.c2 if opt else 2.0  # Global Learning Coefficient
 
     def load_static_data(self):
-        # IDK IF THIS IS RIGHT
-        try:
-            # Try to load from the specific file first
-            weather_data = pd.read_csv('sama_python/content/Data.csv', header=None)
-            weather_data.columns = ['Power', 'Irradiance', 'Temperature', 'Wind Speed']
-        except FileNotFoundError:
-            # Fallback to individual files if Data.csv doesn't exist
-            temperature_data = pd.read_csv('sama_python/content/Temperature.csv', header=None)
-            irradiance_data = pd.read_csv('sama_python/content/Irradiance.csv', header=None)
-            wind_data = pd.read_csv('sama_python/content/WSPEED.csv', header=None)
-            
-            # Combine the weather data - these files have no headers, just data
-            weather_data = pd.DataFrame({
-                'Temperature': temperature_data.iloc[:, 0],
-                'GHI': irradiance_data.iloc[:, 0],
-                'Wind Speed': wind_data.iloc[:, 0]
-            })
-        
-        # Generate hourly consumption data from annualData using generic_load
-        self.Eload = generic_load(
-            load_type=8,  # Annual consumption
-            load_previous_year_type=1,
-            peakmonth='July',  # Could be made configurable
-            daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
-            user_defined_load=self.annualData  # Use the annualData from SystemConfig
-        )
-        
-        self.T = weather_data['Temperature'].values
-        self.G = weather_data['Irradiance'].values if 'Irradiance' in weather_data.columns else weather_data['GHI'].values
-        self.Vw = weather_data['Wind Speed'].values
-        
-        # Placeholder/default values for variables not in the database
-        self.daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        self.Ppv_r = 1.0  # Rated power of a single PV panel
-        self.Pwt_r = 1.0  # Rated power of a single wind turbine
-        self.Cbt_r = 1.0  # Capacity of a single battery
-        self.Cdg_r = 1.0  # Capacity of a single diesel generator
-        self.h_hub = 50
-        self.h0 = 10
-        self.alfa_wind_turbine = 0.14
-        self.v_cut_in = 3
-        self.v_cut_out = 25
-        self.v_rated = 15
-        self.R_B = 200
-        self.C_WT = 1200
-        self.C_B = 200
-        self.C_CH = 100
-        self.L_WT = 20
-        self.R_WT = 1000
-        self.R_CH = 80
-        self.L_CH = 10
-        self.MO_WT = 20
-        self.MO_B = 10
-        self.MO_CH = 5
-        self.RT_PV = 1
-        self.RT_WT = 1
-        self.RT_B = 3
-        self.RT_I = 2
-        self.RT_CH = 2
-        self.CO2 = 2.6
-        self.NOx = 0.006
-        self.SO2 = 0.00013
-        self.E_CO2 = 0.2
-        self.E_SO2 = 0.0001
-        self.E_NOx = 0.0002
-        self.Cbuy = np.full(8760, 0.15)
-        self.Csell = np.full(8760, 0.05)
-        self.EM = 'default_em'
-        self.Budget = 100000
-        self.Vnom_Li_ion = 48
-        self.Cnom_Li = 100
-        self.ef_bat_Li = 0.9
-        self.Q_lifetime_Li = 3000
-        self.Cash_Flow_adv = 0
-        
+        # This data is now loaded dynamically based on user input or defaults
+        pass
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth
