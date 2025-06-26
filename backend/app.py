@@ -266,6 +266,109 @@ def save_grid():
         logger.error(f"Error saving grid data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/pv-config', methods=['GET'])
+@require_auth
+def get_pv_config():
+    user_id = request.user['uid']
+    pv_system = PhotovoltaicSystem.query.get(user_id)
+    if not pv_system:
+        return jsonify({'error': 'No PV config found'}), 404
+    return jsonify({
+        'user_id': pv_system.user_id,
+        'system_capacity': pv_system.system_capacity,
+        'azimuth': pv_system.azimuth,
+        'tilt': pv_system.tilt,
+        'array_type': pv_system.array_type,
+        'module_type': pv_system.module_type,
+        'losses': pv_system.losses,
+        'fpv': pv_system.fpv,
+        'Tcof': pv_system.Tcof,
+        'Tref': pv_system.Tref,
+        'Tc_noct': pv_system.Tc_noct,
+        'Ta_noct': pv_system.Ta_noct,
+        'G_noct': pv_system.G_noct,
+        'n_PV': pv_system.n_PV,
+        'Gref': pv_system.Gref,
+        'L_PV': pv_system.L_PV,
+        'gama': pv_system.gama,
+        'C_PV': pv_system.C_PV,
+        'R_PV': pv_system.R_PV,
+        'MO_PV': pv_system.MO_PV,
+        'Installation_cost': pv_system.Installation_cost,
+        'Overhead': pv_system.Overhead,
+        'Sales_and_marketing': pv_system.Sales_and_marketing,
+        'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
+        'Electrical_BoS': pv_system.Electrical_BoS,
+        'Structural_BoS': pv_system.Structural_BoS,
+        'Supply_Chain_costs': pv_system.Supply_Chain_costs,
+        'Profit_costs': pv_system.Profit_costs,
+        'Sales_tax': pv_system.Sales_tax
+    })
+
+@app.route('/api/inverter-config', methods=['GET'])
+@require_auth
+def get_inverter_config():
+    user_id = request.user['uid']
+    inverter = Inverter.query.get(user_id)
+    if not inverter:
+        return jsonify({'error': 'No inverter config found'}), 404
+    return jsonify({
+        'user_id': inverter.user_id,
+        'n_I': inverter.n_I,
+        'L_I': inverter.L_I,
+        'DC_AC_ratio': inverter.DC_AC_ratio,
+        'C_I': inverter.C_I,
+        'R_I': inverter.R_I,
+        'MO_I': inverter.MO_I
+    })
+
+@app.route('/api/dg-config', methods=['GET'])
+@require_auth
+def get_dg_config():
+    user_id = request.user['uid']
+    dg = DieselGenerator.query.get(user_id)
+    if not dg:
+        return jsonify({'error': 'No diesel generator config found'}), 404
+    return jsonify({
+        'user_id': dg.user_id,
+        'a': dg.a,
+        'b': dg.b,
+        'min_load_ratio': dg.min_load_ratio,
+        'C_DG': dg.C_DG,
+        'R_DG': dg.R_DG,
+        'MO_DG': dg.MO_DG,
+        'C_fuel': dg.C_fuel,
+        'C_fuel_adj_rate': dg.C_fuel_adj_rate,
+        'diesel_lifetime': dg.diesel_lifetime
+    })
+
+@app.route('/api/battery-config', methods=['GET'])
+@require_auth
+def get_battery_config():
+    user_id = request.user['uid']
+    battery = Battery.query.get(user_id)
+    if not battery:
+        return jsonify({'error': 'No battery config found'}), 404
+    return jsonify({
+        'user_id': battery.user_id,
+        'SOC_min': battery.SOC_min,
+        'SOC_max': battery.SOC_max,
+        'SOC_initial': battery.SOC_initial,
+        'self_discharge_rate': battery.self_discharge_rate,
+        'L_B': battery.L_B,
+        'Cnom_Leadacid': battery.Cnom_Leadacid,
+        'alfa_battery_leadacid': battery.alfa_battery_leadacid,
+        'c': battery.c,
+        'k': battery.k,
+        'Ich_max_leadacid': battery.Ich_max_leadacid,
+        'Vnom_leadacid': battery.Vnom_leadacid,
+        'ef_bat_leadacid': battery.ef_bat_leadacid,
+        'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
+        'Ich_max_Li_ion': battery.Ich_max_Li_ion,
+        'Idch_max_Li_ion': battery.Idch_max_Li_ion,
+        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion
+    })
+
 class InData:
     def __init__(self, user_id):
         self.user_id = user_id
