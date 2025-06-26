@@ -340,7 +340,7 @@ class Input_Data:
         self.SOC_min = 0.1
         self.SOC_max = 1
         self.SOC_initial = 0.5
-        self.self_discharge_rate = 0     # Hourly self-discharge rate
+        self.self_discharge_rate = 0.02     # Hourly self-discharge rate
         self.L_B = 7.5  # Life time (year)
         self.RT_B = ceil(self.n / self.L_B) - 1  # Replacement time
 
