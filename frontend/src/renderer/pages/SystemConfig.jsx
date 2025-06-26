@@ -118,14 +118,11 @@ function SystemConfig({ auth, user }) {
           
           if (PV) {
             navigate('/pv-config')
-          } else if (WT) {
-            navigate('/wt-config')
           } else if (DG) {
             navigate('/dg-config')
           } else if (Bat) {
             navigate('/battery-config')
           } else {
-            // Default navigation if no main component is selected
             navigate('/grid-config')
           }
         }, 1500)

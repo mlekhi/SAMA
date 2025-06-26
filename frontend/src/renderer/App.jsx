@@ -101,19 +101,19 @@ function App() {
               } 
             />
             <Route 
-              path="/battery" 
+              path="/battery-config" 
               element={
                 user ? <Battery auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
-              path="/pv" 
+              path="/pv-config" 
               element={
                 user ? <PV auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
-              path="/diesel" 
+              path="/dg-config" 
               element={
                 user ? <Diesel auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 

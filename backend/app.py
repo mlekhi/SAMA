@@ -155,6 +155,22 @@ def save_optimization():
         logger.error(f"Error saving optimization data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/component-selection', methods=['GET'])
+@require_auth
+def get_component_selection():
+    user_id = request.user['uid']
+    system_config = SystemConfig.query.get(user_id)
+    if not system_config:
+        return jsonify({'error': 'No system config found'}), 404
+    return jsonify({
+        'PV': system_config.PV,
+        'WT': system_config.WT,
+        'DG': system_config.DG,
+        'Bat': system_config.Bat,
+        'Lead_acid': system_config.Lead_acid,
+        'Li_ion': system_config.Li_ion
+    })
+
 @app.route('/api/system-config', methods=['POST'])
 @require_auth
 @log_function_input
