@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from firebase_admin import credentials, initialize_app, auth
 import os
@@ -14,6 +14,7 @@ import numpy as np
 from sama_python.generic_load import generic_load
 from math import ceil
 from sama_python.Input_Data import Input_Data as OriginalInputData
+import glob
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -612,11 +613,35 @@ def submit_results():
         results_logs = output_logs.copy()
         output_logs.clear()
         
-        # 4. Return the analysis results
+        # 4. Get list of generated files
+        output_base = f'../backend/sama_python/output/{user_id}'
+        figs_dir = f'{output_base}/figs'
+        data_dir = f'{output_base}/data'
+        
+        generated_files = {
+            'figures': []
+        }
+        
+        # Get figure files only
+        if os.path.exists(figs_dir):
+            fig_files = glob.glob(f'{figs_dir}/*.png')
+            logger.info(f"Found {len(fig_files)} figure files: {fig_files}")
+            for fig_file in fig_files:
+                filename = os.path.basename(fig_file)
+                generated_files['figures'].append({
+                    'name': filename,
+                    'display_name': filename.replace('.png', '').replace('_', ' ').title(),
+                    'type': 'figure'
+                })
+        else:
+            logger.warning(f"Figures directory does not exist: {figs_dir}")
+        
+        logger.info(f"Returning files: {generated_files}")
         return jsonify({
             'message': 'Analysis completed successfully',
             'logs': results_logs,
-            'user_id': user_id
+            'user_id': user_id,
+            'generated_files': generated_files
         })
         
     except Exception as e:
@@ -624,6 +649,90 @@ def submit_results():
         logger.error(f"Error submitting results: {str(e)}")
         logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+@app.route('/api/download/<user_id>/<file_type>/<filename>', methods=['GET'])
+@require_auth
+def download_file(user_id, file_type, filename):
+    """Download a generated file for a specific user"""
+    try:
+        # Verify the requesting user can access this file
+        requesting_user_id = request.user['uid']
+        if requesting_user_id != user_id:
+            return jsonify({'error': 'Unauthorized access to file'}), 403
+        
+        # Determine the file path based on type
+        if file_type == 'figure':
+            file_path = f'../backend/sama_python/output/{user_id}/figs/{filename}'
+        elif file_type == 'data':
+            file_path = f'../backend/sama_python/output/{user_id}/data/{filename}'
+        else:
+            return jsonify({'error': 'Invalid file type'}), 400
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Determine MIME type
+        if filename.endswith('.png'):
+            mimetype = 'image/png'
+        elif filename.endswith('.csv'):
+            mimetype = 'text/csv'
+        else:
+            mimetype = 'application/octet-stream'
+        
+        # Send the file
+        return send_file(
+            file_path,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading file: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/<user_id>', methods=['GET'])
+@require_auth
+def get_user_files(user_id):
+    """Get list of generated files for a specific user"""
+    try:
+        # Verify the requesting user can access this file list
+        requesting_user_id = request.user['uid']
+        if requesting_user_id != user_id:
+            return jsonify({'error': 'Unauthorized access to files'}), 403
+        
+        output_base = f'../backend/sama_python/output/{user_id}'
+        figs_dir = f'{output_base}/figs'
+        data_dir = f'{output_base}/data'
+        
+        generated_files = {
+            'figures': []
+        }
+        
+        # Get figure files only
+        if os.path.exists(figs_dir):
+            fig_files = glob.glob(f'{figs_dir}/*.png')
+            logger.info(f"Found {len(fig_files)} figure files: {fig_files}")
+            for fig_file in fig_files:
+                filename = os.path.basename(fig_file)
+                generated_files['figures'].append({
+                    'name': filename,
+                    'display_name': filename.replace('.png', '').replace('_', ' ').title(),
+                    'type': 'figure'
+                })
+        else:
+            logger.warning(f"Figures directory does not exist: {figs_dir}")
+        
+        logger.info(f"Returning files: {generated_files}")
+        return jsonify({
+            'user_id': user_id,
+            'files': generated_files
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user files: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():

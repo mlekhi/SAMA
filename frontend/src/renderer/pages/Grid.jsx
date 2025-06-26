@@ -83,9 +83,18 @@ function Grid({ auth, user }) {
       if (submitResponse.ok) {
         const results = await submitResponse.json();
         console.log('SAMA Analysis Results:', results.logs);
+        console.log('Generated Files:', results.generated_files);
+        console.log('Full response:', results);
+        console.log('User ID from response:', results.user_id);
         setSaveMessage('Analysis complete! Navigating to results...');
         setTimeout(() => {
-          navigate('/results', { state: { results: results.logs } });
+          navigate('/results', { 
+            state: { 
+              results: results.logs,
+              generatedFiles: results.generated_files,
+              userId: results.user_id
+            } 
+          });
         }, 1500);
       } else {
         const errorData = await submitResponse.json();

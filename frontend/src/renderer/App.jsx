@@ -97,7 +97,7 @@ function App() {
             <Route 
               path="/results" 
               element={
-                user ? <Results /> : <Navigate to="/login" replace />
+                user ? <Results auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
