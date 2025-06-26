@@ -55,7 +55,7 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         {/* Persistent Header */}
         <Header auth={auth} user={user} />
-        <FormStepper auth={auth} />
+        {user && <FormStepper auth={auth} />}
         {/* Main Content */}
         <main className="pt-0">
           <Routes>
