@@ -24,14 +24,35 @@ function Diesel() {
     setDgData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     setSaveMessage('');
-    setTimeout(() => {
+    try {
+      // ... your save logic ...
       setSaving(false);
       setSaveMessage('Diesel Generator configuration saved!');
-      // navigate('/next-page'); // Uncomment and set next page if needed
-    }, 1000);
+      setTimeout(async () => {
+        // Fetch component selection to determine next page
+        try {
+          const res = await fetch('/api/component-selection', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.Bat) {
+              navigate('/battery-config');
+            } else {
+              navigate('/grid-config');
+            }
+          } else {
+            navigate('/grid-config');
+          }
+        } catch (err) {
+          navigate('/grid-config');
+        }
+      }, 1000);
+    } catch (err) {
+      setSaveMessage('Failed to save Diesel Generator configuration.');
+      setSaving(false);
+    }
   };
 
   return (
