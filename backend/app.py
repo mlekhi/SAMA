@@ -283,7 +283,7 @@ def save_pv_config():
             'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
             'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
             'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'Ppv_r']:
+            'Profit_costs', 'Sales_tax']:
             if field in data:
                 setattr(pv, field, data[field])
         db.session.commit()
@@ -291,7 +291,7 @@ def save_pv_config():
             'user_id', 'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
             'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
             'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'Ppv_r']}), 200
+            'Profit_costs', 'Sales_tax']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
