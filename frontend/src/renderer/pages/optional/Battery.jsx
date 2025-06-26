@@ -34,7 +34,7 @@ const defaultValues = {
   MO_B: 10.27
 };
 
-function Battery() {
+function Battery({ user }) {
   const [batData, setBatData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -48,8 +48,12 @@ function Battery() {
       setLoading(true);
       setError('');
       try {
-        // Fetch battery config
+        let token = null;
+        if (user) {
+          token = await user.getIdToken();
+        }
         const res = await fetch('http://127.0.0.1:5000/api/battery-config', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           credentials: 'include',
         });
         if (res.ok) {
@@ -65,7 +69,7 @@ function Battery() {
       }
     };
     fetchComponentSelection();
-  }, []);
+  }, [user]);
 
   const handleChange = (field) => (event) => {
     setBatData(prev => ({ ...prev, [field]: event.target.value }));
@@ -102,7 +106,6 @@ function Battery() {
               <TextField label="Hourly self-discharge rate" value={batData.self_discharge_rate} onChange={handleChange('self_discharge_rate')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
               <TextField label="Battery lifetime" value={batData.L_B} onChange={handleChange('L_B')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
             </Box>
-            {componentSelection?.Lead_acid && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h5" gutterBottom>Lead Acid Battery</Typography>
@@ -117,8 +120,6 @@ function Battery() {
                   <TextField label="Throughout" value={batData.Q_lifetime_leadacid} onChange={handleChange('Q_lifetime_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
                 </Box>
               </>
-            )}
-            {componentSelection?.Li_ion && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h5" gutterBottom>Li-ion Battery</Typography>
@@ -133,7 +134,6 @@ function Battery() {
                   <TextField label="Battery lifetime" value={batData.L_B_Li} onChange={handleChange('L_B_Li')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
                 </Box>
               </>
-            )}
             <Divider sx={{ my: 2 }} />
             <Typography variant="h5" gutterBottom>Economic</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
