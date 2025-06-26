@@ -47,7 +47,7 @@ pip install -r requirements.txt
 - PostgreSQL must be installed on your system
   - **macOS**: `brew install postgresql` or download from postgresql.org
   - **Ubuntu/Debian**: `sudo apt-get install postgresql postgresql-contrib`
-  - **Windows**: Download from postgresql.org
+  - **Windows**: [Download the official PostgreSQL installer for Windows](https://www.postgresql.org/download/windows) and follow the setup instructions. 
 
 **Setup Steps:**
 
@@ -68,7 +68,7 @@ pip install -r requirements.txt
    SECRET_KEY=your-secret-key-here
    FLASK_DEBUG=True
    
-   # API Keys (optional)
+   # API Keys
    NREL_API_KEY=your_nrel_api_key_here
    HOLIDAY_API_KEY=your_holiday_api_key_here
    EOF
