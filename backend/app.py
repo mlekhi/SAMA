@@ -545,7 +545,6 @@ class InData:
         self.n_PV = pv_system.n_PV if pv_system else 0.15
         self.Gref = pv_system.Gref if pv_system else 1000
         self.L_PV = pv_system.L_PV if pv_system else 25
-        self.gama = pv_system.gama if pv_system else 0.9
         self.C_PV = pv_system.C_PV if pv_system else 1000
         self.R_PV = pv_system.R_PV if pv_system else 800
         self.MO_PV = pv_system.MO_PV if pv_system else 10
