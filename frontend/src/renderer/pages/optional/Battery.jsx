@@ -81,7 +81,7 @@ function Battery({ user }) {
     setTimeout(() => {
       setSaving(false);
       setSaveMessage('Battery configuration saved!');
-      // navigate('/next-page'); // Uncomment and set next page if needed
+      navigate('/grid-config');
     }, 1000);
   };
 
