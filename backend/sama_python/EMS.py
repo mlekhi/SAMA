@@ -22,6 +22,11 @@ def EMS(Lead_acid, Li_ion, Ich_max_Li_ion, Idch_max_Li_ion, Cnom_Li, Vnom_Li_ion
     if Lead_acid == 1:
         ef_bat = ef_bat_leadacid
         Q_lifetime = Q_lifetime_leadacid
+        
+    # Safety check: if neither battery type is selected, set defaults
+    if not (Li_ion == 1 or Lead_acid == 1):
+        ef_bat = 0.8  # Default battery efficiency
+        Q_lifetime = 8000  # Default battery lifetime
 
     Eb = np.zeros(NT + 1)
     Pch = np.zeros(NT)
@@ -52,7 +57,7 @@ def EMS(Lead_acid, Li_ion, Ich_max_Li_ion, Idch_max_Li_ion, Cnom_Li, Vnom_Li_ion
         Pdg_min = 0.01 * Pn_DG
 
     # Battery Wear Cost
-    Cbw = R_B * Cn_B / (Nbat * Q_lifetime * np.sqrt(ef_bat)) if Cn_B > 0 else 0
+    Cbw = R_B * Cn_B / (Nbat * Q_lifetime * np.sqrt(ef_bat)) if (Cn_B > 0 and Nbat > 0) else 0
 
     # DG fixed cost
     cc_gen = (b * Pn_DG * C_fuel) + ((R_DG * Pn_DG) / (TL_DG)) + MO_DG
