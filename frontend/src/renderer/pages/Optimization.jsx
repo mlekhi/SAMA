@@ -13,11 +13,11 @@ function Optimization({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [optimizationSettings, setOptimizationSettings] = useState({
-    maxIterations: 100,
-    populationSize: 30,
-    inertiaWeight: 0.7,
+    maxIterations: 200,
+    populationSize: 50,
+    inertiaWeight: 1,
     inertiaWeightDamping: 0.99,
-    personalLearningCoeff: 1.5,
+    personalLearningCoeff: 2.0,
     globalLearningCoeff: 2.0
   })
 
