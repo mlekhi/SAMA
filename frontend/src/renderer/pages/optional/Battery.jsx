@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
+import NextPageButton from '../../components/NextPageButton';
 
 const defaultValues = {
   SOC_min: 0.1,
@@ -140,9 +141,13 @@ function Battery() {
             </Box>
             <Box sx={{ mt: 4 }}>
               <SaveMessageAlert message={saveMessage} />
-              <Button variant="contained" color="primary" onClick={handleSave} disabled={saving} fullWidth sx={{ py: 1.5 }}>
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
+              <NextPageButton
+                onClick={handleSave}
+                saving={saving}
+                text="Next"
+                savingText="Saving..."
+                disabled={saving}
+              />
             </Box>
           </>
         )}

@@ -225,13 +225,13 @@ function Geography({ auth, user }) {
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
           <SaveMessageAlert message={saveMessage} />
-          
           <NextPageButton
             onClick={saveGeoData}
             disabled={!isFormValid()}
             saving={saving}
+            text="Next"
+            savingText="Saving..."
           />
-          
           {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
               Please select a location and fill in all fields to continue

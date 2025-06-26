@@ -12,6 +12,7 @@ import {
   Button,
   InputAdornment
 } from "@mui/material"
+import NextPageButton from '../components/NextPageButton'
 
 function Grid({ auth, user }) {
   const navigate = useNavigate()
@@ -300,18 +301,13 @@ function Grid({ auth, user }) {
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
           <SaveMessageAlert message={saveMessage} />
-          
-          <Button
-            variant="contained"
-            color="primary"
+          <NextPageButton
             onClick={handleSubmit}
             disabled={!isFormValid() || saving}
-            fullWidth
-            sx={{ py: 1.5 }}
-          >
-            {saving ? 'Submitting...' : 'Submit for Analysis'}
-          </Button>
-          
+            saving={saving}
+            text="Submit for Analysis"
+            savingText="Submitting..."
+          />
           {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
               Please fill in all fields to continue

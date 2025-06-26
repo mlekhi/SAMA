@@ -186,13 +186,13 @@ function Optimization({ auth, user }) {
         {/* Next Page Button */}
         <Box sx={{ mb: 4 }}>
           <SaveMessageAlert message={saveMessage} />
-          
           <NextPageButton
             onClick={saveOptimizationData}
             saving={saving}
             disabled={!isFormValid()}
+            text="Next"
+            savingText="Saving..."
           />
-          
           {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
               Please fill in all fields to continue
