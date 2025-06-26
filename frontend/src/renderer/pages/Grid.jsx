@@ -19,12 +19,12 @@ function Grid({ auth, user }) {
     Grid: true,
     NEM: true,
     Annual_expenses: 0.0,
-    Grid_sale_tax_rate: 6.88,
-    Grid_Tax_amount: 0.0016,
-    Grid_escalation_rate: 5.7,
-    Grid_credit: 121.4,
+    Grid_sale_tax_rate: 0.0,
+    Grid_Tax_amount: 0.0,
+    Grid_escalation_rate: 2.0,
+    Grid_credit: 0.0,
     NEM_fee: 0.0,
-    SC_flat: 0.0,
+    SC_flat: 10.0,
     Pbuy_max: 6.0,
     Psell_max: 200.0,
   })
@@ -146,6 +146,7 @@ function Grid({ auth, user }) {
         <Divider sx={{ my: 4 }} />
 
         {/* Economic Parameters Section */}
+        {gridData.Grid && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" component="h2" gutterBottom>
             Economic Parameters
@@ -221,6 +222,7 @@ function Grid({ auth, user }) {
                 }}
               />
             </Box>
+            {gridData.NEM && (
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>Net Metering Fee</Typography>
               <TextField 
@@ -235,6 +237,7 @@ function Grid({ auth, user }) {
                 }}
               />
             </Box>
+            )}
             <Box>
               <Typography variant="subtitle1" component="h3" gutterBottom>Grid Monthly Fixed Charge</Typography>
               <TextField 
@@ -251,6 +254,7 @@ function Grid({ auth, user }) {
             </Box>
           </Box>
         </Box>
+        )}
 
         <Divider sx={{ my: 4 }} />
 
