@@ -440,6 +440,14 @@ class InData(OriginalInputData):
         battery = Battery.query.get(self.user_id)
         grid = Grid.query.get(self.user_id)
 
+        logger.info(f"Loading user data for user_id: {self.user_id}")
+        logger.info(f"sys_config exists: {sys_config is not None}")
+        logger.info(f"pv_system exists: {pv_system is not None}")
+        logger.info(f"inverter exists: {inverter is not None}")
+        logger.info(f"diesel exists: {diesel is not None}")
+        logger.info(f"battery exists: {battery is not None}")
+        logger.info(f"grid exists: {grid is not None}")
+
         # --- SystemConfig ---
         if sys_config:
             self.WT = sys_config.WT
@@ -563,6 +571,16 @@ class InData(OriginalInputData):
             self.c1 = opt.c1
             self.c2 = opt.c2
 
+        # Debug: Check for potential division by zero issues
+        logger.info(f"Critical values check:")
+        logger.info(f"  L_PV: {getattr(self, 'L_PV', 'NOT SET')}")
+        logger.info(f"  L_I: {getattr(self, 'L_I', 'NOT SET')}")
+        logger.info(f"  L_B: {getattr(self, 'L_B', 'NOT SET')}")
+        logger.info(f"  L_WT: {getattr(self, 'L_WT', 'NOT SET')}")
+        logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
+        logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
+        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
+
 @app.route('/api/submit', methods=['POST'])
 @require_auth
 @log_function_input
@@ -602,8 +620,10 @@ def submit_results():
         })
         
     except Exception as e:
+        import traceback
         logger.error(f"Error submitting results: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 if __name__ == '__main__':
     with app.app_context():
