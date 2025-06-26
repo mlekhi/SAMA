@@ -15,7 +15,7 @@ function Geography({ auth, user }) {
     n_ir_rate: 5.5,
     e_ir_rate: 2.0,
     Tax_rate: 0.0,
-    RE_incentives_rate: 30.0
+    RE_incentives_rate: 0.0
   })
   const [selectedPosition, setSelectedPosition] = useState(null)
   const [saving, setSaving] = useState(false)
