@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Divider, Button } from '@mui/material';
+import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,17 +42,17 @@ function Diesel() {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Diesel Generator Fuel Curve</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Slope" value={dgData.a} onChange={handleChange('a')} InputProps={{ endAdornment: <span>Liter/hr/kW output</span> }} />
-          <TextField label="Intercept coefficient" value={dgData.b} onChange={handleChange('b')} InputProps={{ endAdornment: <span>Liter/hr/kW rate</span> }} />
+          <TextField label="Slope" value={dgData.a} onChange={handleChange('a')} InputProps={{ endAdornment: <InputAdornment position="end">Liter/hr/kW output</InputAdornment> }} />
+          <TextField label="Intercept coefficient" value={dgData.b} onChange={handleChange('b')} InputProps={{ endAdornment: <InputAdornment position="end">Liter/hr/kW rate</InputAdornment> }} />
         </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Economic</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Capital cost" value={dgData.C_DG} onChange={handleChange('C_DG')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Replacement Cost" value={dgData.R_DG} onChange={handleChange('R_DG')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="O&M cost / Running cost" value={dgData.MO_DG} onChange={handleChange('MO_DG')} InputProps={{ endAdornment: <span>$/op.h</span> }} />
-          <TextField label="Fuel Cost" value={dgData.C_fuel} onChange={handleChange('C_fuel')} InputProps={{ endAdornment: <span>$/L</span> }} />
-          <TextField label="DG fuel cost yearly escalation rate" value={dgData.C_fuel_adj_rate} onChange={handleChange('C_fuel_adj_rate')} InputProps={{ endAdornment: <span>%</span> }} />
+          <TextField label="Capital cost" value={dgData.C_DG} onChange={handleChange('C_DG')} InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Replacement Cost" value={dgData.R_DG} onChange={handleChange('R_DG')} InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="O&M cost / Running cost" value={dgData.MO_DG} onChange={handleChange('MO_DG')} InputProps={{ endAdornment: <InputAdornment position="end">$/op.h</InputAdornment> }} />
+          <TextField label="Fuel Cost" value={dgData.C_fuel} onChange={handleChange('C_fuel')} InputProps={{ endAdornment: <InputAdornment position="end">$/L</InputAdornment> }} />
+          <TextField label="DG fuel cost yearly escalation rate" value={dgData.C_fuel_adj_rate} onChange={handleChange('C_fuel_adj_rate')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
         </Box>
         <Box sx={{ mt: 4 }}>
           <SaveMessageAlert message={saveMessage} />

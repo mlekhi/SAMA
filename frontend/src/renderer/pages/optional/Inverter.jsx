@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Divider, Button } from '@mui/material';
+import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 
@@ -71,16 +71,16 @@ function Inverter() {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Technical</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Inverter Efficiency" value={invData.n_I} onChange={handleChange('n_I')} InputProps={{ endAdornment: <span>%</span> }} />
-          <TextField label="Inverter lifetime" value={invData.L_I} onChange={handleChange('L_I')} InputProps={{ endAdornment: <span>years</span> }} />
-          <TextField label="Maximum acceptable DC to AC ratio" value={invData.DC_AC_ratio} onChange={handleChange('DC_AC_ratio')} />
+          <TextField label="Inverter Efficiency" value={invData.n_I} onChange={handleChange('n_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Inverter lifetime" value={invData.L_I} onChange={handleChange('L_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
+          <TextField label="Maximum acceptable DC to AC ratio" value={invData.DC_AC_ratio} onChange={handleChange('DC_AC_ratio')} variant="outlined" fullWidth />
         </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Economic</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Capital cost" value={invData.C_I} onChange={handleChange('C_I')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Replacement cost" value={invData.R_I} onChange={handleChange('R_I')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="O&M cost" value={invData.MO_I} onChange={handleChange('MO_I')} InputProps={{ endAdornment: <span>$/kW/year</span> }} />
+          <TextField label="Capital cost" value={invData.C_I} onChange={handleChange('C_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Replacement cost" value={invData.R_I} onChange={handleChange('R_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="O&M cost" value={invData.MO_I} onChange={handleChange('MO_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW/year</InputAdornment> }} />
         </Box>
         <Box sx={{ mt: 4 }}>
           <SaveMessageAlert message={saveMessage} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Divider, Button } from '@mui/material';
+import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 
@@ -56,35 +56,35 @@ function PV() {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Technical</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="PV derating factor" value={pvData.fpv} onChange={handleChange('fpv')} InputProps={{ endAdornment: <span>%</span> }} />
-          <TextField label="Temperature coefficient" value={pvData.Tcof} onChange={handleChange('Tcof')} InputProps={{ endAdornment: <span>%/°C</span> }} />
-          <TextField label="Temperature at standard test condition" value={pvData.Tref} onChange={handleChange('Tref')} InputProps={{ endAdornment: <span>°C</span> }} />
-          <TextField label="Nominal operating cell temperature" value={pvData.Tc_noct} onChange={handleChange('Tc_noct')} InputProps={{ endAdornment: <span>°C</span> }} />
-          <TextField label="Ambient temperature at which NOCT is defined" value={pvData.Ta_noct} onChange={handleChange('Ta_noct')} InputProps={{ endAdornment: <span>°C</span> }} />
-          <TextField label="Solar radiation at which NOCT is defined" value={pvData.G_noct} onChange={handleChange('G_noct')} InputProps={{ endAdornment: <span>W/m²</span> }} />
-          <TextField label="Efficiency of PV module" value={pvData.n_PV} onChange={handleChange('n_PV')} InputProps={{ endAdornment: <span>%/100</span> }} />
-          <TextField label="Reference irradiance" value={pvData.Gref} onChange={handleChange('Gref')} InputProps={{ endAdornment: <span>W/m²</span> }} />
-          <TextField label="PV modules' life time" value={pvData.L_PV} onChange={handleChange('L_PV')} InputProps={{ endAdornment: <span>years</span> }} />
+          <TextField label="PV derating factor" value={pvData.fpv} onChange={handleChange('fpv')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Temperature coefficient" value={pvData.Tcof} onChange={handleChange('Tcof')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%/°C</InputAdornment> }} />
+          <TextField label="Temperature at standard test condition" value={pvData.Tref} onChange={handleChange('Tref')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°C</InputAdornment> }} />
+          <TextField label="Nominal operating cell temperature" value={pvData.Tc_noct} onChange={handleChange('Tc_noct')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°C</InputAdornment> }} />
+          <TextField label="Ambient temperature at which NOCT is defined" value={pvData.Ta_noct} onChange={handleChange('Ta_noct')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°C</InputAdornment> }} />
+          <TextField label="Solar radiation at which NOCT is defined" value={pvData.G_noct} onChange={handleChange('G_noct')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">W/m²</InputAdornment> }} />
+          <TextField label="Efficiency of PV module" value={pvData.n_PV} onChange={handleChange('n_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%/100</InputAdornment> }} />
+          <TextField label="Reference irradiance" value={pvData.Gref} onChange={handleChange('Gref')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">W/m²</InputAdornment> }} />
+          <TextField label="PV modules' life time" value={pvData.L_PV} onChange={handleChange('L_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
         </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Economic</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Capital cost" value={pvData.C_PV} onChange={handleChange('C_PV')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Replacement Cost of PV modules" value={pvData.R_PV} onChange={handleChange('R_PV')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="O&M cost" value={pvData.MO_PV} onChange={handleChange('MO_PV')} InputProps={{ endAdornment: <span>$/year/kW</span> }} />
+          <TextField label="Capital cost" value={pvData.C_PV} onChange={handleChange('C_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Replacement Cost of PV modules" value={pvData.R_PV} onChange={handleChange('R_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="O&M cost" value={pvData.MO_PV} onChange={handleChange('MO_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/year/kW</InputAdornment> }} />
         </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Engineering Costs</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField label="Installation cost" value={pvData.Installation_cost} onChange={handleChange('Installation_cost')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Overhead" value={pvData.Overhead} onChange={handleChange('Overhead')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Sales and marketing" value={pvData.Sales_and_marketing} onChange={handleChange('Sales_and_marketing')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Permitting and Inspection" value={pvData.Permiting_and_Inspection} onChange={handleChange('Permiting_and_Inspection')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Electrical BoS" value={pvData.Electrical_BoS} onChange={handleChange('Electrical_BoS')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Structural BoS" value={pvData.Structural_BoS} onChange={handleChange('Structural_BoS')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Supply Chain costs" value={pvData.Supply_Chain_costs} onChange={handleChange('Supply_Chain_costs')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Profit costs" value={pvData.Profit_costs} onChange={handleChange('Profit_costs')} InputProps={{ endAdornment: <span>$/kW</span> }} />
-          <TextField label="Sales tax" value={pvData.Sales_tax} onChange={handleChange('Sales_tax')} InputProps={{ endAdornment: <span>$/kW</span> }} />
+          <TextField label="Installation cost" value={pvData.Installation_cost} onChange={handleChange('Installation_cost')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Overhead" value={pvData.Overhead} onChange={handleChange('Overhead')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Sales and marketing" value={pvData.Sales_and_marketing} onChange={handleChange('Sales_and_marketing')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Permitting and Inspection" value={pvData.Permiting_and_Inspection} onChange={handleChange('Permiting_and_Inspection')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Electrical BoS" value={pvData.Electrical_BoS} onChange={handleChange('Electrical_BoS')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Structural BoS" value={pvData.Structural_BoS} onChange={handleChange('Structural_BoS')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Supply Chain costs" value={pvData.Supply_Chain_costs} onChange={handleChange('Supply_Chain_costs')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Profit costs" value={pvData.Profit_costs} onChange={handleChange('Profit_costs')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
+          <TextField label="Sales tax" value={pvData.Sales_tax} onChange={handleChange('Sales_tax')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} />
         </Box>
         <Box sx={{ mt: 4 }}>
           <SaveMessageAlert message={saveMessage} />
