@@ -49,7 +49,7 @@ function Battery() {
       setError('');
       try {
         // Fetch battery config
-        const res = await fetch('/api/battery-config', {
+        const res = await fetch('http://127.0.0.1:5000/api/battery-config', {
           credentials: 'include',
         });
         if (res.ok) {

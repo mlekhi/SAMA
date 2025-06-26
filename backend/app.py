@@ -266,6 +266,38 @@ def save_grid():
         logger.error(f"Error saving grid data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/pv-config', methods=['GET'])
+@require_auth
+def get_pv_config():
+    user_id = request.user['uid']
+    pv_system = PhotovoltaicSystem.query.get(user_id)
+    if not pv_system:
+        return jsonify({'error': 'No PV config found'}), 404
+    return jsonify({
+        'user_id': pv_system.user_id,
+        'fpv': pv_system.fpv,
+        'Tcof': pv_system.Tcof,
+        'Tref': pv_system.Tref,
+        'Tc_noct': pv_system.Tc_noct,
+        'Ta_noct': pv_system.Ta_noct,
+        'G_noct': pv_system.G_noct,
+        'n_PV': pv_system.n_PV,
+        'Gref': pv_system.Gref,
+        'L_PV': pv_system.L_PV,
+        'C_PV': pv_system.C_PV,
+        'R_PV': pv_system.R_PV,
+        'MO_PV': pv_system.MO_PV,
+        'Installation_cost': pv_system.Installation_cost,
+        'Overhead': pv_system.Overhead,
+        'Sales_and_marketing': pv_system.Sales_and_marketing,
+        'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
+        'Electrical_BoS': pv_system.Electrical_BoS,
+        'Structural_BoS': pv_system.Structural_BoS,
+        'Supply_Chain_costs': pv_system.Supply_Chain_costs,
+        'Profit_costs': pv_system.Profit_costs,
+        'Sales_tax': pv_system.Sales_tax
+    })
+
 @app.route('/api/pv-config', methods=['POST'])
 @require_auth
 def save_pv_config():
@@ -277,15 +309,18 @@ def save_pv_config():
             pv = PhotovoltaicSystem(user_id=user_id)
             db.session.add(pv)
         for field in [
-            'system_capacity', 'azimuth', 'tilt', 'array_type', 'module_type', 'losses',
-            'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV', 'gama',
+            'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
             'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
             'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
             'Profit_costs', 'Sales_tax']:
             if field in data:
                 setattr(pv, field, data[field])
         db.session.commit()
-        return jsonify({field: getattr(pv, field) for field in pv.__table__.columns.keys()}), 200
+        return jsonify({field: getattr(pv, field) for field in [
+            'user_id', 'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
+            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
+            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
+            'Profit_costs', 'Sales_tax']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

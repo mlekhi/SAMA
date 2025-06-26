@@ -28,7 +28,7 @@ const defaultValues = {
   Sales_tax: 80
 };
 
-function PV() {
+function PV({ user }) {
   const [pvData, setPvData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -38,14 +38,38 @@ function PV() {
     setPvData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) {
+      setSaveMessage('User not authenticated.');
+      return;
+    }
     setSaving(true);
     setSaveMessage('');
-    setTimeout(() => {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('http://127.0.0.1:5000/api/pv-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(pvData),
+      });
+      if (res.ok) {
+        setSaveMessage('PV configuration saved!');
+        setTimeout(() => {
+          navigate('/inverter');
+        }, 1000);
+      } else {
+        const data = await res.json();
+        setSaveMessage(data.error || 'Failed to save PV configuration.');
+      }
+    } catch (err) {
+      setSaveMessage('Failed to save PV configuration.');
+    } finally {
       setSaving(false);
-      setSaveMessage('PV configuration saved!');
-      navigate('/inverter'); // Navigate to Inverter page
-    }, 1000);
+    }
   };
 
   return (

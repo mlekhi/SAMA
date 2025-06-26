@@ -33,7 +33,7 @@ function Inverter() {
       // Fetch component selection to determine next page
       try {
         console.log('Fetching component selection...');
-        const res = await fetch('/api/component-selection', {
+        const res = await fetch('http://127.0.0.1:5000/api/component-selection', {
           credentials: 'include',
         });
         console.log('Response status:', res.status);

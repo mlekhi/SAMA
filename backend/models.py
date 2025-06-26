@@ -63,7 +63,7 @@ class Grid(db.Model):
     
     # Technical Parameters
     Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)
-    Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW) 
+    Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW)
 
     
 # --------------------------
@@ -72,42 +72,27 @@ class Grid(db.Model):
 
 class PhotovoltaicSystem(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
-    
-    # System Configuration Parameters
-    system_capacity = db.Column(db.Float, nullable=False)  # Total system capacity in kW
-    azimuth = db.Column(db.Float, nullable=False)         # Array azimuth angle in degrees
-    tilt = db.Column(db.Float, nullable=False)           # Array tilt angle in degrees
-    array_type = db.Column(db.Integer, nullable=False)   # Array type (0=fixed, 1=tracking)
-    module_type = db.Column(db.Integer, nullable=False)  # Module type (0=standard, 1=premium)
-    losses = db.Column(db.Float, nullable=False)         # System losses in %
-    
-    # Technical Parameters
-    fpv = db.Column(db.Float, nullable=False)  # PV derating factor (%)
-    Tcof = db.Column(db.Float, nullable=False)  # Temperature coefficient (%/°C)
-    Tref = db.Column(db.Float, nullable=False)  # Temperature at standard test condition (°C)
-    Tc_noct = db.Column(db.Float, nullable=False)  # Nominal operating cell temperature (°C)
-    Ta_noct = db.Column(db.Float, nullable=False)  # Ambient temperature at which NOCT is defined (°C)
-    G_noct = db.Column(db.Float, nullable=False)  # Solar radiation at which NOCT is defined (W/m2)
-    n_PV = db.Column(db.Float, nullable=False)  # Efficiency of PV module (%/100)
-    Gref = db.Column(db.Float, nullable=False)  # Reference irradiance (W/m2)
-    L_PV = db.Column(db.Float, nullable=False)  # PV modules' life time (years)
-    gama = db.Column(db.Float, nullable=False)  # Temperature coefficient parameter
-    
-    # Economic Parameters
-    C_PV = db.Column(db.Float, nullable=False)  # Capital cost ($/kW)
-    R_PV = db.Column(db.Float, nullable=False)  # Replacement Cost of PV modules ($/kW)
-    MO_PV = db.Column(db.Float, nullable=False)  # O&M cost ($/year/kw)
-    
-    # Engineering Costs
-    Installation_cost = db.Column(db.Float, nullable=False)  # Installation cost ($/kW)
-    Overhead = db.Column(db.Float, nullable=False)  # Overhead ($/kW)
-    Sales_and_marketing = db.Column(db.Float, nullable=False)  # Sales and marketing ($/kW)
-    Permiting_and_Inspection = db.Column(db.Float, nullable=False)  # Permitting and Inspection ($/kW)
-    Electrical_BoS = db.Column(db.Float, nullable=False)  # Electrical BoS ($/kW)
-    Structural_BoS = db.Column(db.Float, nullable=False)  # Structural BoS ($/kW)
-    Supply_Chain_costs = db.Column(db.Float, nullable=False)  # Supply Chain costs ($/kW)
-    Profit_costs = db.Column(db.Float, nullable=False)  # Profit costs ($/kW)
-    Sales_tax = db.Column(db.Float, nullable=False)  # Sales tax ($/kW)
+    fpv = db.Column(db.Float, nullable=False)
+    Tcof = db.Column(db.Float, nullable=False)
+    Tref = db.Column(db.Float, nullable=False)
+    Tc_noct = db.Column(db.Float, nullable=False)
+    Ta_noct = db.Column(db.Float, nullable=False)
+    G_noct = db.Column(db.Float, nullable=False)
+    n_PV = db.Column(db.Float, nullable=False)
+    Gref = db.Column(db.Float, nullable=False)
+    L_PV = db.Column(db.Float, nullable=False)
+    C_PV = db.Column(db.Float, nullable=False)
+    R_PV = db.Column(db.Float, nullable=False)
+    MO_PV = db.Column(db.Float, nullable=False)
+    Installation_cost = db.Column(db.Float, nullable=False)
+    Overhead = db.Column(db.Float, nullable=False)
+    Sales_and_marketing = db.Column(db.Float, nullable=False)
+    Permiting_and_Inspection = db.Column(db.Float, nullable=False)
+    Electrical_BoS = db.Column(db.Float, nullable=False)
+    Structural_BoS = db.Column(db.Float, nullable=False)
+    Supply_Chain_costs = db.Column(db.Float, nullable=False)
+    Profit_costs = db.Column(db.Float, nullable=False)
+    Sales_tax = db.Column(db.Float, nullable=False)
 
 class Inverter(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
