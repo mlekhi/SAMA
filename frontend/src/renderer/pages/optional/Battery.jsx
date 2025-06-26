@@ -48,16 +48,18 @@ function Battery() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('/api/component-selection', {
+        // Fetch battery config
+        const res = await fetch('/api/battery-config', {
           credentials: 'include',
         });
-        if (!res.ok) {
-          throw new Error('Failed to fetch component selection');
+        if (res.ok) {
+          const data = await res.json();
+          setBatData(prev => ({ ...prev, ...data }));
+        } else if (res.status !== 404) {
+          setError('Could not load battery configuration.');
         }
-        const data = await res.json();
-        setComponentSelection(data);
       } catch (err) {
-        setError('Could not load component selection.');
+        setError('Could not load battery configuration.');
       } finally {
         setLoading(false);
       }

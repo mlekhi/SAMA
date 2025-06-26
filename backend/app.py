@@ -266,6 +266,85 @@ def save_grid():
         logger.error(f"Error saving grid data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/pv-config', methods=['POST'])
+@require_auth
+def save_pv_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        pv = PhotovoltaicSystem.query.get(user_id)
+        if not pv:
+            pv = PhotovoltaicSystem(user_id=user_id)
+            db.session.add(pv)
+        for field in [
+            'system_capacity', 'azimuth', 'tilt', 'array_type', 'module_type', 'losses',
+            'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV', 'gama',
+            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
+            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
+            'Profit_costs', 'Sales_tax']:
+            if field in data:
+                setattr(pv, field, data[field])
+        db.session.commit()
+        return jsonify({field: getattr(pv, field) for field in pv.__table__.columns.keys()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/inverter-config', methods=['POST'])
+@require_auth
+def save_inverter_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        inv = Inverter.query.get(user_id)
+        if not inv:
+            inv = Inverter(user_id=user_id)
+            db.session.add(inv)
+        for field in ['n_I', 'L_I', 'DC_AC_ratio', 'C_I', 'R_I', 'MO_I']:
+            if field in data:
+                setattr(inv, field, data[field])
+        db.session.commit()
+        return jsonify({field: getattr(inv, field) for field in inv.__table__.columns.keys()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/dg-config', methods=['POST'])
+@require_auth
+def save_dg_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        dg = DieselGenerator.query.get(user_id)
+        if not dg:
+            dg = DieselGenerator(user_id=user_id)
+            db.session.add(dg)
+        for field in ['a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']:
+            if field in data:
+                setattr(dg, field, data[field])
+        db.session.commit()
+        return jsonify({field: getattr(dg, field) for field in dg.__table__.columns.keys()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/battery-config', methods=['POST'])
+@require_auth
+def save_battery_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        bat = Battery.query.get(user_id)
+        if not bat:
+            bat = Battery(user_id=user_id)
+            db.session.add(bat)
+        for field in [
+            'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
+            'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
+            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion']:
+            if field in data:
+                setattr(bat, field, data[field])
+        db.session.commit()
+        return jsonify({field: getattr(bat, field) for field in bat.__table__.columns.keys()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 class InData:
     def __init__(self, user_id):
