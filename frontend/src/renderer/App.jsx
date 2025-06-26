@@ -10,6 +10,10 @@ import FAQ from './pages/FAQ'
 import Grid from './pages/Grid'
 import Results from './pages/Results'
 import Header from './components/Header'
+import Battery from './pages/optional/Battery'
+import PV from './pages/optional/PV'
+import Diesel from './pages/optional/Diesel'
+import Inverter from './pages/optional/Inverter'
 
 // Firebase config from environment variables
 const firebaseConfig = {
@@ -94,6 +98,30 @@ function App() {
               path="/results" 
               element={
                 user ? <Results /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/battery" 
+              element={
+                user ? <Battery auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/pv" 
+              element={
+                user ? <PV auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/diesel" 
+              element={
+                user ? <Diesel auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/inverter" 
+              element={
+                user ? <Inverter auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
