@@ -21,11 +21,11 @@ function SystemConfig({ auth, user }) {
     LPSP_max_rate: 0.0999999,
     RE_min_rate: 75.0,
     annualData: 9,
-    PV: true,
+    PV: false,
     WT: false,
     DG: false,
-    Bat: true,
-    Lead_acid: true,
+    Bat: false,
+    Lead_acid: false,
     Li_ion: false
   })
   const [consumptionPath, setConsumptionPath] = useState({ hourly: null, monthly: null, annual: null });
