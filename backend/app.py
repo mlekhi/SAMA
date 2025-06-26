@@ -12,6 +12,8 @@ import pandas as pd
 from types import SimpleNamespace
 import numpy as np
 from sama_python.generic_load import generic_load
+from math import ceil
+from sama_python.Input_Data import Input_Data as OriginalInputData
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -418,12 +420,14 @@ def save_battery_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-class InData:
+class InData(OriginalInputData):
     def __init__(self, user_id):
+        # Initialize the original Input_Data class first (this sets all defaults)
+        super().__init__()
+        
+        # Now override only the values that come from the database
         self.user_id = user_id
-        self.daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.load_user_data()
-        self.load_static_data()
 
     def load_user_data(self):
         # Load data from database
@@ -437,144 +441,127 @@ class InData:
         grid = Grid.query.get(self.user_id)
 
         # --- SystemConfig ---
-        self.WT = sys_config.WT
-        self.n = sys_config.lifetime
-        self.LPSP_max = sys_config.LPSP_max_rate
-        self.RE_min = sys_config.RE_min_rate
-        self.Lead_acid = sys_config.Lead_acid
-        self.Li_ion = sys_config.Li_ion
-        
-        # Add missing variables for optimization
-        self.PV = sys_config.PV if sys_config else 1
-        self.Bat = sys_config.Bat if sys_config else 1
-        self.DG = sys_config.DG if sys_config else 1
-        
-        # Load consumption data from database JSON fields
-        if sys_config.consumption_data_source:
-            if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
-                # Load hourly data from JSON array
-                hourly_values = json.loads(sys_config.hourly_consumption)
-                self.Eload = np.array(hourly_values)
-            elif sys_config.consumption_data_source == 'monthly' and sys_config.monthly_consumption:
-                # Load monthly data from JSON array and convert to hourly
-                monthly_values = json.loads(sys_config.monthly_consumption)
-                days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                hourly_load = []
-                for month, total_load in enumerate(monthly_values):
-                    days = days_in_month[month]
-                    hourly_avg = float(total_load) / (days * 24)
-                    hourly_load.extend([hourly_avg] * (days * 24))
-                self.Eload = np.array(hourly_load)
-            elif sys_config.consumption_data_source in ['annual', 'manual'] and sys_config.annualData:
-                # Use annual data from database
-                self.annualData = float(sys_config.annualData)
-                self.Eload = generic_load(
-                    load_type=8, user_defined_load=self.annualData,
-                    load_previous_year_type=1, peakmonth='July',
-                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                )
-            else:
-                # Fallback to default annual data
-                self.annualData = float(sys_config.annualData) if sys_config and sys_config.annualData else 10000
-                self.Eload = generic_load(
-                    load_type=8, user_defined_load=self.annualData,
-                    load_previous_year_type=1, peakmonth='July',
-                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                )
-        else:
-            # Fallback to manual annual data from the form
-            self.annualData = float(sys_config.annualData) if sys_config and sys_config.annualData else 10000
-            self.Eload = generic_load(
-                load_type=8, user_defined_load=self.annualData,
-                load_previous_year_type=1, peakmonth='July',
-                daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            )
+        if sys_config:
+            self.WT = sys_config.WT
+            self.n = sys_config.lifetime
+            self.LPSP_max = sys_config.LPSP_max_rate
+            self.RE_min = sys_config.RE_min_rate
+            self.Lead_acid = sys_config.Lead_acid
+            self.Li_ion = sys_config.Li_ion
+            self.PV = sys_config.PV
+            self.Bat = sys_config.Bat
+            self.DG = sys_config.DG
+            
+            # Load consumption data from database JSON fields
+            if sys_config.consumption_data_source:
+                if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
+                    hourly_values = json.loads(sys_config.hourly_consumption)
+                    self.Eload = np.array(hourly_values)
+                elif sys_config.consumption_data_source == 'monthly' and sys_config.monthly_consumption:
+                    monthly_values = json.loads(sys_config.monthly_consumption)
+                    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                    hourly_load = []
+                    for month, total_load in enumerate(monthly_values):
+                        days = days_in_month[month]
+                        hourly_avg = float(total_load) / (days * 24)
+                        hourly_load.extend([hourly_avg] * (days * 24))
+                    self.Eload = np.array(hourly_load)
+                elif sys_config.consumption_data_source in ['annual', 'manual'] and sys_config.annualData:
+                    self.annualData = float(sys_config.annualData)
+                    self.Eload = generic_load(
+                        load_type=8, user_defined_load=self.annualData,
+                        load_previous_year_type=1, peakmonth='July',
+                        daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                    )
 
         # --- Grid ---
-        self.Grid = grid.Grid
-        self.NEM = grid.NEM
-        self.Annual_expenses = grid.Annual_expenses
-        self.Grid_Tax = grid.Grid_sale_tax_rate / 100
-        self.Grid_Tax_amount = grid.Grid_Tax_amount
-        self.Grid_escalation = grid.Grid_escalation_rate / 100
-        self.Grid_credit = grid.Grid_credit
-        self.NEM_fee = grid.NEM_fee
-        self.Service_charge = grid.SC_flat 
-        self.Pbuy_max = grid.Pbuy_max
-        self.Psell_max = grid.Psell_max
+        if grid:
+            self.Grid = grid.Grid
+            self.NEM = grid.NEM
+            self.Annual_expenses = grid.Annual_expenses
+            self.Grid_Tax = grid.Grid_sale_tax_rate / 100
+            self.Grid_Tax_amount = grid.Grid_Tax_amount
+            self.Grid_escalation = grid.Grid_escalation_rate / 100
+            self.Grid_credit = grid.Grid_credit
+            self.NEM_fee = grid.NEM_fee
+            self.Service_charge = grid.SC_flat 
+            self.Pbuy_max = grid.Pbuy_max
+            self.Psell_max = grid.Psell_max
 
         # --- PhotovoltaicSystem ---
-        self.fpv = pv_system.fpv if pv_system else 0.9
-        self.Tcof = pv_system.Tcof if pv_system else -0.4
-        self.Tref = pv_system.Tref if pv_system else 25
-        self.Tc_noct = pv_system.Tc_noct if pv_system else 45
-        self.Ta_noct = pv_system.Ta_noct if pv_system else 20
-        self.G_noct = pv_system.G_noct if pv_system else 800
-        self.n_PV = pv_system.n_PV if pv_system else 0.15
-        self.Gref = pv_system.Gref if pv_system else 1000
-        self.L_PV = pv_system.L_PV if pv_system else 25
-        self.C_PV = pv_system.C_PV if pv_system else 1000
-        self.R_PV = pv_system.R_PV if pv_system else 800
-        self.MO_PV = pv_system.MO_PV if pv_system else 10
-        self.Engineering_Costs = sum([
-            pv_system.Installation_cost or 0, pv_system.Overhead or 0, pv_system.Sales_and_marketing or 0,
-            pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
-            pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
-        ]) if pv_system else 0
+        if pv_system:
+            self.fpv = pv_system.fpv
+            self.Tcof = pv_system.Tcof
+            self.Tref = pv_system.Tref
+            self.Tc_noct = pv_system.Tc_noct
+            self.Ta_noct = pv_system.Ta_noct
+            self.G_noct = pv_system.G_noct
+            self.n_PV = pv_system.n_PV
+            self.Gref = pv_system.Gref
+            self.L_PV = pv_system.L_PV
+            self.C_PV = pv_system.C_PV
+            self.R_PV = pv_system.R_PV
+            self.MO_PV = pv_system.MO_PV
+            self.Engineering_Costs = sum([
+                pv_system.Installation_cost or 0, pv_system.Overhead or 0, pv_system.Sales_and_marketing or 0,
+                pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
+                pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
+            ])
 
         # --- Inverter ---
-        self.n_I = inverter.n_I if inverter else 0.95
-        self.L_I = inverter.L_I if inverter else 15
-        self.DC_AC_ratio = inverter.DC_AC_ratio if inverter else 1.2
-        self.C_I = inverter.C_I if inverter else 500
-        self.R_I = inverter.R_I if inverter else 400
-        self.MO_I = inverter.MO_I if inverter else 5
+        if inverter:
+            self.n_I = inverter.n_I
+            self.L_I = inverter.L_I
+            self.DC_AC_ratio = inverter.DC_AC_ratio
+            self.C_I = inverter.C_I
+            self.R_I = inverter.R_I
+            self.MO_I = inverter.MO_I
         
         # --- DieselGenerator ---
-        self.a = diesel.a if diesel else 0.246
-        self.b = diesel.b if diesel else 0.08145
-        self.LR_DG = diesel.min_load_ratio if diesel else 0.3
-        self.C_DG = diesel.C_DG if diesel else 500
-        self.R_DG = diesel.R_DG if diesel else 400
-        self.MO_DG = diesel.MO_DG if diesel else 0.02
-        self.C_fuel = diesel.C_fuel if diesel else 1.2
-        self.C_fuel_adj = (diesel.C_fuel_adj_rate / 100) if diesel else 0.03
-        self.TL_DG = diesel.diesel_lifetime if diesel else 15000
+        if diesel:
+            self.a = diesel.a
+            self.b = diesel.b
+            self.LR_DG = diesel.min_load_ratio
+            self.C_DG = diesel.C_DG
+            self.R_DG = diesel.R_DG
+            self.MO_DG = diesel.MO_DG
+            self.C_fuel = diesel.C_fuel
+            self.C_fuel_adj = (diesel.C_fuel_adj_rate / 100)
+            self.TL_DG = diesel.diesel_lifetime
 
         # --- Battery ---
-        self.SOC_min = battery.SOC_min if battery else 0.2
-        self.SOC_max = battery.SOC_max if battery else 0.8
-        self.SOC_initial = battery.SOC_initial if battery else 0.5
-        self.self_discharge_rate = battery.self_discharge_rate if battery else 0.02
-        self.L_B = battery.L_B if battery else 5
-        self.Cnom_Leadacid = battery.Cnom_Leadacid if battery else 100
-        self.alfa_battery_leadacid = battery.alfa_battery_leadacid if battery else 0.002
-        self.c = battery.c if battery else 0.305
-        self.k = battery.k if battery else 0.027
-        self.Ich_max_leadacid = battery.Ich_max_leadacid if battery else 20
-        self.Vnom_leadacid = battery.Vnom_leadacid if battery else 48
-        self.ef_bat_leadacid = battery.ef_bat_leadacid if battery else 0.8
-        self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid if battery else 1000
-        self.Ich_max_Li_ion = battery.Ich_max_Li_ion if battery else 50
-        self.Idch_max_Li_ion = battery.Idch_max_Li_ion if battery else 50
-        self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion if battery else 0.001
+        if battery:
+            self.SOC_min = battery.SOC_min
+            self.SOC_max = battery.SOC_max
+            self.SOC_initial = battery.SOC_initial
+            self.self_discharge_rate = battery.self_discharge_rate
+            self.L_B = battery.L_B
+            self.Cnom_Leadacid = battery.Cnom_Leadacid
+            self.alfa_battery_leadacid = battery.alfa_battery_leadacid
+            self.c = battery.c
+            self.k = battery.k
+            self.Ich_max_leadacid = battery.Ich_max_leadacid
+            self.Vnom_leadacid = battery.Vnom_leadacid
+            self.ef_bat_leadacid = battery.ef_bat_leadacid
+            self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid
+            self.Ich_max_Li_ion = battery.Ich_max_Li_ion
+            self.Idch_max_Li_ion = battery.Idch_max_Li_ion
+            self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
 
         # --- GeographyEconomy ---
-        self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
-        self.System_Tax = geo_econ.Tax_rate / 100
-        self.RE_incentives = geo_econ.RE_incentives_rate / 100
+        if geo_econ:
+            self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
+            self.System_Tax = geo_econ.Tax_rate / 100
+            self.RE_incentives = geo_econ.RE_incentives_rate / 100
         
         # --- Optimization ---
-        self.MaxIt = opt.MaxIt if opt else 100  # Maximum Number of Iterations
-        self.nPop = opt.nPop if opt else 50  # Population Size (Swarm Size)
-        self.w = opt.w if opt else 0.9  # Inertia Weight
-        self.wdamp = opt.wdamp if opt else 0.99  # Inertia Weight Damping Ratio
-        self.c1 = opt.c1 if opt else 2.0  # Personal Learning Coefficient
-        self.c2 = opt.c2 if opt else 2.0  # Global Learning Coefficient
-
-    def load_static_data(self):
-        # This data is now loaded dynamically based on user input or defaults
-        pass
+        if opt:
+            self.MaxIt = opt.MaxIt
+            self.nPop = opt.nPop
+            self.w = opt.w
+            self.wdamp = opt.wdamp
+            self.c1 = opt.c1
+            self.c2 = opt.c2
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth

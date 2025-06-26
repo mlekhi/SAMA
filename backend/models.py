@@ -93,7 +93,6 @@ class PhotovoltaicSystem(db.Model):
     Supply_Chain_costs = db.Column(db.Float, nullable=False)
     Profit_costs = db.Column(db.Float, nullable=False)
     Sales_tax = db.Column(db.Float, nullable=False)
-    Ppv_r = db.Column(db.Float, nullable=False, default=1.0)  # PV module rated power (kW)
 
 class Inverter(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
