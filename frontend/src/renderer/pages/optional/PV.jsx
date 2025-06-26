@@ -25,7 +25,8 @@ const defaultValues = {
   Structural_BoS: 160,
   Supply_Chain_costs: 0,
   Profit_costs: 340,
-  Sales_tax: 80
+  Sales_tax: 80,
+  Ppv_r: 1.0
 };
 
 function PV({ user }) {
@@ -81,6 +82,7 @@ function PV({ user }) {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Technical</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="PV module rated power" value={pvData.Ppv_r} onChange={handleChange('Ppv_r')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">kW</InputAdornment> }} />
           <TextField label="PV derating factor" value={pvData.fpv} onChange={handleChange('fpv')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
           <TextField label="Temperature coefficient" value={pvData.Tcof} onChange={handleChange('Tcof')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%/°C</InputAdornment> }} />
           <TextField label="Temperature at standard test condition" value={pvData.Tref} onChange={handleChange('Tref')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°C</InputAdornment> }} />
