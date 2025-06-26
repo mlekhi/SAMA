@@ -14,6 +14,7 @@ import Battery from './pages/optional/Battery'
 import PV from './pages/optional/PV'
 import Diesel from './pages/optional/Diesel'
 import Inverter from './pages/optional/Inverter'
+import FormStepper from './components/FormStepper'
 
 // Firebase config from environment variables
 const firebaseConfig = {
@@ -54,7 +55,7 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         {/* Persistent Header */}
         <Header auth={auth} user={user} />
-
+        <FormStepper auth={auth} />
         {/* Main Content */}
         <main className="pt-0">
           <Routes>
