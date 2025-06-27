@@ -13,7 +13,7 @@ const defaultValues = {
   MO_I: 3.4
 };
 
-function Inverter() {
+function Inverter({ user }) {
   const [invData, setInvData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -33,7 +33,12 @@ function Inverter() {
       // Fetch component selection to determine next page
       try {
         console.log('Fetching component selection...');
+        let token = null;
+        if (user) {
+          token = await user.getIdToken();
+        }
         const res = await fetch('http://127.0.0.1:5000/api/component-selection', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           credentials: 'include',
         });
         console.log('Response status:', res.status);
