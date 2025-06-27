@@ -13,7 +13,7 @@ const defaultValues = {
   MO_I: 3.4
 };
 
-function Inverter({ user }) {
+function Inverter({ auth, user }) {
   const [invData, setInvData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
