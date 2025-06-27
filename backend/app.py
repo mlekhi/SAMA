@@ -7,7 +7,6 @@ import logging
 import json
 from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery
 from config import Config
-from sama_python.Results import Gen_Results, output_logs
 import pandas as pd
 from types import SimpleNamespace
 import numpy as np
@@ -15,6 +14,7 @@ from sama_python.generic_load import generic_load
 from math import ceil
 from sama_python.Input_Data import Input_Data as OriginalInputData
 import glob
+from sama_python.pso import run as pso_run
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -169,9 +169,7 @@ def get_component_selection():
         'PV': system_config.PV,
         'WT': system_config.WT,
         'DG': system_config.DG,
-        'Bat': system_config.Bat,
-        'Lead_acid': system_config.Lead_acid,
-        'Li_ion': system_config.Li_ion
+        'Bat': system_config.Bat
     })
 
 @app.route('/api/system-config', methods=['POST'])
@@ -187,7 +185,7 @@ def save_system_config():
             system_config = SystemConfig(user_id=user_id)
             db.session.add(system_config)
 
-        # Update fields from form data
+        # Handle form data (from system config page)
         data = request.form
         system_config.lifetime = data.get('lifetime')
         system_config.LPSP_max_rate = data.get('LPSP_max_rate')
@@ -199,8 +197,6 @@ def save_system_config():
         system_config.WT = data.get('WT', 'false').lower() == 'true'
         system_config.DG = data.get('DG', 'false').lower() == 'true'
         system_config.Bat = data.get('Bat', 'false').lower() == 'true'
-        system_config.Lead_acid = data.get('Lead_acid', 'false').lower() == 'true'
-        system_config.Li_ion = data.get('Li_ion', 'false').lower() == 'true'
         
         # Handle consumption data source and storage
         consumption_data_source = data.get('consumptionDataSource')
@@ -455,8 +451,6 @@ class InData(OriginalInputData):
             self.n = sys_config.lifetime
             self.LPSP_max = sys_config.LPSP_max_rate
             self.RE_min = sys_config.RE_min_rate
-            self.Lead_acid = sys_config.Lead_acid
-            self.Li_ion = sys_config.Li_ion
             self.PV = sys_config.PV
             self.Bat = sys_config.Bat
             self.DG = sys_config.DG
@@ -556,6 +550,10 @@ class InData(OriginalInputData):
             self.Ich_max_Li_ion = battery.Ich_max_Li_ion
             self.Idch_max_Li_ion = battery.Idch_max_Li_ion
             self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
+            
+            # Since we have all battery parameters available, set both types to True
+            self.Lead_acid = True
+            self.Li_ion = True
 
         # --- GeographyEconomy ---
         if geo_econ:
@@ -588,62 +586,14 @@ class InData(OriginalInputData):
 def submit_results():
     try:
         user_id = request.user['uid']
-        
-        # 1. Prepare data
         in_data = InData(user_id)
-        
-        # 2. Get optimization variables (using defaults for now)
-        # These would eventually come from the frontend or another process
-        X = [
-            in_data.PV, # Npv
-            in_data.WT, # Nwt
-            in_data.Bat, # Nbat
-            in_data.DG, # N_DG
-            1 # Cn_I, placeholder
-        ]
-
-        # 3. Run the results generation
-        # Clear any previous results
-        output_logs.clear()
-        
-        # Run the analysis (Results.py will create user-specific directories)
-        Gen_Results(X, in_data, user_id=f'{user_id}')
-        
-        # Capture the results
-        results_logs = output_logs.copy()
-        output_logs.clear()
-        
-        # 4. Get list of generated files
-        output_base = f'../backend/sama_python/output/{user_id}'
-        figs_dir = f'{output_base}/figs'
-        data_dir = f'{output_base}/data'
-        
-        generated_files = {
-            'figures': []
-        }
-        
-        # Get figure files only
-        if os.path.exists(figs_dir):
-            fig_files = glob.glob(f'{figs_dir}/*.png')
-            logger.info(f"Found {len(fig_files)} figure files: {fig_files}")
-            for fig_file in fig_files:
-                filename = os.path.basename(fig_file)
-                generated_files['figures'].append({
-                    'name': filename,
-                    'display_name': filename.replace('.png', '').replace('_', ' ').title(),
-                    'type': 'figure'
-                })
-        else:
-            logger.warning(f"Figures directory does not exist: {figs_dir}")
-        
-        logger.info(f"Returning files: {generated_files}")
+        # Call PSO optimizer instead of Gen_Results
+        result = pso_run(in_data, user_id)
         return jsonify({
-            'message': 'Analysis completed successfully',
-            'logs': results_logs,
-            'user_id': user_id,
-            'generated_files': generated_files
+            'message': 'Optimization completed successfully',
+            'result': result,
+            'user_id': user_id
         })
-        
     except Exception as e:
         import traceback
         logger.error(f"Error submitting results: {str(e)}")

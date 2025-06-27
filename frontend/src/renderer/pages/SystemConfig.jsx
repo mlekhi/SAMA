@@ -24,9 +24,7 @@ function SystemConfig({ auth, user }) {
     PV: false,
     WT: false,
     DG: false,
-    Bat: false,
-    Lead_acid: false,
-    Li_ion: false
+    Bat: false
   })
   const [consumptionPath, setConsumptionPath] = useState({ hourly: null, monthly: null, annual: null });
   const [uploadedFile, setUploadedFile] = useState(null);

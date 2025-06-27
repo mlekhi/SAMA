@@ -14,11 +14,11 @@ def convert_ndarrays(obj):
     else:
         return obj
     
-def run(Input_Data):
+def run(Input_Data, user_id=None):
     start = process_time()
     modifiedInput = convert_ndarrays(vars(Input_Data))
     swarm = Swarm(Input_Data)
-    answer = swarm.optimize(Input_Data)
+    answer = swarm.optimize(Input_Data, user_id)
 
     print(process_time()-start, "Total execution time [Sec]")
     return answer

@@ -1,5 +1,4 @@
 import matplotlib
-matplotlib.use('TkAgg')
 matplotlib.use('Agg')  # Use a non-GUI backend to avoid macOS GUI issues
 import matplotlib.pyplot as plt
 from sama_python.Results import Gen_Results
@@ -46,7 +45,7 @@ class Swarm:
         self.solution_best_positions = []
         self.solution_cost_curve = []
 
-    def optimize(self, data):
+    def optimize(self, data, user_id=None):
         Run_Time = data.Run_Time
         nPop = data.nPop
         MaxIt = data.MaxIt
@@ -101,7 +100,7 @@ class Swarm:
                     particle_positions[i] = np.minimum(np.maximum(particle_positions[i], self.VarMin), self.VarMax)
 
                     # Evaluation
-                    particle_costs[i] = cost_function(particle_positions[i])
+                    particle_costs[i] = cost_function(particle_positions[i], data)
 
                     # Update Personal Best
                     if particle_costs[i] < particle_personal_best_cost[i]:
@@ -143,4 +142,4 @@ class Swarm:
         plt.tight_layout()
         # plt.show()
         plt.savefig('../backend/sama_python/output/figs/Optimization.png', dpi=300)
-        Gen_Results(X, data)
+        Gen_Results(X, data, user_id)

@@ -75,7 +75,7 @@ function Battery({ user }) {
     setBatData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     setSaveMessage('');
     setTimeout(() => {

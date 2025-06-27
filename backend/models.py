@@ -39,8 +39,6 @@ class SystemConfig(db.Model):
     WT = db.Column(db.Boolean, nullable=False)  # Wind Turbine
     DG = db.Column(db.Boolean, nullable=False)  # Diesel Generator
     Bat = db.Column(db.Boolean, nullable=False)  # Battery
-    Lead_acid = db.Column(db.Boolean, nullable=False)  # Lead acid battery
-    Li_ion = db.Column(db.Boolean, nullable=False)  # Lithium ion battery
     consumption_data_source = db.Column(db.String(50), nullable=True) # hourly, monthly, annual, manual
     hourly_consumption = db.Column(db.Text, nullable=True) # path to uploaded csv
     monthly_consumption = db.Column(db.Text, nullable=True)  # JSON array of 12 monthly values
