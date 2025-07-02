@@ -9,10 +9,6 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/sama_db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # API Keys
-    NREL_API_KEY = os.getenv('NREL_API_KEY')
-    HOLIDAY_API_KEY = os.getenv('HOLIDAY_API_KEY')
-    
     # App configuration
     SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
