@@ -72,13 +72,22 @@ function Search(props){
           </Grid>
           {listPlace.length > 0 && (
             <Grid item>
-          <Select value={selectPosition} sx={{width: "500px"}} placeholder='Please select a location' displayEmpty>
+          <Select 
+            value={selectPosition ? selectPosition.display_name : ""} 
+            sx={{width: "500px"}} 
+            placeholder='Please select a location' 
+            displayEmpty
+            onChange={(e) => {
+              const selectedItem = listPlace.find(item => item.display_name === e.target.value);
+              setSelectPosition(selectedItem);
+            }}
+          >
           <MenuItem disabled value="">
             <em>Please select a location listed below:</em>
           </MenuItem>
           {listPlace.map((item) => {
              return(
-                <MenuItem key={item?.place_id} value={item} onClick={(e) => {setSelectPosition(item);}}> 
+                <MenuItem key={item?.place_id} value={item.display_name}> 
                     <PlaceIcon />
                   {item?.display_name}
               </MenuItem>
