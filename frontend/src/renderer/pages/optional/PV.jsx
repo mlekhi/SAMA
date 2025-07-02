@@ -58,8 +58,33 @@ function PV({ auth, user }) {
       });
       if (res.ok) {
         setSaveMessage('PV configuration saved!');
-        setTimeout(() => {
-          navigate('/inverter');
+        
+        // Check component selection to determine next page
+        setTimeout(async () => {
+          try {
+            const componentRes = await fetch('http://127.0.0.1:5000/api/component-selection', { 
+              headers: { 'Authorization': `Bearer ${token}` },
+              credentials: 'include' 
+            });
+            if (componentRes.ok) {
+              const data = await componentRes.json();
+              // Route to the next component that needs configuration
+              if (data.WT) {
+                navigate('/wind-config');
+              } else if (data.Bat) {
+                navigate('/battery-config');
+              } else if (data.DG) {
+                navigate('/dg-config');
+              } else {
+                navigate('/grid-config');
+              }
+            } else {
+              navigate('/grid-config');
+            }
+          } catch (error) {
+            console.error('Error checking component selection:', error);
+            navigate('/grid-config');
+          }
         }, 1000);
       } else {
         const data = await res.json();
