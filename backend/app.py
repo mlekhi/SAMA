@@ -357,6 +357,7 @@ def save_battery_config():
 
 @app.route('/api/wind-config', methods=['POST'])
 @require_auth
+@log_function_input
 def save_wind_config():
     try:
         user_id = request.user['uid']

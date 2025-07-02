@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, TextField, Divider, Button, InputAdornment, FormControlLabel, Checkbox, FormGroup } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
@@ -41,37 +41,7 @@ function Battery({ auth, user }) {
   const [batData, setBatData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchBatteryConfig = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        let token = null;
-        if (user) {
-          token = await user.getIdToken();
-        }
-        const res = await fetch('http://127.0.0.1:5000/api/battery-config', {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setBatData(prev => ({ ...prev, ...data }));
-        } else if (res.status !== 404) {
-          setError('Could not load battery configuration.');
-        }
-      } catch (err) {
-        setError('Could not load battery configuration.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBatteryConfig();
-  }, [user]);
 
   const handleChange = (field) => (event) => {
     setBatData(prev => ({ ...prev, [field]: event.target.value }));
@@ -105,22 +75,8 @@ function Battery({ auth, user }) {
       });
       if (res.ok) {
         setSaveMessage('Battery configuration saved!');
-        setTimeout(async () => {
-          // Fetch component selection to determine next page
-          try {
-            const res = await fetch('http://127.0.0.1:5000/api/component-selection', { 
-              headers: { 'Authorization': `Bearer ${token}` },
-              credentials: 'include' 
-            });
-            if (res.ok) {
-              const data = await res.json();
-              navigate('/grid-config');
-            } else {
-              navigate('/grid-config');
-            }
-          } catch (err) {
-            navigate('/grid-config');
-          }
+        setTimeout(() => {
+          navigate('/grid-config');
         }, 1000);
       } else {
         const data = await res.json();
@@ -140,93 +96,85 @@ function Battery({ auth, user }) {
           Battery Configuration
         </Typography>
         <Divider sx={{ my: 2 }} />
-        {loading ? (
-          <Typography>Loading battery options...</Typography>
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : (
+        <Typography variant="h5" gutterBottom>Technical</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="Minimum state of charge (SoC)" value={batData.SOC_min} onChange={handleChange('SOC_min')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Maximum state of charge (SoC)" value={batData.SOC_max} onChange={handleChange('SOC_max')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Initial state of charge (SoC)" value={batData.SOC_initial} onChange={handleChange('SOC_initial')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Hourly self-discharge rate" value={batData.self_discharge_rate} onChange={handleChange('self_discharge_rate')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+          <TextField label="Battery lifetime" value={batData.L_B} onChange={handleChange('L_B')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
+        </Box>
+        
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h5" gutterBottom>Battery Type Selection</Typography>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+          Select which battery types you want to include in your system. You can choose one or both types.
+        </Typography>
+        <FormGroup row sx={{ mb: 2 }}>
+          <FormControlLabel 
+            control={<Checkbox checked={batData.Lead_acid} onChange={handleCheckboxChange('Lead_acid')} />} 
+            label="Lead Acid Battery" 
+          />
+          <FormControlLabel 
+            control={<Checkbox checked={batData.Li_ion} onChange={handleCheckboxChange('Li_ion')} />} 
+            label="Li-ion Battery" 
+          />
+        </FormGroup>
+        
+        {batData.Lead_acid && (
           <>
-            <Typography variant="h5" gutterBottom>Technical</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField label="Minimum state of charge (SoC)" value={batData.SOC_min} onChange={handleChange('SOC_min')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-              <TextField label="Maximum state of charge (SoC)" value={batData.SOC_max} onChange={handleChange('SOC_max')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-              <TextField label="Initial state of charge (SoC)" value={batData.SOC_initial} onChange={handleChange('SOC_initial')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-              <TextField label="Hourly self-discharge rate" value={batData.self_discharge_rate} onChange={handleChange('self_discharge_rate')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-              <TextField label="Battery lifetime" value={batData.L_B} onChange={handleChange('L_B')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
-            </Box>
-            
             <Divider sx={{ my: 2 }} />
-            <Typography variant="h5" gutterBottom>Battery Type Selection</Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Select which battery types you want to include in your system. You can choose one or both types.
-            </Typography>
-            <FormGroup row sx={{ mb: 2 }}>
-              <FormControlLabel 
-                control={<Checkbox checked={batData.Lead_acid} onChange={handleCheckboxChange('Lead_acid')} />} 
-                label="Lead Acid Battery" 
-              />
-              <FormControlLabel 
-                control={<Checkbox checked={batData.Li_ion} onChange={handleCheckboxChange('Li_ion')} />} 
-                label="Li-ion Battery" 
-              />
-            </FormGroup>
-            
-            {batData.Lead_acid && (
-              <>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h5" gutterBottom>Lead Acid Battery</Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <TextField label="Lead Acid nominal capacity" value={batData.Cnom_Leadacid} onChange={handleChange('Cnom_Leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">Ah</InputAdornment> }} />
-                  <TextField label="Storage's maximum charge rate" value={batData.alfa_battery_leadacid} onChange={handleChange('alfa_battery_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">A/Ah</InputAdornment> }} />
-                  <TextField label="Storage capacity ratio" value={batData.c} onChange={handleChange('c')} />
-                  <TextField label="Storage rate constant" value={batData.k} onChange={handleChange('k')} InputProps={{ endAdornment: <InputAdornment position="end">1/h</InputAdornment> }} />
-                  <TextField label="Storage's maximum charge current" value={batData.Ich_max_leadacid} onChange={handleChange('Ich_max_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
-                  <TextField label="Storage's nominal voltage" value={batData.Vnom_leadacid} onChange={handleChange('Vnom_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">V</InputAdornment> }} />
-                  <TextField label="Round trip efficiency" value={batData.ef_bat_leadacid} onChange={handleChange('ef_bat_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-                  <TextField label="Throughout" value={batData.Q_lifetime_leadacid} onChange={handleChange('Q_lifetime_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
-                </Box>
-              </>
-            )}
-            {batData.Li_ion && (
-              <>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h5" gutterBottom>Li-ion Battery</Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <TextField label="Storage's maximum charge current" value={batData.Ich_max_Li_ion} onChange={handleChange('Ich_max_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
-                  <TextField label="Storage's maximum discharge current" value={batData.Idch_max_Li_ion} onChange={handleChange('Idch_max_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
-                  <TextField label="Storage's maximum charge rate" value={batData.alfa_battery_Li_ion} onChange={handleChange('alfa_battery_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A/Ah</InputAdornment> }} />
-                  <TextField label="Storage's nominal voltage" value={batData.Vnom_Li_ion} onChange={handleChange('Vnom_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">V</InputAdornment> }} />
-                  <TextField label="Round trip efficiency" value={batData.ef_bat_Li} onChange={handleChange('ef_bat_Li')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
-                  <TextField label="Li-ion nominal capacity" value={batData.Cnom_Li} onChange={handleChange('Cnom_Li')} InputProps={{ endAdornment: <InputAdornment position="end">Ah</InputAdornment> }} />
-                  <TextField label="Throughout" value={batData.Q_lifetime_Li} onChange={handleChange('Q_lifetime_Li')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
-                  <TextField label="Battery lifetime" value={batData.L_B_Li} onChange={handleChange('L_B_Li')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
-                </Box>
-              </>
-            )}
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h5" gutterBottom>Economic</Typography>
+            <Typography variant="h5" gutterBottom>Lead Acid Battery</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField label="Capital cost" value={batData.C_B} onChange={handleChange('C_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh</InputAdornment> }} />
-              <TextField label="Replacement cost" value={batData.R_B} onChange={handleChange('R_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh</InputAdornment> }} />
-              <TextField label="O&M cost" value={batData.MO_B} onChange={handleChange('MO_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh/year</InputAdornment> }} />
-            </Box>
-            <Box sx={{ mt: 4 }}>
-              <SaveMessageAlert message={saveMessage} />
-              <NextPageButton
-                onClick={handleSave}
-                saving={saving}
-                text="Next"
-                savingText="Saving..."
-                disabled={!isFormValid() || saving}
-              />
-              {!isFormValid() && (
-                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
-                  Please select at least one battery type to continue
-                </Typography>
-              )}
+              <TextField label="Lead Acid nominal capacity" value={batData.Cnom_Leadacid} onChange={handleChange('Cnom_Leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">Ah</InputAdornment> }} />
+              <TextField label="Storage's maximum charge rate" value={batData.alfa_battery_leadacid} onChange={handleChange('alfa_battery_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">A/Ah</InputAdornment> }} />
+              <TextField label="Storage capacity ratio" value={batData.c} onChange={handleChange('c')} />
+              <TextField label="Storage rate constant" value={batData.k} onChange={handleChange('k')} InputProps={{ endAdornment: <InputAdornment position="end">1/h</InputAdornment> }} />
+              <TextField label="Storage's maximum charge current" value={batData.Ich_max_leadacid} onChange={handleChange('Ich_max_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
+              <TextField label="Storage's nominal voltage" value={batData.Vnom_leadacid} onChange={handleChange('Vnom_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">V</InputAdornment> }} />
+              <TextField label="Round trip efficiency" value={batData.ef_bat_leadacid} onChange={handleChange('ef_bat_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+              <TextField label="Throughout" value={batData.Q_lifetime_leadacid} onChange={handleChange('Q_lifetime_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
             </Box>
           </>
         )}
+        {batData.Li_ion && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h5" gutterBottom>Li-ion Battery</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField label="Storage's maximum charge current" value={batData.Ich_max_Li_ion} onChange={handleChange('Ich_max_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
+              <TextField label="Storage's maximum discharge current" value={batData.Idch_max_Li_ion} onChange={handleChange('Idch_max_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A</InputAdornment> }} />
+              <TextField label="Storage's maximum charge rate" value={batData.alfa_battery_Li_ion} onChange={handleChange('alfa_battery_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">A/Ah</InputAdornment> }} />
+              <TextField label="Storage's nominal voltage" value={batData.Vnom_Li_ion} onChange={handleChange('Vnom_Li_ion')} InputProps={{ endAdornment: <InputAdornment position="end">V</InputAdornment> }} />
+              <TextField label="Round trip efficiency" value={batData.ef_bat_Li} onChange={handleChange('ef_bat_Li')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
+              <TextField label="Li-ion nominal capacity" value={batData.Cnom_Li} onChange={handleChange('Cnom_Li')} InputProps={{ endAdornment: <InputAdornment position="end">Ah</InputAdornment> }} />
+              <TextField label="Throughout" value={batData.Q_lifetime_Li} onChange={handleChange('Q_lifetime_Li')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
+              <TextField label="Battery lifetime" value={batData.L_B_Li} onChange={handleChange('L_B_Li')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
+            </Box>
+          </>
+        )}
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h5" gutterBottom>Economic</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="Capital cost" value={batData.C_B} onChange={handleChange('C_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh</InputAdornment> }} />
+          <TextField label="Replacement cost" value={batData.R_B} onChange={handleChange('R_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh</InputAdornment> }} />
+          <TextField label="O&M cost" value={batData.MO_B} onChange={handleChange('MO_B')} InputProps={{ endAdornment: <InputAdornment position="end">$/kWh/year</InputAdornment> }} />
+        </Box>
+        <Box sx={{ mt: 4 }}>
+          <SaveMessageAlert message={saveMessage} />
+          <NextPageButton
+            onClick={handleSave}
+            saving={saving}
+            text="Next"
+            savingText="Saving..."
+            disabled={!isFormValid() || saving}
+          />
+          {!isFormValid() && (
+            <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+              Please select at least one battery type to continue
+            </Typography>
+          )}
+        </Box>
       </div>
     </div>
   );

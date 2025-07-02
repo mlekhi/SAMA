@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, TextField, Divider, InputAdornment } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
@@ -31,37 +31,7 @@ function Wind({ auth, user }) {
   const [windData, setWindData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchWindConfig = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        let token = null;
-        if (user) {
-          token = await user.getIdToken();
-        }
-        const res = await fetch('http://127.0.0.1:5000/api/wind-config', {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setWindData(prev => ({ ...prev, ...data }));
-        } else if (res.status !== 404) {
-          setError('Could not load wind turbine configuration.');
-        }
-      } catch (err) {
-        setError('Could not load wind turbine configuration.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWindConfig();
-  }, [user]);
 
   const handleChange = (field) => (event) => {
     setWindData(prev => ({ ...prev, [field]: event.target.value }));
@@ -127,127 +97,119 @@ function Wind({ auth, user }) {
         </Typography>
         <Divider sx={{ my: 2 }} />
         
-        {loading ? (
-          <Typography>Loading wind turbine options...</Typography>
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : (
-          <>
-            <Typography variant="h5" gutterBottom>Technical Parameters</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField 
-                label="Rated power" 
-                value={windData.Pwt_r} 
-                onChange={handleChange('Pwt_r')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">kW</InputAdornment> }} 
-              />
-              <TextField 
-                label="Hub height" 
-                value={windData.h_hub} 
-                onChange={handleChange('h_hub')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} 
-              />
-              <TextField 
-                label="Anemometer height" 
-                value={windData.h0} 
-                onChange={handleChange('h0')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} 
-              />
-              <TextField 
-                label="Electrical Efficiency" 
-                value={windData.nw} 
-                onChange={handleChange('nw')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} 
-              />
-              <TextField 
-                label="Cut-in wind speed" 
-                value={windData.v_cut_in} 
-                onChange={handleChange('v_cut_in')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-              />
-              <TextField 
-                label="Cut-out wind speed" 
-                value={windData.v_cut_out} 
-                onChange={handleChange('v_cut_out')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-              />
-              <TextField 
-                label="Rated wind speed" 
-                value={windData.v_rated} 
-                onChange={handleChange('v_rated')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-              />
-              <TextField 
-                label="Coefficient of friction" 
-                value={windData.alfa_wind_turbine} 
-                onChange={handleChange('alfa_wind_turbine')} 
-                helperText="0.11 for extreme wind conditions, 0.20 for normal wind conditions"
-              />
-              <TextField 
-                label="Wind turbine lifetime" 
-                value={windData.L_WT} 
-                onChange={handleChange('L_WT')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} 
-              />
-            </Box>
-            
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h5" gutterBottom>Economic Parameters</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField 
-                label="Capital cost" 
-                value={windData.C_WT} 
-                onChange={handleChange('C_WT')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} 
-              />
-              <TextField 
-                label="Replacement cost" 
-                value={windData.R_WT} 
-                onChange={handleChange('R_WT')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} 
-              />
-              <TextField 
-                label="O&M cost" 
-                value={windData.MO_WT} 
-                onChange={handleChange('MO_WT')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">$/kW/year</InputAdornment> }} 
-              />
-            </Box>
-            
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h5" gutterBottom>Wind Resource Parameters</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField 
-                label="Weibull shape parameter (k)" 
-                value={windData.Weibull_k} 
-                onChange={handleChange('Weibull_k')} 
-              />
-              <TextField 
-                label="Weibull scale parameter (c)" 
-                value={windData.Weibull_c} 
-                onChange={handleChange('Weibull_c')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-              />
-              <TextField 
-                label="Average wind speed" 
-                value={windData.Wind_speed} 
-                onChange={handleChange('Wind_speed')} 
-                InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-              />
-            </Box>
-            
-            <Box sx={{ mt: 4 }}>
-              <SaveMessageAlert message={saveMessage} />
-              <NextPageButton
-                onClick={handleSave}
-                saving={saving}
-                text="Next"
-                savingText="Saving..."
-                disabled={saving}
-              />
-            </Box>
-          </>
-        )}
+        <Typography variant="h5" gutterBottom>Technical Parameters</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField 
+            label="Rated power" 
+            value={windData.Pwt_r} 
+            onChange={handleChange('Pwt_r')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">kW</InputAdornment> }} 
+          />
+          <TextField 
+            label="Hub height" 
+            value={windData.h_hub} 
+            onChange={handleChange('h_hub')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} 
+          />
+          <TextField 
+            label="Anemometer height" 
+            value={windData.h0} 
+            onChange={handleChange('h0')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m</InputAdornment> }} 
+          />
+          <TextField 
+            label="Electrical Efficiency" 
+            value={windData.nw} 
+            onChange={handleChange('nw')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} 
+          />
+          <TextField 
+            label="Cut-in wind speed" 
+            value={windData.v_cut_in} 
+            onChange={handleChange('v_cut_in')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
+          />
+          <TextField 
+            label="Cut-out wind speed" 
+            value={windData.v_cut_out} 
+            onChange={handleChange('v_cut_out')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
+          />
+          <TextField 
+            label="Rated wind speed" 
+            value={windData.v_rated} 
+            onChange={handleChange('v_rated')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
+          />
+          <TextField 
+            label="Coefficient of friction" 
+            value={windData.alfa_wind_turbine} 
+            onChange={handleChange('alfa_wind_turbine')} 
+            helperText="0.11 for extreme wind conditions, 0.20 for normal wind conditions"
+          />
+          <TextField 
+            label="Wind turbine lifetime" 
+            value={windData.L_WT} 
+            onChange={handleChange('L_WT')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} 
+          />
+        </Box>
+        
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h5" gutterBottom>Economic Parameters</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField 
+            label="Capital cost" 
+            value={windData.C_WT} 
+            onChange={handleChange('C_WT')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} 
+          />
+          <TextField 
+            label="Replacement cost" 
+            value={windData.R_WT} 
+            onChange={handleChange('R_WT')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">$/kW</InputAdornment> }} 
+          />
+          <TextField 
+            label="O&M cost" 
+            value={windData.MO_WT} 
+            onChange={handleChange('MO_WT')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">$/kW/year</InputAdornment> }} 
+          />
+        </Box>
+        
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h5" gutterBottom>Wind Resource Parameters</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField 
+            label="Weibull shape parameter (k)" 
+            value={windData.Weibull_k} 
+            onChange={handleChange('Weibull_k')} 
+          />
+          <TextField 
+            label="Weibull scale parameter (c)" 
+            value={windData.Weibull_c} 
+            onChange={handleChange('Weibull_c')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
+          />
+          <TextField 
+            label="Average wind speed" 
+            value={windData.Wind_speed} 
+            onChange={handleChange('Wind_speed')} 
+            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
+          />
+        </Box>
+        
+        <Box sx={{ mt: 4 }}>
+          <SaveMessageAlert message={saveMessage} />
+          <NextPageButton
+            onClick={handleSave}
+            saving={saving}
+            text="Next"
+            savingText="Saving..."
+            disabled={saving}
+          />
+        </Box>
       </div>
     </div>
   );
