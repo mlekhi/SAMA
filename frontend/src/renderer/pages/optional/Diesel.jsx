@@ -14,7 +14,7 @@ const defaultValues = {
   C_fuel_adj_rate: 2
 };
 
-function Diesel() {
+function Diesel({ auth, user }) {
   const [dgData, setDgData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -25,32 +25,53 @@ function Diesel() {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      setSaveMessage('User not authenticated.');
+      return;
+    }
     setSaving(true);
     setSaveMessage('');
     try {
-      // ... your save logic ...
-      setSaving(false);
-      setSaveMessage('Diesel Generator configuration saved!');
-      setTimeout(async () => {
-        // Fetch component selection to determine next page
-        try {
-          const res = await fetch('/api/component-selection', { credentials: 'include' });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.Bat) {
-              navigate('/battery-config');
+      const token = await user.getIdToken();
+      const res = await fetch('http://127.0.0.1:5000/api/dg-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(dgData),
+      });
+      if (res.ok) {
+        setSaveMessage('Diesel Generator configuration saved!');
+        setTimeout(async () => {
+          // Fetch component selection to determine next page
+          try {
+            const res = await fetch('http://127.0.0.1:5000/api/component-selection', { 
+              headers: { 'Authorization': `Bearer ${token}` },
+              credentials: 'include' 
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.Bat) {
+                navigate('/battery-config');
+              } else {
+                navigate('/grid-config');
+              }
             } else {
               navigate('/grid-config');
             }
-          } else {
+          } catch (err) {
             navigate('/grid-config');
           }
-        } catch (err) {
-          navigate('/grid-config');
-        }
-      }, 1000);
+        }, 1000);
+      } else {
+        const data = await res.json();
+        setSaveMessage(data.error || 'Failed to save Diesel Generator configuration.');
+      }
     } catch (err) {
       setSaveMessage('Failed to save Diesel Generator configuration.');
+    } finally {
       setSaving(false);
     }
   };
