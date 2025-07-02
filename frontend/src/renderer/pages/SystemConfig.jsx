@@ -82,18 +82,23 @@ function SystemConfig({ auth, user }) {
     };
     formData.append('consumptionDataSource', getConsumptionDataSource());
 
-    // Append monthly data if manually entered
+    // Append monthly data if manually entered or from CSV
     if (consumptionPath.monthly === 'yes') {
-      monthlyData.forEach((value, index) => {
-        formData.append(`month_${index}`, value);
-      });
+      if (monthlyData.length > 0) {
+        // Send as JSON string instead of individual fields
+        formData.append('monthlyData', JSON.stringify(monthlyData.map(v => parseFloat(v))));
+      } else {
+        // Fallback to individual form fields for backward compatibility
+        monthlyData.forEach((value, index) => {
+          formData.append(`month_${index}`, value);
+        });
+      }
     }
 
     // Append hourly data if uploaded via CSV
     if (consumptionPath.hourly === 'yes' && hourlyData.length > 0) {
-      hourlyData.forEach((value, index) => {
-        formData.append(`hour_${index}`, value);
-      });
+      // Send as JSON string instead of individual fields
+      formData.append('hourlyData', JSON.stringify(hourlyData));
     }
     
     try {
@@ -124,7 +129,8 @@ function SystemConfig({ auth, user }) {
           }
         }, 1500)
       } else {
-        setSaveMessage('Failed to save data')
+        const errorData = await response.json();
+        setSaveMessage('Failed to save data: ' + (errorData.error || 'Unknown error'));
       }
     } catch (error) {
       setSaveMessage('Error saving data: ' + error.message)
