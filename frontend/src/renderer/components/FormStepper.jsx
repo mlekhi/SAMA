@@ -24,6 +24,7 @@ function getActiveStep(pathname) {
   const componentModulePaths = [
     '/pv-config',
     '/dg-config',
+    '/wind-config',
     '/battery-config',
     '/inverter'
   ];
