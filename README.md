@@ -67,10 +67,6 @@ pip install -r requirements.txt
    # App Configuration
    SECRET_KEY=your-secret-key-here
    FLASK_DEBUG=True
-   
-   # API Keys
-   NREL_API_KEY=your_nrel_api_key_here
-   HOLIDAY_API_KEY=your_holiday_api_key_here
    EOF
    ```
 

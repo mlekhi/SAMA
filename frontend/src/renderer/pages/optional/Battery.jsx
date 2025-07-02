@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mui/material';
+import { Box, Typography, TextField, Divider, Button, InputAdornment, FormControlLabel, Checkbox, FormGroup } from '@mui/material';
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
@@ -10,6 +10,9 @@ const defaultValues = {
   SOC_initial: 0.5,
   self_discharge_rate: 0,
   L_B: 7.5,
+  // Battery Type Selection
+  Lead_acid: false,
+  Li_ion: false,
   // Lead Acid
   Cnom_Leadacid: 83.4,
   alfa_battery_leadacid: 1,
@@ -72,6 +75,14 @@ function Battery({ auth, user }) {
 
   const handleChange = (field) => (event) => {
     setBatData(prev => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleCheckboxChange = (field) => (event) => {
+    setBatData(prev => ({ ...prev, [field]: event.target.checked }));
+  };
+
+  const isFormValid = () => {
+    return batData.Lead_acid || batData.Li_ion;
   };
 
   const handleSave = async () => {
@@ -143,6 +154,24 @@ function Battery({ auth, user }) {
               <TextField label="Hourly self-discharge rate" value={batData.self_discharge_rate} onChange={handleChange('self_discharge_rate')} InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
               <TextField label="Battery lifetime" value={batData.L_B} onChange={handleChange('L_B')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
             </Box>
+            
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h5" gutterBottom>Battery Type Selection</Typography>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Select which battery types you want to include in your system. You can choose one or both types.
+            </Typography>
+            <FormGroup row sx={{ mb: 2 }}>
+              <FormControlLabel 
+                control={<Checkbox checked={batData.Lead_acid} onChange={handleCheckboxChange('Lead_acid')} />} 
+                label="Lead Acid Battery" 
+              />
+              <FormControlLabel 
+                control={<Checkbox checked={batData.Li_ion} onChange={handleCheckboxChange('Li_ion')} />} 
+                label="Li-ion Battery" 
+              />
+            </FormGroup>
+            
+            {batData.Lead_acid && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h5" gutterBottom>Lead Acid Battery</Typography>
@@ -157,6 +186,8 @@ function Battery({ auth, user }) {
                   <TextField label="Throughout" value={batData.Q_lifetime_leadacid} onChange={handleChange('Q_lifetime_leadacid')} InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }} />
                 </Box>
               </>
+            )}
+            {batData.Li_ion && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h5" gutterBottom>Li-ion Battery</Typography>
@@ -171,6 +202,7 @@ function Battery({ auth, user }) {
                   <TextField label="Battery lifetime" value={batData.L_B_Li} onChange={handleChange('L_B_Li')} InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
                 </Box>
               </>
+            )}
             <Divider sx={{ my: 2 }} />
             <Typography variant="h5" gutterBottom>Economic</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -185,8 +217,13 @@ function Battery({ auth, user }) {
                 saving={saving}
                 text="Next"
                 savingText="Saving..."
-                disabled={saving}
+                disabled={!isFormValid() || saving}
               />
+              {!isFormValid() && (
+                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+                  Please select at least one battery type to continue
+                </Typography>
+              )}
             </Box>
           </>
         )}

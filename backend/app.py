@@ -291,23 +291,6 @@ def save_pv_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/inverter-config', methods=['GET'])
-@require_auth
-def get_inverter_config():
-    user_id = request.user['uid']
-    inverter = Inverter.query.get(user_id)
-    if not inverter:
-        return jsonify({'error': 'No inverter config found'}), 404
-    return jsonify({
-        'user_id': inverter.user_id,
-        'n_I': inverter.n_I,
-        'L_I': inverter.L_I,
-        'DC_AC_ratio': inverter.DC_AC_ratio,
-        'C_I': inverter.C_I,
-        'R_I': inverter.R_I,
-        'MO_I': inverter.MO_I
-    })
-
 @app.route('/api/inverter-config', methods=['POST'])
 @require_auth
 def save_inverter_config():
@@ -327,26 +310,6 @@ def save_inverter_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/dg-config', methods=['GET'])
-@require_auth
-def get_dg_config():
-    user_id = request.user['uid']
-    dg = DieselGenerator.query.get(user_id)
-    if not dg:
-        return jsonify({'error': 'No diesel generator config found'}), 404
-    return jsonify({
-        'user_id': dg.user_id,
-        'a': dg.a,
-        'b': dg.b,
-        'min_load_ratio': dg.min_load_ratio,
-        'C_DG': dg.C_DG,
-        'R_DG': dg.R_DG,
-        'MO_DG': dg.MO_DG,
-        'C_fuel': dg.C_fuel,
-        'C_fuel_adj_rate': dg.C_fuel_adj_rate,
-        'diesel_lifetime': dg.diesel_lifetime
-    })
-
 @app.route('/api/dg-config', methods=['POST'])
 @require_auth
 def save_dg_config():
@@ -365,43 +328,6 @@ def save_dg_config():
             'user_id', 'a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/api/battery-config', methods=['GET'])
-@require_auth
-def get_battery_config():
-    user_id = request.user['uid']
-    battery = Battery.query.get(user_id)
-    if not battery:
-        return jsonify({'error': 'No battery config found'}), 404
-    return jsonify({
-        'user_id': battery.user_id,
-        'Lead_acid': battery.Lead_acid,
-        'Li_ion': battery.Li_ion,
-        'SOC_min': battery.SOC_min,
-        'SOC_max': battery.SOC_max,
-        'SOC_initial': battery.SOC_initial,
-        'self_discharge_rate': battery.self_discharge_rate,
-        'L_B': battery.L_B,
-        'Cnom_Leadacid': battery.Cnom_Leadacid,
-        'alfa_battery_leadacid': battery.alfa_battery_leadacid,
-        'c': battery.c,
-        'k': battery.k,
-        'Ich_max_leadacid': battery.Ich_max_leadacid,
-        'Vnom_leadacid': battery.Vnom_leadacid,
-        'ef_bat_leadacid': battery.ef_bat_leadacid,
-        'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
-        'Ich_max_Li_ion': battery.Ich_max_Li_ion,
-        'Idch_max_Li_ion': battery.Idch_max_Li_ion,
-        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion,
-        'Vnom_Li_ion': battery.Vnom_Li_ion,
-        'ef_bat_Li': battery.ef_bat_Li,
-        'Cnom_Li': battery.Cnom_Li,
-        'Q_lifetime_Li': battery.Q_lifetime_Li,
-        'L_B_Li': battery.L_B_Li,
-        'C_B': battery.C_B,
-        'R_B': battery.R_B,
-        'MO_B': battery.MO_B
-    })
 
 @app.route('/api/battery-config', methods=['POST'])
 @require_auth
