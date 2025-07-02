@@ -7,11 +7,13 @@ import NextPageButton from '../../components/NextPageButton';
 const defaultValues = {
   a: 0.273,
   b: 0.033,
+  min_load_ratio: 0.25,
   C_DG: 240.45,
   R_DG: 240.45,
   MO_DG: 0.066,
   C_fuel: 1.428,
-  C_fuel_adj_rate: 2
+  C_fuel_adj_rate: 2,
+  diesel_lifetime: 24000
 };
 
 function Diesel({ auth, user }) {
