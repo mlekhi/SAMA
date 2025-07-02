@@ -10,9 +10,35 @@ import {
   Checkbox,
   FormGroup,
   Button,
-  InputAdornment
+  InputAdornment,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Chip
 } from "@mui/material"
 import NextPageButton from '../components/NextPageButton'
+
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const holidayOptions = [
+  'New Year\'s Day', 'Independence Day', 'Thanksgiving', 'Christmas',
+  'Labor Day', 'Memorial Day', 'Other'
+];
+
+const rateStructures = [
+  { value: 'flat', label: 'Flat Rate' },
+  { value: 'seasonal', label: 'Seasonal Rate' },
+  { value: 'monthly', label: 'Monthly Rate' },
+  { value: 'tiered', label: 'Tiered Rate' },
+  { value: 'seasonalTiered', label: 'Seasonal Tiered Rate' },
+  { value: 'monthlyTiered', label: 'Monthly Tiered Rate' },
+  { value: 'tou', label: 'Time of Use' },
+];
 
 function Grid({ auth, user }) {
   const navigate = useNavigate()
@@ -32,6 +58,12 @@ function Grid({ auth, user }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [currentStep, setCurrentStep] = useState(1) // 1: Grid connected?, 2: Net metered?, 3: Configuration
+  const [compareOffGrid, setCompareOffGrid] = useState(null); // null, true, or false
+  const [seasonMonths, setSeasonMonths] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [rateStructure, setRateStructure] = useState('');
+  const [onPeakPrice, setOnPeakPrice] = useState('');
+  const [midPeakPrice, setMidPeakPrice] = useState('');
 
   const isFormValid = () => {
     // If grid is not connected, no validation needed
@@ -86,7 +118,12 @@ function Grid({ auth, user }) {
 
     try {
       const token = await user.getIdToken();
-      
+      // Send all grid data and new fields
+      const payload = {
+        ...gridData,
+        season: seasonMonths,
+        holidays,
+      };
       // Step 1: Save the Grid data first.
       const saveResponse = await fetch('http://127.0.0.1:5000/api/grid', {
         method: 'POST',
@@ -94,7 +131,7 @@ function Grid({ auth, user }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(gridData)
+        body: JSON.stringify(payload)
       });
 
       if (!saveResponse.ok) {
@@ -164,6 +201,28 @@ function Grid({ auth, user }) {
             />
           }
           label="Yes, my system is connected to the grid"
+        />
+      </FormGroup>
+    </Box>
+  );
+
+  const renderOffGridCompareQuestion = () => (
+    <Box sx={{ mb: 4 }}>
+      <Typography
+        variant="body1"
+        sx={{ color: 'red', fontStyle: 'italic', fontWeight: 600 }}
+        gutterBottom
+      >
+        Do you want to compare your off-grid system with the time?
+      </Typography>
+      <FormGroup row>
+        <FormControlLabel
+          control={<Checkbox checked={compareOffGrid === true} onChange={() => setCompareOffGrid(true)} />}
+          label="Yes"
+        />
+        <FormControlLabel
+          control={<Checkbox checked={compareOffGrid === false} onChange={() => setCompareOffGrid(false)} />}
+          label="No"
         />
       </FormGroup>
     </Box>
@@ -351,6 +410,95 @@ function Grid({ auth, user }) {
     </Box>
   );
 
+  const renderOffGridExtras = () => (
+    <Box sx={{ mt: 6, mb: 4 }}>
+      <Divider sx={{ my: 4 }} />
+      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+        Which months of the year are considered as summer?
+      </Typography>
+      <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel id="season-months-label">Summer Months</InputLabel>
+        <Select
+          labelId="season-months-label"
+          multiple
+          value={seasonMonths}
+          onChange={e => setSeasonMonths(e.target.value)}
+          input={<OutlinedInput label="Summer Months" />}
+          renderValue={selected => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map(value => (
+                <Chip key={value} label={value} />
+              ))}
+            </Box>
+          )}
+        >
+          {monthNames.map(month => (
+            <MenuItem key={month} value={month}>{month}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+        Which days are considered holidays?
+      </Typography>
+      <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel id="holidays-label">Holidays</InputLabel>
+        <Select
+          labelId="holidays-label"
+          multiple
+          value={holidays}
+          onChange={e => setHolidays(e.target.value)}
+          input={<OutlinedInput label="Holidays" />}
+          renderValue={selected => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map(value => (
+                <Chip key={value} label={value} />
+              ))}
+            </Box>
+          )}
+        >
+          {holidayOptions.map(day => (
+            <MenuItem key={day} value={day}>{day}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+        Select Utility Rate Structure
+      </Typography>
+      <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel id="rate-structure-label">Rate Structure</InputLabel>
+        <Select
+          labelId="rate-structure-label"
+          value={rateStructure}
+          onChange={e => setRateStructure(e.target.value)}
+          input={<OutlinedInput label="Rate Structure" />}
+        >
+          {rateStructures.map(opt => (
+            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      {/* Conditionally render fields for Time of Use */}
+      {rateStructure === 'tou' && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <TextField
+            label="On-Peak Price"
+            value={onPeakPrice}
+            onChange={e => setOnPeakPrice(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+            fullWidth
+          />
+          <TextField
+            label="Mid-Peak Price"
+            value={midPeakPrice}
+            onChange={e => setMidPeakPrice(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+            fullWidth
+          />
+        </Box>
+      )}
+    </Box>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -367,11 +515,20 @@ function Grid({ auth, user }) {
         {/* Step 1: Grid Connection Question */}
         {renderStep1()}
 
+        {/* If grid is not connected, show the off-grid comparison question */}
+        {!gridData.Grid && renderOffGridCompareQuestion()}
+
+        {/* If grid is not connected and user wants to compare, show all grid variables */}
+        {!gridData.Grid && compareOffGrid === true && renderStep3()}
+
         {/* Step 2: Net Metering Question (only if grid is connected) */}
         {gridData.Grid && currentStep >= 2 && renderStep2()}
 
         {/* Step 3: Configuration Fields (only if grid is connected) */}
         {gridData.Grid && currentStep >= 3 && renderStep3()}
+
+        {/* --- New Off-Grid Extras at the bottom --- */}
+        {!gridData.Grid && compareOffGrid === true && renderOffGridExtras()}
 
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
@@ -383,7 +540,7 @@ function Grid({ auth, user }) {
             text="Submit for Analysis"
             savingText="Submitting..."
           />
-          {!isFormValid() && gridData.Grid && (
+          {!isFormValid() && (gridData.Grid || (!gridData.Grid && compareOffGrid === true)) && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
               Please fill in all required fields to continue
             </Typography>

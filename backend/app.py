@@ -256,7 +256,10 @@ def save_grid():
         
         # Update fields dynamically
         for key, value in data.items():
-            if hasattr(grid, key):
+            if key in ['season', 'holidays']:
+                # Store as JSON-encoded string
+                setattr(grid, key, json.dumps(value))
+            elif hasattr(grid, key):
                 setattr(grid, key, value)
         
         db.session.commit()

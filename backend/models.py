@@ -63,7 +63,10 @@ class Grid(db.Model):
     Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)
     Psell_max = db.Column(db.Float, default=200.0)  # Sell Capacity (kW)
 
-    
+    # New fields for off-grid comparison
+    season = db.Column(db.Text, nullable=True)  # JSON-encoded list of summer months
+    holidays = db.Column(db.Text, nullable=True)  # JSON-encoded list of holidays
+
 # --------------------------
 # optional modules
 # --------------------------
