@@ -375,6 +375,8 @@ def get_battery_config():
         return jsonify({'error': 'No battery config found'}), 404
     return jsonify({
         'user_id': battery.user_id,
+        'Lead_acid': battery.Lead_acid,
+        'Li_ion': battery.Li_ion,
         'SOC_min': battery.SOC_min,
         'SOC_max': battery.SOC_max,
         'SOC_initial': battery.SOC_initial,
@@ -412,7 +414,7 @@ def save_battery_config():
             bat = Battery(user_id=user_id)
             db.session.add(bat)
         for field in [
-            'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
+            'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
             'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
             'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
             'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']:
@@ -420,7 +422,7 @@ def save_battery_config():
                 setattr(bat, field, data[field])
         db.session.commit()
         return jsonify({field: getattr(bat, field) for field in [
-            'user_id', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
+            'user_id', 'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
             'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
             'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
             'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']}), 200
@@ -568,6 +570,8 @@ class InData(OriginalInputData):
 
         # --- Battery ---
         if battery:
+            self.Lead_acid = battery.Lead_acid
+            self.Li_ion = battery.Li_ion
             self.SOC_min = battery.SOC_min
             self.SOC_max = battery.SOC_max
             self.SOC_initial = battery.SOC_initial

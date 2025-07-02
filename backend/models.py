@@ -124,6 +124,10 @@ class DieselGenerator(db.Model):
 class Battery(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
     
+    # Battery Type Selection
+    Lead_acid = db.Column(db.Boolean, nullable=False, default=False)  # Lead Acid battery selected
+    Li_ion = db.Column(db.Boolean, nullable=False, default=False)  # Li-ion battery selected
+    
     # Technical Parameters
     SOC_min = db.Column(db.Float, nullable=False)  # Minimum state of charge (SoC) (%/100)
     SOC_max = db.Column(db.Float, nullable=False)  # Maximum state of charge (SoC) (%/100)
