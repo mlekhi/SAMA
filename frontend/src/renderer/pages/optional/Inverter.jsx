@@ -52,7 +52,9 @@ function Inverter({ auth, user }) {
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.DG) {
+              if (data.WT) {
+                navigate('/wind-config');
+              } else if (data.DG) {
                 navigate('/dg-config');
               } else if (data.Bat) {
                 navigate('/battery-config');
