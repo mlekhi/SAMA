@@ -114,14 +114,11 @@ function SystemConfig({ auth, user }) {
         setTimeout(() => {
           const { PV, WT, DG, Bat } = systemData
           
-          if (PV) {
-            navigate('/pv-config')
-          } else if (WT) {
-            navigate('/wind-config')
+          // If PV, WT, or Battery are selected, show inverter first
+          if (PV || WT || Bat) {
+            navigate('/inverter')
           } else if (DG) {
             navigate('/dg-config')
-          } else if (Bat) {
-            navigate('/battery-config')
           } else {
             navigate('/grid-config')
           }

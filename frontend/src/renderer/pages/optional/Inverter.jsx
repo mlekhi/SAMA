@@ -52,12 +52,15 @@ function Inverter({ auth, user }) {
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.WT) {
+              // Route to the first selected component that needs configuration
+              if (data.PV) {
+                navigate('/pv-config');
+              } else if (data.WT) {
                 navigate('/wind-config');
-              } else if (data.DG) {
-                navigate('/dg-config');
               } else if (data.Bat) {
                 navigate('/battery-config');
+              } else if (data.DG) {
+                navigate('/dg-config');
               } else {
                 navigate('/grid-config');
               }
