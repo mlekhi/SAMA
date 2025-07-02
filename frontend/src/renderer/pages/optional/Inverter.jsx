@@ -23,49 +23,58 @@ function Inverter({ auth, user }) {
     setInvData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) {
+      setSaveMessage('User not authenticated.');
+      return;
+    }
     setSaving(true);
     setSaveMessage('');
-    setTimeout(async () => {
-      setSaving(false);
-      setSaveMessage('Inverter configuration saved!');
-      
-      // Fetch component selection to determine next page
-      try {
-        console.log('Fetching component selection...');
-        let token = null;
-        if (user) {
-          token = await user.getIdToken();
-        }
-        const res = await fetch('http://127.0.0.1:5000/api/component-selection', {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-          credentials: 'include',
-        });
-        console.log('Response status:', res.status);
-        if (res.ok) {
-          const data = await res.json();
-          console.log('Component selection data:', data);
-          if (data.DG) {
-            console.log('Navigating to DG config');
-            navigate('/dg-config');
-          } else if (data.Bat) {
-            console.log('Navigating to Battery config');
-            navigate('/battery-config');
-          } else {
-            console.log('Neither DG nor Bat selected, navigating to grid-config');
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('http://127.0.0.1:5000/api/inverter-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(invData),
+      });
+      if (res.ok) {
+        setSaveMessage('Inverter configuration saved!');
+        setTimeout(async () => {
+          // Fetch component selection to determine next page
+          try {
+            const res = await fetch('http://127.0.0.1:5000/api/component-selection', { 
+              headers: { 'Authorization': `Bearer ${token}` },
+              credentials: 'include' 
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.DG) {
+                navigate('/dg-config');
+              } else if (data.Bat) {
+                navigate('/battery-config');
+              } else {
+                navigate('/grid-config');
+              }
+            } else {
+              navigate('/grid-config');
+            }
+          } catch (err) {
             navigate('/grid-config');
           }
-        } else {
-          console.error('Failed to fetch component selection:', res.status);
-          // Fallback to grid-config
-          navigate('/grid-config');
-        }
-      } catch (err) {
-        console.error('Failed to fetch component selection:', err);
-        // Fallback to grid-config
-        navigate('/grid-config');
+        }, 1000);
+      } else {
+        const data = await res.json();
+        setSaveMessage(data.error || 'Failed to save inverter configuration.');
       }
-    }, 1000);
+    } catch (err) {
+      setSaveMessage('Failed to save inverter configuration.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

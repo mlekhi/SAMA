@@ -28,7 +28,7 @@ const defaultValues = {
   Sales_tax: 80
 };
 
-function PV({ user }) {
+function PV({ auth, user }) {
   const [pvData, setPvData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');

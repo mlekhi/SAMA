@@ -5,7 +5,7 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery
+from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, WindTurbine
 from config import Config
 import pandas as pd
 from types import SimpleNamespace
@@ -390,7 +390,15 @@ def get_battery_config():
         'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
         'Ich_max_Li_ion': battery.Ich_max_Li_ion,
         'Idch_max_Li_ion': battery.Idch_max_Li_ion,
-        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion
+        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion,
+        'Vnom_Li_ion': battery.Vnom_Li_ion,
+        'ef_bat_Li': battery.ef_bat_Li,
+        'Cnom_Li': battery.Cnom_Li,
+        'Q_lifetime_Li': battery.Q_lifetime_Li,
+        'L_B_Li': battery.L_B_Li,
+        'C_B': battery.C_B,
+        'R_B': battery.R_B,
+        'MO_B': battery.MO_B
     })
 
 @app.route('/api/battery-config', methods=['POST'])
@@ -406,14 +414,38 @@ def save_battery_config():
         for field in [
             'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
             'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion']:
+            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
+            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']:
             if field in data:
                 setattr(bat, field, data[field])
         db.session.commit()
         return jsonify({field: getattr(bat, field) for field in [
             'user_id', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
             'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion']}), 200
+            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
+            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/wind-config', methods=['POST'])
+@require_auth
+def save_wind_config():
+    try:
+        user_id = request.user['uid']
+        data = request.get_json()
+        wind = WindTurbine.query.get(user_id)
+        if not wind:
+            wind = WindTurbine(user_id=user_id)
+            db.session.add(wind)
+        for field in [
+            'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
+            'C_WT', 'R_WT', 'MO_WT', 'Weibull_k', 'Weibull_c', 'Wind_speed']:
+            if field in data:
+                setattr(wind, field, data[field])
+        db.session.commit()
+        return jsonify({field: getattr(wind, field) for field in [
+            'user_id', 'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
+            'C_WT', 'R_WT', 'MO_WT', 'Weibull_k', 'Weibull_c', 'Wind_speed']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -435,6 +467,7 @@ class InData(OriginalInputData):
         inverter = Inverter.query.get(self.user_id)
         diesel = DieselGenerator.query.get(self.user_id)
         battery = Battery.query.get(self.user_id)
+        wind = WindTurbine.query.get(self.user_id)
         grid = Grid.query.get(self.user_id)
 
         logger.info(f"Loading user data for user_id: {self.user_id}")
@@ -443,6 +476,7 @@ class InData(OriginalInputData):
         logger.info(f"inverter exists: {inverter is not None}")
         logger.info(f"diesel exists: {diesel is not None}")
         logger.info(f"battery exists: {battery is not None}")
+        logger.info(f"wind exists: {wind is not None}")
         logger.info(f"grid exists: {grid is not None}")
 
         # --- SystemConfig ---
@@ -550,10 +584,36 @@ class InData(OriginalInputData):
             self.Ich_max_Li_ion = battery.Ich_max_Li_ion
             self.Idch_max_Li_ion = battery.Idch_max_Li_ion
             self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
+            self.Vnom_Li_ion = battery.Vnom_Li_ion
+            self.ef_bat_Li = battery.ef_bat_Li
+            self.Cnom_Li = battery.Cnom_Li
+            self.Q_lifetime_Li = battery.Q_lifetime_Li
+            self.L_B_Li = battery.L_B_Li
+            self.C_B = battery.C_B
+            self.R_B = battery.R_B
+            self.MO_B = battery.MO_B
             
             # Since we have all battery parameters available, set both types to True
             self.Lead_acid = True
             self.Li_ion = True
+
+        # --- WindTurbine ---
+        if wind:
+            self.Pwt_r = wind.Pwt_r
+            self.h_hub = wind.h_hub
+            self.h0 = wind.h0
+            self.nw = wind.nw
+            self.v_cut_out = wind.v_cut_out
+            self.v_cut_in = wind.v_cut_in
+            self.v_rated = wind.v_rated
+            self.alfa_wind_turbine = wind.alfa_wind_turbine
+            self.L_WT = wind.L_WT
+            self.C_WT = wind.C_WT
+            self.R_WT = wind.R_WT
+            self.MO_WT = wind.MO_WT
+            self.Weibull_k = wind.Weibull_k
+            self.Weibull_c = wind.Weibull_c
+            self.Wind_speed = wind.Wind_speed
 
         # --- GeographyEconomy ---
         if geo_econ:

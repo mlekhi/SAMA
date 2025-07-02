@@ -145,3 +145,37 @@ class Battery(db.Model):
     Ich_max_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum charge current (A)
     Idch_max_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum discharge current (A)
     alfa_battery_Li_ion = db.Column(db.Float, nullable=False)  # Storage's maximum charge rate (A/Ah)
+    Vnom_Li_ion = db.Column(db.Float, nullable=False)  # Storage's nominal voltage (V)
+    ef_bat_Li = db.Column(db.Float, nullable=False)  # Round trip efficiency (%/100)
+    Cnom_Li = db.Column(db.Float, nullable=False)  # Li-ion nominal capacity (Ah)
+    Q_lifetime_Li = db.Column(db.Float, nullable=False)  # Throughout (kWh)
+    L_B_Li = db.Column(db.Float, nullable=False)  # Battery lifetime (years)
+    
+    # Economic Parameters
+    C_B = db.Column(db.Float, nullable=False)  # Capital cost ($/kWh)
+    R_B = db.Column(db.Float, nullable=False)  # Replacement cost ($/kWh)
+    MO_B = db.Column(db.Float, nullable=False)  # O&M cost ($/kWh/year)
+
+class WindTurbine(db.Model):
+    user_id = db.Column(db.String(100), primary_key=True)
+    
+    # Technical Parameters
+    Pwt_r = db.Column(db.Float, nullable=False)  # Rated power (kW)
+    h_hub = db.Column(db.Float, nullable=False)  # Hub height (m)
+    h0 = db.Column(db.Float, nullable=False)  # Anemometer height (m)
+    nw = db.Column(db.Float, nullable=False)  # Electrical Efficiency (%)
+    v_cut_out = db.Column(db.Float, nullable=False)  # Cut out speed (m/s)
+    v_cut_in = db.Column(db.Float, nullable=False)  # Cut in speed (m/s)
+    v_rated = db.Column(db.Float, nullable=False)  # Rated speed (m/s)
+    alfa_wind_turbine = db.Column(db.Float, nullable=False)  # Coefficient of friction
+    L_WT = db.Column(db.Float, nullable=False)  # Life time (years)
+    
+    # Economic Parameters
+    C_WT = db.Column(db.Float, nullable=False)  # Capital cost of Wind Turbine ($/kW)
+    R_WT = db.Column(db.Float, nullable=False)  # Replacement cost of Wind Turbine ($/kW)
+    MO_WT = db.Column(db.Float, nullable=False)  # O&M cost of Wind Turbine ($/year/kw)
+    
+    # Wind Resource Parameters
+    Weibull_k = db.Column(db.Float, nullable=False)  # Weibull shape parameter
+    Weibull_c = db.Column(db.Float, nullable=False)  # Weibull scale parameter (m/s)
+    Wind_speed = db.Column(db.Float, nullable=False)  # Average wind speed (m/s)

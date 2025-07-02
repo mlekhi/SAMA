@@ -34,17 +34,16 @@ const defaultValues = {
   MO_B: 10.27
 };
 
-function Battery({ user }) {
+function Battery({ auth, user }) {
   const [batData, setBatData] = useState(defaultValues);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [componentSelection, setComponentSelection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchComponentSelection = async () => {
+    const fetchBatteryConfig = async () => {
       setLoading(true);
       setError('');
       try {
@@ -68,7 +67,7 @@ function Battery({ user }) {
         setLoading(false);
       }
     };
-    fetchComponentSelection();
+    fetchBatteryConfig();
   }, [user]);
 
   const handleChange = (field) => (event) => {
@@ -76,13 +75,51 @@ function Battery({ user }) {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      setSaveMessage('User not authenticated.');
+      return;
+    }
     setSaving(true);
     setSaveMessage('');
-    setTimeout(() => {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('http://127.0.0.1:5000/api/battery-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(batData),
+      });
+      if (res.ok) {
+        setSaveMessage('Battery configuration saved!');
+        setTimeout(async () => {
+          // Fetch component selection to determine next page
+          try {
+            const res = await fetch('http://127.0.0.1:5000/api/component-selection', { 
+              headers: { 'Authorization': `Bearer ${token}` },
+              credentials: 'include' 
+            });
+            if (res.ok) {
+              const data = await res.json();
+              navigate('/grid-config');
+            } else {
+              navigate('/grid-config');
+            }
+          } catch (err) {
+            navigate('/grid-config');
+          }
+        }, 1000);
+      } else {
+        const data = await res.json();
+        setSaveMessage(data.error || 'Failed to save battery configuration.');
+      }
+    } catch (err) {
+      setSaveMessage('Failed to save battery configuration.');
+    } finally {
       setSaving(false);
-      setSaveMessage('Battery configuration saved!');
-      navigate('/grid-config');
-    }, 1000);
+    }
   };
 
   return (

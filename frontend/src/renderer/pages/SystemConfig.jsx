@@ -116,6 +116,8 @@ function SystemConfig({ auth, user }) {
           
           if (PV) {
             navigate('/pv-config')
+          } else if (WT) {
+            navigate('/wind-config')
           } else if (DG) {
             navigate('/dg-config')
           } else if (Bat) {

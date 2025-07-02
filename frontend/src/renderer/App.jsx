@@ -14,6 +14,7 @@ import Battery from './pages/optional/Battery'
 import PV from './pages/optional/PV'
 import Diesel from './pages/optional/Diesel'
 import Inverter from './pages/optional/Inverter'
+import Wind from './pages/optional/Wind'
 import FormStepper from './components/FormStepper'
 
 // Firebase config from environment variables
@@ -123,6 +124,12 @@ function App() {
               path="/inverter" 
               element={
                 user ? <Inverter auth={auth} user={user} /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/wind-config" 
+              element={
+                user ? <Wind auth={auth} user={user} /> : <Navigate to="/login" replace />
               } 
             />
             <Route 
