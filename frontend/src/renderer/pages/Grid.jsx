@@ -124,6 +124,10 @@ function Grid({ auth, user }) {
         ...gridData,
         season: seasonMonths,
         holidays,
+        rateStructure,
+        onPeakPrice,
+        midPeakPrice,
+        // Add more rate-structure-specific fields here as needed
       };
       // Step 1: Save the Grid data first.
       const saveResponse = await fetch('http://127.0.0.1:5000/api/grid', {
@@ -152,10 +156,6 @@ function Grid({ auth, user }) {
 
       if (submitResponse.ok) {
         const results = await submitResponse.json();
-        console.log('SAMA Analysis Results:', results.logs);
-        console.log('Generated Files:', results.generated_files);
-        console.log('Full response:', results);
-        console.log('User ID from response:', results.user_id);
         setSaveMessage('Analysis complete! Navigating to results...');
         setTimeout(() => {
           navigate('/results', { 
@@ -221,7 +221,6 @@ function Grid({ auth, user }) {
       <Typography
         variant="h5"
         component="h2"
-        sx={{ color: 'red', fontWeight: 600 }}
         gutterBottom
       >
         Do you want to compare your off-grid system with the grid?
@@ -234,7 +233,10 @@ function Grid({ auth, user }) {
         <Select
           labelId="compare-offgrid-label"
           value={compareOffGrid === null ? '' : compareOffGrid}
-          onChange={(e) => setCompareOffGrid(e.target.value)}
+          onChange={(e) => {
+            setCompareOffGrid(e.target.value);
+            setCurrentStep(3);
+          }}
           input={<OutlinedInput label="Compare with Grid" />}
         >
           <MenuItem value={true}>Yes, compare with grid</MenuItem>
@@ -448,7 +450,7 @@ function Grid({ auth, user }) {
   const renderOffGridExtras = () => (
     <Box sx={{ mt: 6, mb: 4 }}>
       <Divider sx={{ my: 4 }} />
-      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Which months of the year are considered as summer?
       </Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -472,7 +474,7 @@ function Grid({ auth, user }) {
           ))}
         </Select>
       </FormControl>
-      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Which days are considered holidays?
       </Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -496,7 +498,7 @@ function Grid({ auth, user }) {
           ))}
         </Select>
       </FormControl>
-      <Typography variant="h5" sx={{ color: 'red', fontWeight: 600, mb: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Select Utility Rate Structure
       </Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -550,20 +552,18 @@ function Grid({ auth, user }) {
         {/* Step 1: Grid Connection Question */}
         {renderStep1()}
 
-        {/* Step 2: Net Metering Question (show for both grid-connected and off-grid) */}
-        {currentStep >= 2 && renderStep2()}
+        {/* Step 2: If grid is connected, ask about net metering. If not, ask about comparison */}
+        {currentStep >= 2 && (
+          gridData.Grid === true
+            ? renderStep2() // Net Metering
+            : renderOffGridCompareQuestion() // Off-grid comparison
+        )}
 
-        {/* If grid is not connected and both questions are answered, show the off-grid comparison question */}
-        {!gridData.Grid && currentStep >= 3 && renderOffGridCompareQuestion()}
+        {/* Show grid parameter fields if grid is connected and both questions are answered, or if off-grid and user wants to compare */}
+        {((gridData.Grid === true && currentStep >= 3) || (gridData.Grid === false && currentStep >= 3 && compareOffGrid === true)) && renderStep3()}
 
-        {/* If grid is not connected and user wants to compare, show all grid variables */}
-        {!gridData.Grid && compareOffGrid === true && renderStep3()}
-
-        {/* Step 3: Configuration Fields (only if grid is connected) */}
-        {gridData.Grid && currentStep >= 3 && renderStep3()}
-
-        {/* --- New Off-Grid Extras at the bottom --- */}
-        {!gridData.Grid && compareOffGrid === true && renderOffGridExtras()}
+        {/* Always show summer months, holidays, and rate structure after grid params if grid params are shown */}
+        {((gridData.Grid === true && currentStep >= 3) || (gridData.Grid === false && currentStep >= 3 && compareOffGrid === true)) && renderOffGridExtras()}
 
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
@@ -588,7 +588,7 @@ function Grid({ auth, user }) {
         </Box>
       </div>
     </div>
-  )
+  );
 }
 
-export default Grid 
+export default Grid; 
