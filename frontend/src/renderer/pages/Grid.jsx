@@ -43,8 +43,8 @@ const rateStructures = [
 function Grid({ auth, user }) {
   const navigate = useNavigate()
   const [gridData, setGridData] = useState({
-    Grid: false,
-    NEM: false,
+    Grid: null,
+    NEM: null,
     Annual_expenses: 0.0,
     Grid_sale_tax_rate: 0.0,
     Grid_Tax_amount: 0.0,
@@ -66,48 +66,49 @@ function Grid({ auth, user }) {
   const [midPeakPrice, setMidPeakPrice] = useState('');
 
   const isFormValid = () => {
-    // If grid is not connected, no validation needed
-    if (!gridData.Grid) {
+    // If grid is not connected and user hasn't answered the comparison question yet
+    if (!gridData.Grid && currentStep < 3) {
+      return false;
+    }
+    
+    // If grid is not connected and user doesn't want to compare, no validation needed
+    if (!gridData.Grid && compareOffGrid === false) {
       return true;
     }
     
     // If grid is connected, validate required fields
-    return (
-      gridData.Annual_expenses !== '' &&
-      gridData.Grid_sale_tax_rate !== '' &&
-      gridData.Grid_Tax_amount !== '' &&
-      gridData.Grid_escalation_rate !== '' &&
-      gridData.Grid_credit !== '' &&
-      gridData.SC_flat !== '' &&
-      gridData.Pbuy_max !== '' &&
-      gridData.Psell_max !== '' &&
-      // Only validate NEM_fee if NEM is enabled
-      (!gridData.NEM || gridData.NEM_fee !== '')
-    );
-  };
-
-  const handleGridConnectionChange = (event) => {
-    const isConnected = event.target.checked;
-    setGridData(prev => ({
-      ...prev,
-      Grid: isConnected,
-      // Reset NEM if grid is disconnected
-      NEM: isConnected ? prev.NEM : false
-    }));
-    
-    if (isConnected) {
-      setCurrentStep(2); // Move to net metering question
-    } else {
-      setCurrentStep(1); // Stay on grid connection question
+    if (gridData.Grid) {
+      return (
+        gridData.Annual_expenses !== '' &&
+        gridData.Grid_sale_tax_rate !== '' &&
+        gridData.Grid_Tax_amount !== '' &&
+        gridData.Grid_escalation_rate !== '' &&
+        gridData.Grid_credit !== '' &&
+        gridData.SC_flat !== '' &&
+        gridData.Pbuy_max !== '' &&
+        gridData.Psell_max !== '' &&
+        // Only validate NEM_fee if NEM is enabled
+        (!gridData.NEM || gridData.NEM_fee !== '')
+      );
     }
-  };
-
-  const handleNetMeteringChange = (event) => {
-    setGridData(prev => ({
-      ...prev,
-      NEM: event.target.checked
-    }));
-    setCurrentStep(3); // Move to configuration
+    
+    // If grid is not connected and user wants to compare, validate required fields
+    if (!gridData.Grid && compareOffGrid === true) {
+      return (
+        gridData.Annual_expenses !== '' &&
+        gridData.Grid_sale_tax_rate !== '' &&
+        gridData.Grid_Tax_amount !== '' &&
+        gridData.Grid_escalation_rate !== '' &&
+        gridData.Grid_credit !== '' &&
+        gridData.SC_flat !== '' &&
+        gridData.Pbuy_max !== '' &&
+        gridData.Psell_max !== '' &&
+        // Only validate NEM_fee if NEM is enabled
+        (!gridData.NEM || gridData.NEM_fee !== '')
+      );
+    }
+    
+    return false;
   };
 
   const handleSubmit = async () => {
@@ -191,40 +192,55 @@ function Grid({ auth, user }) {
       <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
         Is your system connected to the electrical grid?
       </Typography>
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <Checkbox 
-              checked={gridData.Grid} 
-              onChange={handleGridConnectionChange}
-              size="large"
-            />
-          }
-          label="Yes, my system is connected to the grid"
-        />
-      </FormGroup>
+      <FormControl fullWidth>
+        <InputLabel id="grid-connection-label">Grid Connection</InputLabel>
+        <Select
+          labelId="grid-connection-label"
+          value={gridData.Grid === null ? '' : gridData.Grid}
+          onChange={(e) => {
+            const isConnected = e.target.value;
+            setGridData(prev => ({
+              ...prev,
+              Grid: isConnected,
+              // Reset NEM if grid is disconnected
+              NEM: isConnected ? prev.NEM : false
+            }));
+            setCurrentStep(2); // Move to net metering question
+          }}
+          input={<OutlinedInput label="Grid Connection" />}
+        >
+          <MenuItem value={true}>Yes, my system is connected to the grid</MenuItem>
+          <MenuItem value={false}>No, my system is off-grid</MenuItem>
+        </Select>
+      </FormControl>
     </Box>
   );
 
   const renderOffGridCompareQuestion = () => (
     <Box sx={{ mb: 4 }}>
       <Typography
-        variant="body1"
-        sx={{ color: 'red', fontStyle: 'italic', fontWeight: 600 }}
+        variant="h5"
+        component="h2"
+        sx={{ color: 'red', fontWeight: 600 }}
         gutterBottom
       >
-        Do you want to compare your off-grid system with the time?
+        Do you want to compare your off-grid system with the grid?
       </Typography>
-      <FormGroup row>
-        <FormControlLabel
-          control={<Checkbox checked={compareOffGrid === true} onChange={() => setCompareOffGrid(true)} />}
-          label="Yes"
-        />
-        <FormControlLabel
-          control={<Checkbox checked={compareOffGrid === false} onChange={() => setCompareOffGrid(false)} />}
-          label="No"
-        />
-      </FormGroup>
+      <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+        This will allow you to compare the economics of your off-grid system with a hypothetical grid-connected scenario.
+      </Typography>
+      <FormControl fullWidth>
+        <InputLabel id="compare-offgrid-label">Compare with Grid</InputLabel>
+        <Select
+          labelId="compare-offgrid-label"
+          value={compareOffGrid === null ? '' : compareOffGrid}
+          onChange={(e) => setCompareOffGrid(e.target.value)}
+          input={<OutlinedInput label="Compare with Grid" />}
+        >
+          <MenuItem value={true}>Yes, compare with grid</MenuItem>
+          <MenuItem value={false}>No, skip comparison</MenuItem>
+        </Select>
+      </FormControl>
     </Box>
   );
 
@@ -234,20 +250,39 @@ function Grid({ auth, user }) {
         Net Metering
       </Typography>
       <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
-        Does your utility offer net metering for your grid connection?
+        {gridData.Grid 
+          ? "Does your utility offer net metering for your grid connection?"
+          : "If you were connected to the grid, would your utility offer net metering?"
+        }
       </Typography>
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <Checkbox 
-              checked={gridData.NEM} 
-              onChange={handleNetMeteringChange}
-              size="large"
-            />
-          }
-          label="Yes, I have net metering"
-        />
-      </FormGroup>
+      <FormControl fullWidth>
+        <InputLabel id="net-metering-label">Net Metering</InputLabel>
+        <Select
+          labelId="net-metering-label"
+          value={gridData.NEM === null ? '' : gridData.NEM}
+          onChange={(e) => {
+            setGridData(prev => ({
+              ...prev,
+              NEM: e.target.value
+            }));
+            setCurrentStep(3); // Move to next step (comparison question or configuration)
+          }}
+          input={<OutlinedInput label="Net Metering" />}
+        >
+          <MenuItem value={true}>
+            {gridData.Grid 
+              ? "Yes, I have net metering"
+              : "Yes, my utility would offer net metering"
+            }
+          </MenuItem>
+          <MenuItem value={false}>
+            {gridData.Grid 
+              ? "No, I don't have net metering"
+              : "No, my utility would not offer net metering"
+            }
+          </MenuItem>
+        </Select>
+      </FormControl>
     </Box>
   );
 
@@ -515,14 +550,14 @@ function Grid({ auth, user }) {
         {/* Step 1: Grid Connection Question */}
         {renderStep1()}
 
-        {/* If grid is not connected, show the off-grid comparison question */}
-        {!gridData.Grid && renderOffGridCompareQuestion()}
+        {/* Step 2: Net Metering Question (show for both grid-connected and off-grid) */}
+        {currentStep >= 2 && renderStep2()}
+
+        {/* If grid is not connected and both questions are answered, show the off-grid comparison question */}
+        {!gridData.Grid && currentStep >= 3 && renderOffGridCompareQuestion()}
 
         {/* If grid is not connected and user wants to compare, show all grid variables */}
         {!gridData.Grid && compareOffGrid === true && renderStep3()}
-
-        {/* Step 2: Net Metering Question (only if grid is connected) */}
-        {gridData.Grid && currentStep >= 2 && renderStep2()}
 
         {/* Step 3: Configuration Fields (only if grid is connected) */}
         {gridData.Grid && currentStep >= 3 && renderStep3()}
@@ -540,9 +575,14 @@ function Grid({ auth, user }) {
             text="Submit for Analysis"
             savingText="Submitting..."
           />
-          {!isFormValid() && (gridData.Grid || (!gridData.Grid && compareOffGrid === true)) && (
+          {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
-              Please fill in all required fields to continue
+              {!gridData.Grid && currentStep < 3 
+                ? "Please answer both questions to continue"
+                : (gridData.Grid || (!gridData.Grid && compareOffGrid === true))
+                ? "Please fill in all required fields to continue"
+                : "Please make a selection to continue"
+              }
             </Typography>
           )}
         </Box>
