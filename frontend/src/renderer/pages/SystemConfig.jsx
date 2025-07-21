@@ -310,9 +310,9 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 placeholder="Max Loss of Power*"
                 value={systemData.LPSP_max_rate}
-                onChange={handleInputChange('LPSP_max_rate')}
+                onChange={e => handleInputChange('LPSP_max_rate')({ target: { value: e.target.value / 100 } })}
                 variant="outlined"
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>,
                 }}
