@@ -48,7 +48,13 @@ function Battery({ auth, user }) {
   };
 
   const handleCheckboxChange = (field) => (event) => {
-    setBatData(prev => ({ ...prev, [field]: event.target.checked }));
+    if (field === 'Lead_acid' && event.target.checked) {
+      setBatData(prev => ({ ...prev, Lead_acid: true, Li_ion: false }));
+    } else if (field === 'Li_ion' && event.target.checked) {
+      setBatData(prev => ({ ...prev, Lead_acid: false, Li_ion: true }));
+    } else {
+      setBatData(prev => ({ ...prev, [field]: event.target.checked }));
+    }
   };
 
   const isFormValid = () => {
