@@ -28,7 +28,7 @@ const defaultValues = {
   Sales_tax: 80,
   azimuth: 180, // default south
   tilt: 30, // default tilt
-  soiling: 0.02 // default soiling loss (2%)
+  soiling: 5 // default soiling rate (5%)
 };
 
 function PV({ auth, user }) {
@@ -120,7 +120,7 @@ function PV({ auth, user }) {
           <TextField label="PV modules' life time" value={pvData.L_PV} onChange={handleChange('L_PV')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
           <TextField label="Azimuth (degrees from North, 180 = South)" value={pvData.azimuth} onChange={handleChange('azimuth')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°</InputAdornment> }} />
           <TextField label="Tilt (degrees from horizontal)" value={pvData.tilt} onChange={handleChange('tilt')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">°</InputAdornment> }} />
-          <TextField label="Soiling Loss Fraction" value={pvData.soiling} onChange={handleChange('soiling')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">fraction</InputAdornment> }} />
+          <TextField label="Soiling Rate" value={pvData.soiling} onChange={handleChange('soiling')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">fraction</InputAdornment> }} />
         </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Economic</Typography>
