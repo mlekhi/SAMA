@@ -19,15 +19,11 @@ import {
   Chip
 } from "@mui/material"
 import NextPageButton from '../components/NextPageButton'
+import DatePicker from "react-multi-date-picker";
 
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
-];
-
-const holidayOptions = [
-  'New Year\'s Day', 'Independence Day', 'Thanksgiving', 'Christmas',
-  'Labor Day', 'Memorial Day', 'Other'
 ];
 
 const rateStructures = [
@@ -60,7 +56,7 @@ function Grid({ auth, user }) {
   const [currentStep, setCurrentStep] = useState(1) // 1: Grid connected?, 2: Net metered?, 3: Configuration
   const [compareOffGrid, setCompareOffGrid] = useState(null); // null, true, or false
   const [seasonMonths, setSeasonMonths] = useState([]);
-  const [holidays, setHolidays] = useState([]);
+  const [holidayDates, setHolidayDates] = useState([]); // Array of Date objects
   const [rateStructure, setRateStructure] = useState('');
   const [onPeakPrice, setOnPeakPrice] = useState('');
   const [midPeakPrice, setMidPeakPrice] = useState('');
@@ -119,11 +115,19 @@ function Grid({ auth, user }) {
 
     try {
       const token = await user.getIdToken();
+      // Convert selected dates to day-of-year numbers
+      const convertedHolidays = holidayDates.map(dateObj => {
+        const d = new Date(dateObj);
+        const start = new Date(d.getFullYear(), 0, 0);
+        const diff = d - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
+      });
       // Send all grid data and new fields
       const payload = {
         ...gridData,
         season: seasonMonths,
-        holidays,
+        holidays: convertedHolidays,
         rateStructure,
         onPeakPrice,
         midPeakPrice,
@@ -477,27 +481,16 @@ function Grid({ auth, user }) {
       <Typography variant="h5" gutterBottom>
         Which days are considered holidays?
       </Typography>
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel id="holidays-label">Holidays</InputLabel>
-        <Select
-          labelId="holidays-label"
+      <Box sx={{ mb: 3 }}>
+        <DatePicker
           multiple
-          value={holidays}
-          onChange={e => setHolidays(e.target.value)}
-          input={<OutlinedInput label="Holidays" />}
-          renderValue={selected => (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {selected.map(value => (
-                <Chip key={value} label={value} />
-              ))}
-            </Box>
-          )}
-        >
-          {holidayOptions.map(day => (
-            <MenuItem key={day} value={day}>{day}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          value={holidayDates}
+          onChange={setHolidayDates}
+          format="YYYY-MM-DD"
+          placeholder="Select holiday dates"
+          style={{ minWidth: 0, width: '100%', height: 56, fontSize: 18, borderRadius: 4, border: '1px solid #c4c4c4' }}
+        />
+      </Box>
       <Typography variant="h5" gutterBottom>
         Select Utility Rate Structure
       </Typography>
