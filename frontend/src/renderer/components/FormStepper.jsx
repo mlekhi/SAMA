@@ -1,75 +1,97 @@
 import { Box, Stepper, Step, StepLabel } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const steps = [
+const baseSteps = [
   { label: 'Geography', path: '/geography' },
   { label: 'Optimization', path: '/optimization' },
   { label: 'System Config', path: '/system-config' },
-  { label: 'Component Modules', path: '/pv-config' },
+  // Component steps will be inserted here
   { label: 'Grid', path: '/grid-config' },
   { label: 'Results', path: '/results' }
 ];
 
-// Map component keys to their routes
-const componentRoutes = {
-  PV: '/pv-config',
-  DG: '/dg-config',
-  Bat: '/battery-config',
-  Inverter: '/inverter',
-};
+const componentStepDefs = [
+  { key: 'Inverter', label: 'Inverter', path: '/inverter' },
 
-function getActiveStep(pathname) {
-  // All component module routes
-  const componentModulePaths = [
-    '/pv-config',
-    '/dg-config',
-    '/wind-config',
-    '/battery-config',
-    '/inverter'
-  ];
-  if (componentModulePaths.some(path => pathname.startsWith(path))) {
-    return 3; // "Component Modules" step index
-  }
+  { key: 'PV', label: 'PV', path: '/pv-config' },
+  { key: 'WT', label: 'Wind', path: '/wind-config' },
+  { key: 'Bat', label: 'Battery', path: '/battery-config' },
+  { key: 'DG', label: 'Diesel', path: '/dg-config' },
+];
+
+function getActiveStep(pathname, steps) {
   return steps.findIndex(step => pathname.startsWith(step.path));
 }
 
 export default function FormStepper({ auth }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const activeStep = getActiveStep(location.pathname);
+  const [steps, setSteps] = useState(baseSteps);
   const [loadingComponent, setLoadingComponent] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
-  // Handler for Component Modules step
-  const handleComponentModulesClick = async () => {
-    setLoadingComponent(true);
-    try {
+  useEffect(() => {
+    async function fetchComponentSelection() {
+      setFetching(true);
       let token = null;
       if (auth && auth.currentUser) {
         token = await auth.currentUser.getIdToken();
       }
-      const response = await fetch('http://127.0.0.1:5000/api/component-selection', {
-        method: 'GET',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-      if (response.ok) {
-        const data = await response.json();
-        for (const key of Object.keys(componentRoutes)) {
-          if (data[key]) {
-            navigate(componentRoutes[key]);
-            return;
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/component-selection', {
+          method: 'GET',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const selectedComponents = componentStepDefs.filter(def => data[def.key]);
+          let newSteps = [
+            ...baseSteps.slice(0, 3),
+            ...selectedComponents,
+            ...baseSteps.slice(3)
+          ];
+          // Ensure the current route is in the steps array
+          const currentPath = location.pathname;
+          if (!newSteps.some(step => currentPath.startsWith(step.path))) {
+            // Try to find a matching component step definition
+            const match = componentStepDefs.find(def => currentPath.startsWith(def.path));
+            if (match) {
+              // Insert at the correct position (after System Config, before Grid)
+              newSteps = [
+                ...baseSteps.slice(0, 3),
+                ...selectedComponents,
+                match,
+                ...baseSteps.slice(3)
+              ];
+            } else {
+              // Fallback: insert as a generic step before Grid
+              newSteps = [
+                ...baseSteps.slice(0, 3),
+                { label: currentPath.replace('/', ''), path: currentPath },
+                ...baseSteps.slice(3)
+              ];
+            }
           }
+          setSteps(newSteps);
+        } else {
+          setSteps(baseSteps);
         }
-        navigate('/system-config');
-      } else {
-        navigate('/system-config');
+      } catch (e) {
+        setSteps(baseSteps);
+      } finally {
+        setFetching(false);
       }
-    } catch (e) {
-      navigate('/system-config');
-    } finally {
-      setLoadingComponent(false);
     }
-  };
+    fetchComponentSelection();
+    // eslint-disable-next-line
+  }, [location.pathname]);
+
+  const activeStep = getActiveStep(location.pathname, steps);
+
+  if (fetching) {
+    return <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 4, pt: 4 }} />;
+  }
 
   return (
     <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 4, pt: 4 }}>
@@ -83,11 +105,7 @@ export default function FormStepper({ auth }) {
             <StepLabel
               onClick={async () => {
                 if (index < activeStep) {
-                  if (step.label === 'Component Modules') {
-                    await handleComponentModulesClick();
-                  } else {
-                    navigate(step.path);
-                  }
+                  navigate(step.path);
                 }
               }}
               style={{
