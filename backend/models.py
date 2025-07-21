@@ -66,6 +66,11 @@ class Grid(db.Model):
     # New fields for off-grid comparison
     season = db.Column(db.Text, nullable=True)  # JSON-encoded list of summer months
     holidays = db.Column(db.Text, nullable=True)  # JSON-encoded list of holidays
+    
+    # Rate structure fields
+    rateStructure = db.Column(db.String(50), nullable=True)  # Rate structure type (flat, tou, seasonal, etc.)
+    onPeakPrice = db.Column(db.Float, nullable=True)  # On-peak price for TOU rates
+    midPeakPrice = db.Column(db.Float, nullable=True)  # Mid-peak price for TOU rates
 
 # --------------------------
 # optional modules
@@ -94,6 +99,9 @@ class PhotovoltaicSystem(db.Model):
     Supply_Chain_costs = db.Column(db.Float, nullable=False)
     Profit_costs = db.Column(db.Float, nullable=False)
     Sales_tax = db.Column(db.Float, nullable=False)
+    azimuth = db.Column(db.Float, nullable=True)
+    tilt = db.Column(db.Float, nullable=True)
+    soiling = db.Column(db.Float, nullable=True)
 
 class Inverter(db.Model):
     user_id = db.Column(db.String(100), primary_key=True)
