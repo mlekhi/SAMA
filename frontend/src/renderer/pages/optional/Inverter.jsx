@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
 
 const defaultValues = {
-  n_I: 0.96,
+  n_I: 96, // 96%
   L_I: 25,
   DC_AC_ratio: 1.99,
   C_I: 440,
@@ -20,7 +20,12 @@ function Inverter({ auth, user }) {
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => {
-    setInvData(prev => ({ ...prev, [field]: event.target.value }));
+    let value = event.target.value;
+    if (field === 'n_I') {
+      // Clamp to 0-100
+      value = Math.max(0, Math.min(100, Number(value)));
+    }
+    setInvData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
@@ -32,6 +37,8 @@ function Inverter({ auth, user }) {
     setSaveMessage('');
     try {
       const token = await user.getIdToken();
+      // Convert n_I to decimal before sending
+      const payload = { ...invData, n_I: invData.n_I / 100 };
       const res = await fetch('http://127.0.0.1:5000/api/inverter-config', {
         method: 'POST',
         headers: {
@@ -39,7 +46,7 @@ function Inverter({ auth, user }) {
           'Authorization': `Bearer ${token}`
         },
         credentials: 'include',
-        body: JSON.stringify(invData),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         setSaveMessage('Inverter configuration saved!');
@@ -91,6 +98,16 @@ function Inverter({ auth, user }) {
         <Divider sx={{ my: 2 }} />
         <Typography variant="h5" gutterBottom>Technical</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            label="Inverter Efficiency"
+            value={invData.n_I}
+            onChange={handleChange('n_I')}
+            variant="outlined"
+            fullWidth
+            type="number"
+            inputProps={{ min: 0, max: 100 }}
+            InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+          />
           <TextField label="Inverter Efficiency" value={invData.n_I} onChange={handleChange('n_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
           <TextField label="Inverter lifetime" value={invData.L_I} onChange={handleChange('L_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
           <TextField label="Maximum acceptable DC to AC ratio" value={invData.DC_AC_ratio} onChange={handleChange('DC_AC_ratio')} variant="outlined" fullWidth />
