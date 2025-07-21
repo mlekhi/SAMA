@@ -15,6 +15,14 @@ from math import ceil
 from sama_python.Input_Data import Input_Data as OriginalInputData
 import glob
 from sama_python.pso import run as pso_run
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+import calendar
+import requests
+import csv
+
+NREL_API_KEY = os.environ.get('NREL_API_KEY')
+NREL_BASE_URL = 'https://developer.nrel.gov/api/solar/solar_resource/v1.json'
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -104,6 +112,59 @@ def require_auth(f):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
+# Helper to fetch and save METEO.csv
+def fetch_and_save_meteo_csv(user_id, latitude, longitude):
+    params = {
+        'api_key': NREL_API_KEY,
+        'lat': latitude,
+        'lon': longitude
+    }
+    response = requests.get(NREL_BASE_URL, params=params)
+    try:
+        data = response.json()
+    except Exception:
+        logger.error(f"NREL API non-JSON response: {response.text}")
+        return False
+    if not isinstance(data, dict) or response.status_code != 200 or 'outputs' not in data:
+        logger.error(f"NREL API error: {data}")
+        return False
+    output_dir = f'../backend/sama_python/output/{user_id}/data'
+    os.makedirs(output_dir, exist_ok=True)
+    csv_path = os.path.join(output_dir, 'METEO.csv')
+    with open(csv_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            'Source','Location ID','City','State','Country','Latitude','Longitude','Time Zone','Elevation','Local Time Zone',
+            'Dew Point Units','DHI Units','DNI Units','GHI Units','Temperature Units','Pressure Units','Wind Direction Units',
+            'Wind Speed Units','Surface Albedo Units','Version'
+        ])
+        meta = data.get('inputs', {})
+        outputs = data.get('outputs', {})
+        writer.writerow([
+            'NREL',
+            '',  # Location ID
+            meta.get('city', ''),
+            meta.get('state', ''),
+            meta.get('country', ''),
+            latitude,
+            longitude,
+            meta.get('time_zone', ''),
+            outputs.get('elevation', ''),
+            meta.get('local_time_zone', ''),
+            '',  # Dew Point Units
+            outputs.get('avg_dhi', {}).get('units', ''),
+            outputs.get('avg_dni', {}).get('units', ''),
+            outputs.get('avg_ghi', {}).get('units', ''),
+            outputs.get('avg_air_temp', {}).get('units', ''),
+            outputs.get('avg_pressure', {}).get('units', ''),
+            '',  # Wind Direction Units
+            outputs.get('avg_wspd', {}).get('units', ''),
+            '',  # Surface Albedo Units
+            data.get('version', '')
+        ])
+    logger.info(f"Saved METEO.csv for user {user_id} at {csv_path}")
+    return True
+
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
 @log_function_input
@@ -128,6 +189,10 @@ def save_geography_economy():
         geo_economy.RE_incentives_rate = data.get('RE_incentives_rate')
         
         db.session.commit()
+
+        # Fetch and save METEO.csv
+        fetch_and_save_meteo_csv(user_id, geo_economy.latitude, geo_economy.longitude)
+
         return jsonify({'id': geo_economy.user_id, 'message': 'Geography and economy data saved successfully'}), 200
     except Exception as e:
         logger.error(f"Error saving geography economy data: {str(e)}")
@@ -307,7 +372,7 @@ def save_pv_config():
             'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
             'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
             'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax']:
+            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']:
             if field in data:
                 setattr(pv, field, data[field])
         db.session.commit()
@@ -315,7 +380,7 @@ def save_pv_config():
             'user_id', 'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
             'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
             'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax']}), 200
+            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -702,6 +767,62 @@ def get_user_files(user_id):
     except Exception as e:
         logger.error(f"Error getting user files: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def get_holiday_dates(holiday_names, year=None):
+    """
+    Convert holiday names to actual dates for the given year
+    Returns a list of (month, day) tuples
+    """
+    if year is None:
+        year = datetime.now().year
+    
+    holiday_dates = []
+    
+    for holiday in holiday_names:
+        if holiday == "New Year's Day":
+            holiday_dates.append((1, 1))
+        elif holiday == "Independence Day":
+            holiday_dates.append((7, 4))
+        elif holiday == "Christmas":
+            holiday_dates.append((12, 25))
+        elif holiday == "Thanksgiving":
+            # Thanksgiving is 4th Thursday of November
+            thanksgiving = get_thanksgiving_date(year)
+            holiday_dates.append((thanksgiving.month, thanksgiving.day))
+        elif holiday == "Labor Day":
+            # Labor Day is 1st Monday of September
+            labor_day = get_labor_day_date(year)
+            holiday_dates.append((labor_day.month, labor_day.day))
+        elif holiday == "Memorial Day":
+            # Memorial Day is last Monday of May
+            memorial_day = get_memorial_day_date(year)
+            holiday_dates.append((memorial_day.month, memorial_day.day))
+        # Add more holidays as needed
+    
+    return holiday_dates
+
+def get_thanksgiving_date(year):
+    """Get Thanksgiving date (4th Thursday of November)"""
+    november = date(year, 11, 1)
+    # Find the first Thursday
+    while november.weekday() != calendar.THURSDAY:
+        november += relativedelta(days=1)
+    # Add 3 weeks to get the 4th Thursday
+    return november + relativedelta(weeks=3)
+
+def get_labor_day_date(year):
+    """Get Labor Day date (1st Monday of September)"""
+    september = date(year, 9, 1)
+    while september.weekday() != calendar.MONDAY:
+        september += relativedelta(days=1)
+    return september
+
+def get_memorial_day_date(year):
+    """Get Memorial Day date (last Monday of May)"""
+    may = date(year, 5, 31)
+    while may.weekday() != calendar.MONDAY:
+        may -= relativedelta(days=1)
+    return may
 
 if __name__ == '__main__':
     with app.app_context():
