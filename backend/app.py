@@ -21,8 +21,8 @@ import calendar
 import requests
 import csv
 
-NREL_API_KEY = os.environ.get('NREL_API_KEY')
-NREL_BASE_URL = 'https://developer.nrel.gov/api/solar/solar_resource/v1.json'
+NSRDB_API_KEY = os.environ.get('NSRDB_API_KEY')
+NSRDB_EMAIL = os.environ.get('NSRDB_EMAIL')
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -112,57 +112,34 @@ def require_auth(f):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
-# Helper to fetch and save METEO.csv
 def fetch_and_save_meteo_csv(user_id, latitude, longitude):
+    if not NSRDB_API_KEY or not NSRDB_EMAIL:
+        return False
+    
+    url = "https://developer.nrel.gov/api/solar/nsrdb_psm3_tmy_download.csv"
     params = {
-        'api_key': NREL_API_KEY,
-        'lat': latitude,
-        'lon': longitude
+        "api_key": NSRDB_API_KEY,
+        "wkt": f"POINT({longitude} {latitude})",
+        "names": "tmy",
+        "interval": "60",
+        "full_name": "SAMA User",
+        "email": NSRDB_EMAIL,
+        "affiliation": "SAMA",
+        "reason": "research",
+        "attributes": "air_temperature,dew_point,ghi,dhi,dni,wind_speed,wind_direction,surface_pressure,surface_albedo"
     }
-    response = requests.get(NREL_BASE_URL, params=params)
-    try:
-        data = response.json()
-    except Exception:
-        logger.error(f"NREL API non-JSON response: {response.text}")
+    response = requests.get(url, params=params)
+    
+    if response.status_code != 200:
         return False
-    if not isinstance(data, dict) or response.status_code != 200 or 'outputs' not in data:
-        logger.error(f"NREL API error: {data}")
-        return False
+    
     output_dir = f'../backend/sama_python/output/{user_id}/data'
     os.makedirs(output_dir, exist_ok=True)
     csv_path = os.path.join(output_dir, 'METEO.csv')
-    with open(csv_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([
-            'Source','Location ID','City','State','Country','Latitude','Longitude','Time Zone','Elevation','Local Time Zone',
-            'Dew Point Units','DHI Units','DNI Units','GHI Units','Temperature Units','Pressure Units','Wind Direction Units',
-            'Wind Speed Units','Surface Albedo Units','Version'
-        ])
-        meta = data.get('inputs', {})
-        outputs = data.get('outputs', {})
-        writer.writerow([
-            'NREL',
-            '',  # Location ID
-            meta.get('city', ''),
-            meta.get('state', ''),
-            meta.get('country', ''),
-            latitude,
-            longitude,
-            meta.get('time_zone', ''),
-            outputs.get('elevation', ''),
-            meta.get('local_time_zone', ''),
-            '',  # Dew Point Units
-            outputs.get('avg_dhi', {}).get('units', ''),
-            outputs.get('avg_dni', {}).get('units', ''),
-            outputs.get('avg_ghi', {}).get('units', ''),
-            outputs.get('avg_air_temp', {}).get('units', ''),
-            outputs.get('avg_pressure', {}).get('units', ''),
-            '',  # Wind Direction Units
-            outputs.get('avg_wspd', {}).get('units', ''),
-            '',  # Surface Albedo Units
-            data.get('version', '')
-        ])
-    logger.info(f"Saved METEO.csv for user {user_id} at {csv_path}")
+    
+    with open(csv_path, 'w') as f:
+        f.write(response.text)
+    
     return True
 
 @app.route('/api/geography-economy', methods=['POST'])
@@ -172,6 +149,8 @@ def save_geography_economy():
     try:
         user_id = request.user['uid']
         data = request.get_json()
+        if isinstance(data, str):
+            data = json.loads(data)
         
         # Check if record exists
         geo_economy = GeographyEconomy.query.get(user_id)
@@ -179,6 +158,9 @@ def save_geography_economy():
             geo_economy = GeographyEconomy(user_id=user_id)
             db.session.add(geo_economy)
         
+        logger.info(f"Type of geo_economy: {type(geo_economy)}")
+        logger.info(f"Type of data: {type(data)}")
+
         # Update fields
         geo_economy.latitude = data.get('latitude')
         geo_economy.longitude = data.get('longitude')
@@ -473,11 +455,16 @@ def save_wind_config():
 
 class InData(OriginalInputData):
     def __init__(self, user_id):
-        # Initialize the original Input_Data class first (this sets all defaults)
+        # Set user_id first
+        self.user_id = user_id
+        
+        # Override weather_url before calling parent __init__ to ensure correct file is used
+        self.weather_url = f'../backend/sama_python/output/{self.user_id}/data/METEO.csv'
+        
+        # Initialize the original Input_Data class (this will use our weather_url)
         super().__init__()
         
-        # Now override only the values that come from the database
-        self.user_id = user_id
+        # Now override other values that come from the database
         self.load_user_data()
 
     def load_user_data(self):
@@ -500,6 +487,7 @@ class InData(OriginalInputData):
         logger.info(f"battery exists: {battery is not None}")
         logger.info(f"wind exists: {wind is not None}")
         logger.info(f"grid exists: {grid is not None}")
+        logger.info(f"weather_url: {self.weather_url}")
 
         # --- SystemConfig ---
         if sys_config:
