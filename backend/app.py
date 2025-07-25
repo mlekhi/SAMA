@@ -332,7 +332,12 @@ def save_grid():
                 # Store as JSON-encoded string
                 setattr(grid, key, json.dumps(value))
             elif hasattr(grid, key):
-                setattr(grid, key, value)
+                # Handle empty strings for nullable columns
+                column = getattr(grid.__class__, key)
+                if value == '' and column.nullable:
+                    setattr(grid, key, None)
+                else:
+                    setattr(grid, key, value)
         
         db.session.commit()
         return jsonify({'id': grid.user_id, 'message': 'Grid data saved successfully'}), 200
@@ -534,6 +539,18 @@ class InData(OriginalInputData):
             self.Service_charge = grid.SC_flat 
             self.Pbuy_max = grid.Pbuy_max
             self.Psell_max = grid.Psell_max
+            
+            # Load new grid fields
+            if grid.season:
+                self.season = json.loads(grid.season)
+            if grid.holidays:
+                self.holidays = json.loads(grid.holidays)
+            if grid.rateStructure:
+                self.rateStructure = grid.rateStructure
+            if grid.onPeakPrice is not None:
+                self.onPeakPrice = grid.onPeakPrice
+            if grid.midPeakPrice is not None:
+                self.midPeakPrice = grid.midPeakPrice
 
         # --- PhotovoltaicSystem ---
         if pv_system:
