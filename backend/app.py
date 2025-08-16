@@ -676,18 +676,35 @@ def submit_results():
     try:
         user_id = request.user['uid']
         in_data = InData(user_id)
-        # Call PSO optimizer instead of Gen_Results
+        
+        # Call PSO optimizer and get comprehensive results
         result = pso_run(in_data, user_id)
-        return jsonify({
-            'message': 'Optimization completed successfully',
-            'result': result,
-            'user_id': user_id
-        })
+        
+        # Check if we got valid results
+        if result and 'error' not in result:
+            return jsonify({
+                'message': 'Optimization completed successfully',
+                'result': result,
+                'user_id': user_id,
+                'status': 'success'
+            })
+        else:
+            return jsonify({
+                'message': 'Optimization completed but no valid results generated',
+                'result': result,
+                'user_id': user_id,
+                'status': 'warning'
+            }), 200
+            
     except Exception as e:
         import traceback
         logger.error(f"Error submitting results: {str(e)}")
         logger.error(f"Full traceback: {traceback.format_exc()}")
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+        return jsonify({
+            'error': str(e), 
+            'traceback': traceback.format_exc(),
+            'status': 'error'
+        }), 500
 
 @app.route('/api/download/<user_id>/<file_type>/<filename>', methods=['GET'])
 @require_auth

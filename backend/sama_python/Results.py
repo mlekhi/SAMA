@@ -26,6 +26,28 @@ def log_output(message, *args):
     print(actual_message)
     output_logs.append(actual_message)
 
+def safe_convert(obj):
+    """Convert numpy arrays to lists, handle NaN values, leave other types unchanged"""
+    import numpy as np
+    
+    # Handle NaN and other numpy special values
+    if hasattr(obj, 'tolist'):
+        # It's a numpy array or scalar
+        if np.isscalar(obj):
+            # Handle numpy scalars (including NaN, inf, etc.)
+            if np.isnan(obj) or np.isinf(obj):
+                return None
+            elif isinstance(obj, (np.integer, np.floating)):
+                return float(obj) if isinstance(obj, np.floating) else int(obj)
+            else:
+                return obj.tolist()
+        else:
+            # It's a numpy array
+            return obj.tolist()
+    else:
+        # Not a numpy object, return as is
+        return obj
+
 # Loading all inputs
 
 
@@ -505,7 +527,12 @@ def Gen_Results(X, InData, user_id):
     cumulative_total_cost_PP = [sum(yearly_total_cost[:i + 1]) for i in range(n + 1)]
 
     irr = npf.irr(IRR_cost)
-    if irr < 0:
+    
+    # Handle NaN and infinite values for IRR
+    if np.isnan(irr) or np.isinf(irr):
+        irr = None
+        log_output(output_logs, "The projected investment IRR could not be calculated")
+    elif irr < 0:
         log_output(output_logs, "The projected investment is a loss")
         log_output(output_logs, f"The IRR of the project is: {irr:.2%}")
     else:
@@ -513,24 +540,37 @@ def Gen_Results(X, InData, user_id):
 
     payback_period = next((i for i, cost in enumerate(cumulative_total_cost_PP) if cost >= 0), None)
     if payback_period is None:
-        log_output("No payback period within the project's lifetime")
+        log_output(output_logs, "No payback period within the project's lifetime")
     else:
-        log_output(f"The Payback Period is: {payback_period} years")
+        log_output(output_logs, f"The Payback Period is: {payback_period} years")
 
     # Calculate Total Revenues and Total Costs
     total_revenues = sum(avoided_costs) + (sum(Salvage) * (1 + System_Tax)) + sum(Grid_Cost_neg)
-    log_output(f"Total revenues is: {total_revenues:.2f}")
+    log_output(output_logs, f"Total revenues is: {total_revenues:.2f}")
     total_costs = -(((-I_Cost + sum(MO_Cost) + sum(R_Cost) + sum(C_Fu)) * (1 + System_Tax)) + sum(Grid_Cost_pos))
 
+    # Handle NaN and infinite values
+    if np.isnan(total_revenues) or np.isinf(total_revenues):
+        total_revenues = None
+    if np.isnan(total_costs) or np.isinf(total_costs):
+        total_costs = None
 
     # Calculate Net Profit
-    net_profit = total_revenues - total_costs
-    log_output(f"Total net profit is: {net_profit:.2f}")
-    log_output(f"Total costs is: {total_costs:.2f}")
+    net_profit = total_revenues - total_costs if (total_revenues is not None and total_costs is not None) else None
+    if net_profit is not None:
+        log_output(output_logs, f"Total net profit is: {net_profit:.2f}")
+        log_output(output_logs, f"Total costs is: {total_costs:.2f}")
+    else:
+        log_output(output_logs, "Net profit could not be calculated")
     # Calculate ROI
-    roi = (net_profit / total_costs) * 100
-
-    log_output(f"The ROI of the project is: {roi:.2f}%")
+    roi = (net_profit / total_costs) * 100 if total_costs != 0 else None
+    
+    # Handle NaN and infinite values for ROI
+    if roi is not None and (np.isnan(roi) or np.isinf(roi)):
+        roi = None
+        log_output(output_logs, "The ROI could not be calculated")
+    else:
+        log_output(output_logs, f"The ROI of the project is: {roi:.2f}%")
 
     # Create the bar chart
     plt.figure(figsize=(10, 6))
@@ -1174,4 +1214,120 @@ def Gen_Results(X, InData, user_id):
         fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
         plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average earning Sell to the Grid.png', dpi=300)
 
+    # Initialize results dictionary to store all calculated values
+    results = {
+        'system_size': {},
+        'financial_metrics': {},
+        'energy_metrics': {},
+        'emissions': {},
+        'grid_metrics': {},
+        'battery_metrics': {},
+        'reliability_metrics': {},
+        'cash_flow_data': {},
+    }
 
+    # Store system size results
+    results['system_size'] = {
+        'pv_capacity_kw': Pn_PV,
+        'wind_capacity_kw': Pn_WT if WT == 1 else 0,
+        'battery_capacity_kwh': round(Cn_B, 4),
+        'diesel_capacity_kw': Pn_DG,
+        'inverter_capacity_kw': Cn_I
+    }
+
+    # Store financial metrics
+    results['financial_metrics'] = {
+        'npc': round(NPC, 2),
+        'npc_without_incentives': round(NPC_without_incentives, 2),
+        'total_solar_cost': round(Solar_Cost, 2),
+        'npc_grid_only': round(NPC_Grid, 2),
+        'total_grid_avoidable_cost': round(np.sum(Grid_avoidable_cost), 2),
+        'total_grid_unavoidable_cost': round(np.sum(Grid_unavoidable_cost), 2),
+        'total_avoided_costs': round(np.sum(avoided_costs), 2),
+        'total_net_avoided_costs': round(np.sum(avoided_costs) - np.sum(Grid_Cost), 2),
+        'total_grid_earning': round(np.sum(Sold_electricity), 2),
+        'total_grid_costs': round(np.sum(Bought_electricity), 2),
+        'total_grid_credits': round(np.sum(Total_grid_credits), 2),
+        'lcoe': round(LCOE, 2),
+        'lcoe_without_incentives': round(LCOE_without_incentives, 2),
+        'lcoe_grid_only': round(LCOE_Grid, 2),
+        'grid_avoidable_cost_per_kwh': round(Grid_avoidable_cost_perkWh, 2),
+        'grid_unavoidable_cost_per_kwh': round(Grid_unavoidable_cost_perkWh, 2),
+        'solar_cost_per_kwh': round(Solar_Cost_perkWh, 2),
+        'operating_cost': round(Operating_Cost, 2),
+        'initial_cost': round(I_Cost, 2),
+        'initial_cost_without_incentives': round(I_Cost_without_incentives, 2),
+        'total_incentives_received': round(Total_incentives_received, 2),
+        'total_operation_maintenance_cost': round(np.sum(MO_Cost), 2),
+        'irr': irr if 'irr' in locals() else None,
+        'payback_period_years': payback_period if 'payback_period' in locals() else None,
+        'roi_percent': roi if 'roi' in locals() else None,
+        'total_revenues': total_revenues if 'total_revenues' in locals() else None,
+        'total_costs': total_costs if 'total_costs' in locals() else None,
+        'net_profit': net_profit if 'net_profit' in locals() else None
+    }
+
+    # Store energy metrics
+    results['energy_metrics'] = {
+        'pv_energy_kwh': np.sum(Ppv),
+        'wind_energy_kwh': np.sum(Pwt) if WT == 1 else 0,
+        'diesel_energy_kwh': np.sum(Pdg),
+        'battery_energy_in_kwh': np.sum(Pch),
+        'battery_energy_out_kwh': np.sum(Pdch),
+        'renewable_energy_percentage': round(100 * RE, 2),
+        'annual_load_kwh': np.sum(Eload),
+        'annual_served_load_kwh': np.sum(Eload_served),
+        'annual_capacity_shortage_kwh': np.sum(Ens),
+        'excess_electricity_kwh': np.sum(Edump)
+    }
+
+    # Store emissions metrics
+    results['emissions'] = {
+        'dg_emissions_kg_per_year': DG_Emissions,
+        'grid_emissions_kg_per_year': Grid_Emissions if Grid == 1 else 0,
+        'levelized_emissions_kg_per_kwh': LEM
+    }
+
+    # Store grid metrics
+    if Grid == 1:
+        results['grid_metrics'] = {
+            'annual_power_bought_kwh': np.sum(Pbuy),
+            'annual_power_sold_kwh': np.sum(Psell),
+            'total_money_paid_to_grid': round(np.sum(Grid_Cost), 2),
+            'total_money_paid_by_user': round(np.sum(NPC), 2)
+        }
+    else:
+        results['grid_metrics'] = {
+            'annual_power_bought_kwh': 0,
+            'annual_power_sold_kwh': 0,
+            'total_money_paid_to_grid': 0,
+            'total_money_paid_by_user': round(np.sum(NPC), 2)
+        }
+
+    # Store battery metrics
+    results['battery_metrics'] = {
+        'battery_min_energy_kwh': SOC_min * Cn_B if Cn_B > 0 else 0,
+        'battery_min_power_kw': np.sum(Pb_min) if 'Pb_min' in locals() else 0
+    }
+
+    # Store reliability metrics
+    results['reliability_metrics'] = {
+        'loss_of_power_supply_probability': round(100 * LPSP, 2),
+        'renewable_energy_fraction': round(100 * RE, 2)
+    }
+
+    # Store cash flow data for analysis
+    results['cash_flow_data'] = {
+        'years': years if 'years' in locals() else list(range(n + 1)),
+        'initial_investment': -I_Cost,
+        'replacement_costs': safe_convert(R_Cost) if 'R_Cost' in locals() else [],
+        'maintenance_operating_costs': safe_convert(MO_Cost) if 'MO_Cost' in locals() else [],
+        'fuel_costs': safe_convert(C_Fu) if 'C_Fu' in locals() else [],
+        'salvage_values': safe_convert(Salvage) if 'Salvage' in locals() else [],
+        'grid_costs': safe_convert(Grid_Cost) if 'Grid_Cost' in locals() else [],
+        'avoided_costs': safe_convert(avoided_costs) if 'avoided_costs' in locals() else [],
+        'cumulative_total_cost': cumulative_total_cost if 'cumulative_total_cost' in locals() else []
+    }
+
+    # Return the comprehensive results dictionary
+    return results

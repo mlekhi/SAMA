@@ -164,9 +164,11 @@ function Grid({ auth, user }) {
         setTimeout(() => {
           navigate('/results', { 
             state: { 
-              results: results.logs,
+              results: results.result, // Use the comprehensive results object
               generatedFiles: results.generated_files,
-              userId: results.user_id
+              userId: results.user_id,
+              status: results.status,
+              message: results.message
             } 
           });
         }, 1500);

@@ -21,5 +21,10 @@ def run(Input_Data, user_id=None):
     answer = swarm.optimize(Input_Data, user_id)
 
     print(process_time()-start, "Total execution time [Sec]")
-    return answer
+    
+    # Ensure the answer is properly converted for JSON serialization
+    if answer is not None:
+        return convert_ndarrays(answer)
+    else:
+        return {"error": "No results generated from optimization"}
     

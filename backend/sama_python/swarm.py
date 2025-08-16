@@ -142,4 +142,17 @@ class Swarm:
         plt.tight_layout()
         # plt.show()
         plt.savefig('../backend/sama_python/output/figs/Optimization.png', dpi=300)
-        Gen_Results(X, data, user_id)
+        
+        # Get comprehensive results from Gen_Results and return them
+        comprehensive_results = Gen_Results(X, data, user_id)
+        
+        # Add optimization-specific data to the results
+        comprehensive_results['optimization'] = {
+            'best_solution': X.tolist(),
+            'best_cost': float(Best[index]),
+            'convergence_curve': [float(cost) for cost in best_cost],
+            'all_solutions': [pos.tolist() for pos in self.solution_best_positions],
+            'all_costs': [float(cost) for cost in self.solution_best_costs]
+        }
+        
+        return comprehensive_results
