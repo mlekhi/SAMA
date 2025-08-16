@@ -61,6 +61,10 @@ function Grid({ auth, user }) {
   const [onPeakPrice, setOnPeakPrice] = useState('');
   const [midPeakPrice, setMidPeakPrice] = useState('');
   const [offPeakPrice, setOffPeakPrice] = useState('');
+  const [onPeakStart, setOnPeakStart] = useState('');
+  const [onPeakEnd, setOnPeakEnd] = useState('');
+  const [midPeakStart, setMidPeakStart] = useState('');
+  const [midPeakEnd, setMidPeakEnd] = useState('');
 
   const isFormValid = () => {
     // If grid is not connected and user hasn't answered the comparison question yet
@@ -133,6 +137,12 @@ function Grid({ auth, user }) {
         onPeakPrice,
         midPeakPrice,
         offPeakPrice,
+        onPeakHours: [
+          { start: onPeakStart, end: onPeakEnd }
+        ],
+        midPeakHours: [
+          { start: midPeakStart, end: midPeakEnd }
+        ],
         // Add more rate-structure-specific fields here as needed
       };
       // Step 1: Save the Grid data first.
@@ -535,6 +545,63 @@ function Grid({ auth, user }) {
             InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
             fullWidth
           />
+        </Box>
+      )}
+      
+      {/* Hourly Ranges for Time of Use */}
+      {rateStructure === 'tou' && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" component="h4" gutterBottom>
+            On-Peak Hours
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Please provide the hourly range for on-peak hours.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+            <TextField
+              type="time"
+              value={onPeakStart}
+              onChange={(e) => setOnPeakStart(e.target.value)}
+              placeholder="Start time"
+              sx={{ flex: 1 }}
+            />
+            <Typography variant="body1" sx={{ mx: 1 }}>→</Typography>
+            <TextField
+              type="time"
+              value={onPeakEnd}
+              onChange={(e) => setOnPeakEnd(e.target.value)}
+              placeholder="End time"
+              sx={{ flex: 1 }}
+            />
+          </Box>
+        </Box>
+      )}
+      
+      {rateStructure === 'tou' && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" component="h4" gutterBottom>
+            Mid-Peak Hours
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Please provide the hourly range for mid-peak hours.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+            <TextField
+              type="time"
+              value={midPeakStart}
+              onChange={(e) => setMidPeakStart(e.target.value)}
+              placeholder="Start time"
+              sx={{ flex: 1 }}
+            />
+            <Typography variant="body1" sx={{ mx: 1 }}>→</Typography>
+            <TextField
+              type="time"
+              value={midPeakEnd}
+              onChange={(e) => setMidPeakEnd(e.target.value)}
+              placeholder="End time"
+              sx={{ flex: 1 }}
+            />
+          </Box>
         </Box>
       )}
     </Box>
