@@ -60,6 +60,7 @@ function Grid({ auth, user }) {
   const [rateStructure, setRateStructure] = useState('');
   const [onPeakPrice, setOnPeakPrice] = useState('');
   const [midPeakPrice, setMidPeakPrice] = useState('');
+  const [offPeakPrice, setOffPeakPrice] = useState('');
 
   const isFormValid = () => {
     // If grid is not connected and user hasn't answered the comparison question yet
@@ -131,6 +132,7 @@ function Grid({ auth, user }) {
         rateStructure,
         onPeakPrice,
         midPeakPrice,
+        offPeakPrice,
         // Add more rate-structure-specific fields here as needed
       };
       // Step 1: Save the Grid data first.
@@ -523,6 +525,13 @@ function Grid({ auth, user }) {
             label="Mid-Peak Price"
             value={midPeakPrice}
             onChange={e => setMidPeakPrice(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+            fullWidth
+          />
+          <TextField
+            label="Off-Peak Price"
+            value={offPeakPrice}
+            onChange={e => setOffPeakPrice(e.target.value)}
             InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
             fullWidth
           />
