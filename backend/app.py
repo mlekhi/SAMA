@@ -790,62 +790,6 @@ def get_user_files(user_id):
         logger.error(f"Error getting user files: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-def get_holiday_dates(holiday_names, year=None):
-    """
-    Convert holiday names to actual dates for the given year
-    Returns a list of (month, day) tuples
-    """
-    if year is None:
-        year = datetime.now().year
-    
-    holiday_dates = []
-    
-    for holiday in holiday_names:
-        if holiday == "New Year's Day":
-            holiday_dates.append((1, 1))
-        elif holiday == "Independence Day":
-            holiday_dates.append((7, 4))
-        elif holiday == "Christmas":
-            holiday_dates.append((12, 25))
-        elif holiday == "Thanksgiving":
-            # Thanksgiving is 4th Thursday of November
-            thanksgiving = get_thanksgiving_date(year)
-            holiday_dates.append((thanksgiving.month, thanksgiving.day))
-        elif holiday == "Labor Day":
-            # Labor Day is 1st Monday of September
-            labor_day = get_labor_day_date(year)
-            holiday_dates.append((labor_day.month, labor_day.day))
-        elif holiday == "Memorial Day":
-            # Memorial Day is last Monday of May
-            memorial_day = get_memorial_day_date(year)
-            holiday_dates.append((memorial_day.month, memorial_day.day))
-        # Add more holidays as needed
-    
-    return holiday_dates
-
-def get_thanksgiving_date(year):
-    """Get Thanksgiving date (4th Thursday of November)"""
-    november = date(year, 11, 1)
-    # Find the first Thursday
-    while november.weekday() != calendar.THURSDAY:
-        november += relativedelta(days=1)
-    # Add 3 weeks to get the 4th Thursday
-    return november + relativedelta(weeks=3)
-
-def get_labor_day_date(year):
-    """Get Labor Day date (1st Monday of September)"""
-    september = date(year, 9, 1)
-    while september.weekday() != calendar.MONDAY:
-        september += relativedelta(days=1)
-    return september
-
-def get_memorial_day_date(year):
-    """Get Memorial Day date (last Monday of May)"""
-    may = date(year, 5, 31)
-    while may.weekday() != calendar.MONDAY:
-        may -= relativedelta(days=1)
-    return may
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
