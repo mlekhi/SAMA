@@ -207,45 +207,99 @@ function Results({ auth, user }) {
               <Typography variant="h5" component="h3" gutterBottom>
                 Financial Analysis
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Net Present Cost</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Net Present Cost (NPC)</Typography>
                   <Typography variant="h6" color="primary.main">${results.financial_metrics.npc?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Levelized Cost of Energy</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">NPC without incentives</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.npc_without_incentives?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Solar Cost</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_solar_cost?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">NPC for only Grid connected system</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.npc_grid_only?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Grid avoidable cost</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_grid_avoidable_cost?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Grid unavoidable cost</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_grid_unavoidable_cost?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total avoided costs</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_avoided_costs?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total net avoided costs by hybrid energy system</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_net_avoided_costs?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total grid earning</Typography>
+                  <Typography variant="h6" color="success.main">${results.financial_metrics.total_grid_earning?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total grid costs</Typography>
+                  <Typography variant="h6" color="error.main">${results.financial_metrics.total_grid_costs?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total grid credits</Typography>
+                  <Typography variant="h6" color="success.main">${results.financial_metrics.total_grid_credits?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Levelized Cost of Energy (LCOE)</Typography>
                   <Typography variant="h6" color="primary.main">${results.financial_metrics.lcoe || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">LCOE without incentives</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.lcoe_without_incentives || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">LCOE for only Grid connected system</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.lcoe_grid_only || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Grid avoidable cost per kWh</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.grid_avoidable_cost_per_kwh || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Grid unavoidable cost per kWh</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.grid_unavoidable_cost_per_kwh || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Solar Cost per kWh</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.solar_cost_per_kwh || 'N/A'}/kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Operating Cost</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.operating_cost?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Initial Cost</Typography>
                   <Typography variant="h6" color="primary.main">${results.financial_metrics.initial_cost?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Operating Cost</Typography>
-                  <Typography variant="h6" color="primary.main">${results.financial_metrics.operating_cost?.toLocaleString() || 'N/A'}</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Initial Cost without incentives</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.initial_cost_without_incentives?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
-                {results.financial_metrics.irr && (
-                  <Box>
-                    <Typography variant="subtitle2" color="textSecondary">Internal Rate of Return</Typography>
-                    <Typography variant="h6" color={results.financial_metrics.irr > 0 ? 'success.main' : 'error.main'}>
-                      {(results.financial_metrics.irr * 100).toFixed(2)}%
-                    </Typography>
-                  </Box>
-                )}
-                {results.financial_metrics.roi_percent && (
-                  <Box>
-                    <Typography variant="subtitle2" color="textSecondary">Return on Investment</Typography>
-                    <Typography variant="h6" color={results.financial_metrics.roi_percent > 0 ? 'success.main' : 'error.main'}>
-                      {results.financial_metrics.roi_percent.toFixed(2)}%
-                    </Typography>
-                  </Box>
-                )}
-                {results.financial_metrics.payback_period_years && (
-                  <Box>
-                    <Typography variant="subtitle2" color="textSecondary">Payback Period</Typography>
-                    <Typography variant="h6" color="primary.main">{results.financial_metrics.payback_period_years} years</Typography>
-                  </Box>
-                )}
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total incentives received</Typography>
+                  <Typography variant="h6" color="success.main">${results.financial_metrics.total_incentives_received?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total operation and maintenance cost</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_om_cost?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Money paid by the user</Typography>
+                  <Typography variant="h6" color="error.main">${results.financial_metrics.total_money_paid_by_user?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
               </Box>
             </Paper>
           )}
@@ -256,51 +310,52 @@ function Results({ auth, user }) {
               <Typography variant="h5" component="h3" gutterBottom>
                 Energy Analysis
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">PV Energy</Typography>
-                  <Typography variant="h6">{results.energy_metrics.pv_energy_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">PV Power</Typography>
+                  <Typography variant="h6">{results.energy_metrics.pv_power_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Wind Energy</Typography>
-                  <Typography variant="h6">{results.energy_metrics.wind_energy_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">DG Power</Typography>
+                  <Typography variant="h6">{results.energy_metrics.dg_power_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Diesel Energy</Typography>
-                  <Typography variant="h6">{results.energy_metrics.diesel_energy_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Battery Energy In</Typography>
+                  <Typography variant="h6">{results.energy_metrics.battery_energy_in_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Annual Load</Typography>
-                  <Typography variant="h6">{results.energy_metrics.annual_load_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Battery Energy Out</Typography>
+                  <Typography variant="h6">{results.energy_metrics.battery_energy_out_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Renewable Energy %</Typography>
                   <Typography variant="h6" color="success.main">{results.energy_metrics.renewable_energy_percentage || 'N/A'}%</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Excess Electricity</Typography>
-                  <Typography variant="h6">{results.energy_metrics.excess_electricity_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
-                </Box>
-              </Box>
-            </Paper>
-          )}
-
-          {/* Reliability Metrics */}
-          {results.reliability_metrics && (
-            <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h5" component="h3" gutterBottom>
-                Reliability Analysis
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                <Box>
                   <Typography variant="subtitle2" color="textSecondary">Loss of Power Supply Probability</Typography>
-                  <Typography variant="h6" color={results.reliability_metrics.loss_of_power_supply_probability > 10 ? 'error.main' : 'warning.main'}>
-                    {results.reliability_metrics.loss_of_power_supply_probability}%
+                  <Typography variant="h6" color={results.energy_metrics.lpsp > 10 ? 'error.main' : 'warning.main'}>
+                    {results.energy_metrics.lpsp || 'N/A'}%
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Renewable Energy Fraction</Typography>
-                  <Typography variant="h6" color="success.main">{results.reliability_metrics.renewable_energy_fraction}%</Typography>
+                  <Typography variant="subtitle2" color="textSecondary">Annual Load</Typography>
+                  <Typography variant="h6">{results.energy_metrics.annual_load_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Annual Served Load</Typography>
+                  <Typography variant="h6">{results.energy_metrics.annual_served_load_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Annual Capacity Shortage</Typography>
+                  <Typography variant="h6" color="warning.main">{results.energy_metrics.annual_capacity_shortage_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Excess Electricity</Typography>
+                  <Typography variant="h6">{results.energy_metrics.excess_electricity_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Annual fuel consumed by DG</Typography>
+                  <Typography variant="h6">{results.energy_metrics.annual_fuel_consumed_liters?.toFixed(2) || 'N/A'} L/year</Typography>
                 </Box>
               </Box>
             </Paper>
@@ -312,18 +367,63 @@ function Results({ auth, user }) {
               <Typography variant="h5" component="h3" gutterBottom>
                 Environmental Impact
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">DG Emissions</Typography>
                   <Typography variant="h6">{results.emissions.dg_emissions_kg_per_year?.toFixed(2) || 'N/A'} kg/year</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Grid Emissions</Typography>
-                  <Typography variant="h6">{results.emissions.grid_emissions_kg_per_year?.toFixed(2) || 'N/A'} kg/year</Typography>
-                </Box>
-                <Box>
                   <Typography variant="subtitle2" color="textSecondary">Levelized Emissions</Typography>
                   <Typography variant="h6">{results.emissions.levelized_emissions_kg_per_kwh?.toFixed(4) || 'N/A'} kg/kWh</Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )}
+
+          {/* Investment Analysis */}
+          {results.investment_analysis && (
+            <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h5" component="h3" gutterBottom>
+                Investment Analysis
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Investment Status</Typography>
+                  <Typography variant="h6" color={results.investment_analysis.is_loss ? 'error.main' : 'success.main'}>
+                    {results.investment_analysis.is_loss ? 'Projected Loss' : 'Projected Profit'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Internal Rate of Return (IRR)</Typography>
+                  <Typography variant="h6" color={results.investment_analysis.irr > 0 ? 'success.main' : 'error.main'}>
+                    {(results.investment_analysis.irr * 100).toFixed(2)}%
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Payback Period</Typography>
+                  <Typography variant="h6" color="primary.main">
+                    {results.investment_analysis.payback_period || 'No payback within project lifetime'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Revenues</Typography>
+                  <Typography variant="h6" color="success.main">${results.investment_analysis.total_revenues?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Net Profit</Typography>
+                  <Typography variant="h6" color={results.investment_analysis.total_net_profit > 0 ? 'success.main' : 'error.main'}>
+                    ${results.investment_analysis.total_net_profit?.toLocaleString() || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Total Costs</Typography>
+                  <Typography variant="h6" color="error.main">${results.investment_analysis.total_costs?.toLocaleString() || 'N/A'}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary">Return on Investment (ROI)</Typography>
+                  <Typography variant="h6" color={results.investment_analysis.roi_percent > 0 ? 'success.main' : 'error.main'}>
+                    {results.investment_analysis.roi_percent?.toFixed(2) || 'N/A'}%
+                  </Typography>
                 </Box>
               </Box>
             </Paper>
