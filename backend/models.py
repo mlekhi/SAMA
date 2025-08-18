@@ -69,6 +69,36 @@ class Grid(db.Model):
     
     # Rate structure fields
     rateStructure = db.Column(db.String(50), nullable=True)  # Rate structure type (flat, tou, seasonal, etc.)
+    
+    # Flat rate
+    flatPrice = db.Column(db.Float, nullable=True)  # Flat rate price
+    
+    # Seasonal rate
+    seasonalPrices = db.Column(db.Text, nullable=True)  # JSON-encoded seasonal prices array [summer, winter]
+    
+    # Monthly rate
+    monthlyPrices = db.Column(db.Text, nullable=True)  # JSON-encoded monthly prices array
+    
+    # Tiered rate
+    tieredPrices = db.Column(db.Text, nullable=True)  # JSON-encoded tiered prices array
+    tierMax = db.Column(db.Text, nullable=True)  # JSON-encoded tier max limits array
+    
+    # Seasonal tiered rate
+    seasonalTieredPrices = db.Column(db.Text, nullable=True)  # JSON-encoded seasonal tiered prices
+    seasonalTierMax = db.Column(db.Text, nullable=True)  # JSON-encoded seasonal tier max limits
+    
+    # Monthly tiered rate
+    monthlyTieredPrices = db.Column(db.Text, nullable=True)  # JSON-encoded monthly tiered prices
+    monthlyTierLimits = db.Column(db.Text, nullable=True)  # JSON-encoded monthly tier limits
+    
+    # Time of Use rate
+    onPrice = db.Column(db.Text, nullable=True)  # JSON-encoded on-peak prices [summer, winter]
+    midPrice = db.Column(db.Text, nullable=True)  # JSON-encoded mid-peak prices [summer, winter]
+    offPrice = db.Column(db.Text, nullable=True)  # JSON-encoded off-peak prices [summer, winter]
+    onHours = db.Column(db.Text, nullable=True)  # JSON-encoded on-peak hours [summer, winter]
+    midHours = db.Column(db.Text, nullable=True)  # JSON-encoded mid-peak hours [summer, winter]
+    
+    # Legacy fields for backward compatibility
     onPeakPrice = db.Column(db.Float, nullable=True)  # On-peak price for TOU rates
     midPeakPrice = db.Column(db.Float, nullable=True)  # Mid-peak price for TOU rates
 
