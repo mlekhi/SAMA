@@ -729,7 +729,11 @@ class InData(OriginalInputData):
 def submit_results():
     try:
         user_id = request.user['uid']
+        
+        # Load user data
         in_data = InData(user_id)
+        
+        in_data.completeInitialization()
         
         # Call PSO optimizer and get comprehensive results
         result = pso_run(in_data, user_id)
