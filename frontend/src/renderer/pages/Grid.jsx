@@ -34,10 +34,10 @@ function GridConfig({ auth, user }) {
     Grid_escalation_rate: 2.0,
     Grid_credit: 0.0,
     NEM_fee: 0.0,
-    SC_flat: 10.0,
+    SC_flat: 9.95,
     Pbuy_max: 6.0,
     Psell_max: 200.0,
-    compensation_option: '',
+    compensation_option: '1:1',
     flat_compensation: '',
     monthly_compensation: {},
   })
@@ -385,7 +385,9 @@ function GridConfig({ auth, user }) {
               ...prev,
               Grid: isConnected,
               // Reset NEM if grid is disconnected
-              NEM: isConnected ? prev.NEM : false
+              NEM: isConnected ? prev.NEM : false,
+              // Set default compensation option to '1:1' when grid is connected (matches old working code)
+              compensation_option: isConnected ? '1:1' : prev.compensation_option
             }));
             setCurrentStep(2); // Move to net metering question
           }}
