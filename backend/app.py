@@ -547,10 +547,46 @@ class InData(OriginalInputData):
                 self.holidays = json.loads(grid.holidays)
             if grid.rateStructure:
                 self.rateStructure = grid.rateStructure
-            if grid.onPeakPrice is not None:
-                self.onPeakPrice = grid.onPeakPrice
-            if grid.midPeakPrice is not None:
-                self.midPeakPrice = grid.midPeakPrice
+                
+                # Load rate structure specific data based on type
+                if grid.rateStructure == 'flat' and grid.flatPrice is not None:
+                    self.flatPrice = grid.flatPrice
+                elif grid.rateStructure == 'seasonal' and grid.seasonalPrices:
+                    self.seasonalPrices = json.loads(grid.seasonalPrices)
+                elif grid.rateStructure == 'monthly' and grid.monthlyPrices:
+                    self.monthlyPrices = json.loads(grid.monthlyPrices)
+                elif grid.rateStructure == 'tiered':
+                    if grid.tieredPrices:
+                        self.tieredPrices = json.loads(grid.tieredPrices)
+                    if grid.tierMax:
+                        self.tierMax = json.loads(grid.tierMax)
+                elif grid.rateStructure == 'seasonalTiered':
+                    if grid.seasonalTieredPrices:
+                        self.seasonalTieredPrices = json.loads(grid.seasonalTieredPrices)
+                    if grid.seasonalTierMax:
+                        self.seasonalTierMax = json.loads(grid.seasonalTierMax)
+                elif grid.rateStructure == 'monthlyTiered':
+                    if grid.monthlyTieredPrices:
+                        self.monthlyTieredPrices = json.loads(grid.monthlyTieredPrices)
+                    if grid.monthlyTierLimits:
+                        self.monthlyTierLimits = json.loads(grid.monthlyTierLimits)
+                elif grid.rateStructure == 'tou':
+                    if grid.onPrice:
+                        self.onPrice = json.loads(grid.onPrice)
+                    if grid.midPrice:
+                        self.midPrice = json.loads(grid.midPrice)
+                    if grid.offPrice:
+                        self.offPrice = json.loads(grid.offPrice)
+                    if grid.onHours:
+                        self.onHours = json.loads(grid.onHours)
+                    if grid.midHours:
+                        self.midHours = json.loads(grid.midHours)
+                
+                # Legacy TOU fields for backward compatibility
+                if grid.onPeakPrice is not None:
+                    self.onPeakPrice = grid.onPeakPrice
+                if grid.midPeakPrice is not None:
+                    self.midPeakPrice = grid.midPeakPrice
 
         # --- PhotovoltaicSystem ---
         if pv_system:
