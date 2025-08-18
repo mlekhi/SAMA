@@ -630,7 +630,15 @@ function GridConfig({ auth, user }) {
             onChange={setHolidayDates}
             format="YYYY-MM-DD"
             placeholder="Select holiday dates"
-            style={{ minWidth: 0, width: '100%', height: 56, fontSize: 18, borderRadius: 4, border: '1px solid #c4c4c4' }}
+            style={{ 
+              minWidth: 0, 
+              width: '100%', 
+              height: 56, 
+              fontSize: 18, 
+              borderRadius: 4, 
+              border: '1px solid #c4c4c4',
+              backgroundColor: 'transparent'
+            }}
           />
         </Box>
         
