@@ -126,36 +126,57 @@ function GridConfig({ auth, user }) {
       return true;
     }
     
-    // If grid is connected, validate required fields
-    if (gridData.Grid) {
-      return (
-        gridData.Annual_expenses !== '' &&
-        gridData.Grid_sale_tax_rate !== '' &&
-        gridData.Grid_Tax_amount !== '' &&
-        gridData.Grid_escalation_rate !== '' &&
-        gridData.Grid_credit !== '' &&
-        gridData.SC_flat !== '' &&
-        gridData.Pbuy_max !== '' &&
-        gridData.Psell_max !== '' &&
-        // Only validate NEM_fee if NEM is enabled
-        (!gridData.NEM || gridData.NEM_fee !== '')
-      );
-    }
-    
-    // If grid is not connected and user wants to compare, validate required fields
-    if (!gridData.Grid && compareOffGrid === true) {
-      return (
-        gridData.Annual_expenses !== '' &&
-        gridData.Grid_sale_tax_rate !== '' &&
-        gridData.Grid_Tax_amount !== '' &&
-        gridData.Grid_escalation_rate !== '' &&
-        gridData.Grid_credit !== '' &&
-        gridData.SC_flat !== '' &&
-        gridData.Pbuy_max !== '' &&
-        gridData.Psell_max !== '' &&
-        // Only validate NEM_fee if NEM is enabled
-        (!gridData.NEM || gridData.NEM_fee !== '')
-      );
+    // If grid is connected OR if off-grid user wants to compare, validate required fields
+    if (gridData.Grid || (!gridData.Grid && compareOffGrid === true)) {
+      // Check if all required numeric fields have valid values
+      const requiredFields = [
+        'Annual_expenses',
+        'Grid_sale_tax_rate', 
+        'Grid_Tax_amount',
+        'Grid_escalation_rate',
+        'Grid_credit',
+        'SC_flat',
+        'Pbuy_max',
+        'Psell_max'
+      ];
+      
+      // Validate that all required fields have numeric values (not empty strings or null)
+      for (const field of requiredFields) {
+        if (gridData[field] === '' || gridData[field] === null || gridData[field] === undefined) {
+          return false;
+        }
+      }
+      
+      // Only validate NEM_fee if NEM is enabled
+      if (gridData.NEM && (gridData.NEM_fee === '' || gridData.NEM_fee === null || gridData.NEM_fee === undefined)) {
+        return false;
+      }
+      
+      // Validate compensation option if grid is connected
+      if (gridData.Grid && !gridData.compensation_option) {
+        return false;
+      }
+      
+      // Validate flat compensation if that option is selected
+      if (gridData.compensation_option === 'flat' && 
+          (gridData.flat_compensation === '' || gridData.flat_compensation === null || gridData.flat_compensation === undefined)) {
+        return false;
+      }
+      
+      // Validate monthly compensation if that option is selected
+      if (gridData.compensation_option === 'monthly') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        for (const month of monthNames) {
+          const monthlyValue = gridData.monthly_compensation?.[month];
+          if (monthlyValue === '' || monthlyValue === null || monthlyValue === undefined) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
     }
     
     return false;
@@ -169,6 +190,7 @@ function GridConfig({ auth, user }) {
 
     try {
       const token = await user.getIdToken();
+      
       // Convert selected dates to day-of-year numbers
       const convertedHolidays = holidayDates.map(dateObj => {
         const d = new Date(dateObj);
@@ -214,6 +236,8 @@ function GridConfig({ auth, user }) {
           break;
         case 'monthlyTiered':
           // Convert monthly tiered data to the format expected by backend
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
           const monthlyTieredPricesArray = monthNames.map(month => [
             monthlyTieredPrices[month]?.lowTierPrice || 0,
             monthlyTieredPrices[month]?.mediumTierPrice || 0,
@@ -263,12 +287,18 @@ function GridConfig({ auth, user }) {
           rateStructureData = {};
       }
       
+      // Convert monthly_compensation to JSON string if it exists and has data
+      const monthlyCompensationJson = Object.keys(gridData.monthly_compensation || {}).length > 0 
+        ? JSON.stringify(gridData.monthly_compensation)
+        : null;
+      
       // Send all grid data and new fields
       const payload = {
         ...gridData,
-        season: seasonMonths,
-        holidays: convertedHolidays,
+        season: JSON.stringify(seasonMonths),
+        holidays: JSON.stringify(convertedHolidays),
         rateStructure,
+        monthly_compensation: monthlyCompensationJson, // Convert to JSON string or null
         ...rateStructureData
       };
       
