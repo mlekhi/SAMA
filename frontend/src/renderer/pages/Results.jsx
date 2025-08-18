@@ -294,11 +294,11 @@ function Results({ auth, user }) {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Total operation and maintenance cost</Typography>
-                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_om_cost?.toLocaleString() || 'N/A'}</Typography>
+                  <Typography variant="h6" color="primary.main">${results.financial_metrics.total_operation_maintenance_cost?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Total Money paid by the user</Typography>
-                  <Typography variant="h6" color="error.main">${results.financial_metrics.total_money_paid_by_user?.toLocaleString() || 'N/A'}</Typography>
+                  <Typography variant="h6" color="error.main">${results.grid_metrics.total_money_paid_by_user?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
               </Box>
             </Paper>
@@ -313,11 +313,11 @@ function Results({ auth, user }) {
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">PV Power</Typography>
-                  <Typography variant="h6">{results.energy_metrics.pv_power_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="h6">{results.energy_metrics.pv_energy_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">DG Power</Typography>
-                  <Typography variant="h6">{results.energy_metrics.dg_power_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
+                  <Typography variant="h6">{results.energy_metrics.diesel_energy_kwh?.toLocaleString() || 'N/A'} kWh</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Battery Energy In</Typography>
@@ -333,8 +333,8 @@ function Results({ auth, user }) {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Loss of Power Supply Probability</Typography>
-                  <Typography variant="h6" color={results.energy_metrics.lpsp > 10 ? 'error.main' : 'warning.main'}>
-                    {results.energy_metrics.lpsp || 'N/A'}%
+                  <Typography variant="h6" color={results.reliability_metrics.loss_of_power_supply_probability > 10 ? 'error.main' : 'warning.main'}>
+                    {results.reliability_metrics.loss_of_power_supply_probability || 'N/A'}%
                   </Typography>
                 </Box>
                 <Box>
@@ -355,7 +355,7 @@ function Results({ auth, user }) {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Annual fuel consumed by DG</Typography>
-                  <Typography variant="h6">{results.energy_metrics.annual_fuel_consumed_liters?.toFixed(2) || 'N/A'} L/year</Typography>
+                  <Typography variant="h6">N/A L/year</Typography>
                 </Box>
               </Box>
             </Paper>
@@ -381,7 +381,7 @@ function Results({ auth, user }) {
           )}
 
           {/* Investment Analysis */}
-          {results.investment_analysis && (
+          {(results.financial_metrics.irr || results.financial_metrics.roi_percent || results.financial_metrics.payback_period_years) && (
             <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
               <Typography variant="h5" component="h3" gutterBottom>
                 Investment Analysis
@@ -389,40 +389,40 @@ function Results({ auth, user }) {
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Investment Status</Typography>
-                  <Typography variant="h6" color={results.investment_analysis.is_loss ? 'error.main' : 'success.main'}>
-                    {results.investment_analysis.is_loss ? 'Projected Loss' : 'Projected Profit'}
+                  <Typography variant="h6" color={results.financial_metrics.irr < 0 ? 'error.main' : 'success.main'}>
+                    {results.financial_metrics.irr < 0 ? 'Projected Loss' : 'Projected Profit'}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Internal Rate of Return (IRR)</Typography>
-                  <Typography variant="h6" color={results.investment_analysis.irr > 0 ? 'success.main' : 'error.main'}>
-                    {(results.investment_analysis.irr * 100).toFixed(2)}%
+                  <Typography variant="h6" color={results.financial_metrics.irr > 0 ? 'success.main' : 'error.main'}>
+                    {(results.financial_metrics.irr * 100).toFixed(2)}%
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Payback Period</Typography>
                   <Typography variant="h6" color="primary.main">
-                    {results.investment_analysis.payback_period || 'No payback within project lifetime'}
+                    {results.financial_metrics.payback_period_years || 'No payback within project lifetime'}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Total Revenues</Typography>
-                  <Typography variant="h6" color="success.main">${results.investment_analysis.total_revenues?.toLocaleString() || 'N/A'}</Typography>
+                  <Typography variant="h6" color="success.main">${results.financial_metrics.total_revenues?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Total Net Profit</Typography>
-                  <Typography variant="h6" color={results.investment_analysis.total_net_profit > 0 ? 'success.main' : 'error.main'}>
-                    ${results.investment_analysis.total_net_profit?.toLocaleString() || 'N/A'}
+                  <Typography variant="h6" color={results.financial_metrics.net_profit > 0 ? 'success.main' : 'error.main'}>
+                    ${results.financial_metrics.net_profit?.toLocaleString() || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Total Costs</Typography>
-                  <Typography variant="h6" color="error.main">${results.investment_analysis.total_costs?.toLocaleString() || 'N/A'}</Typography>
+                  <Typography variant="h6" color="error.main">${results.financial_metrics.total_costs?.toLocaleString() || 'N/A'}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">Return on Investment (ROI)</Typography>
-                  <Typography variant="h6" color={results.investment_analysis.roi_percent > 0 ? 'success.main' : 'error.main'}>
-                    {results.investment_analysis.roi_percent?.toFixed(2) || 'N/A'}%
+                  <Typography variant="h6" color={results.financial_metrics.roi_percent > 0 ? 'success.main' : 'error.main'}>
+                    {results.financial_metrics.roi_percent?.toFixed(2) || 'N/A'}%
                   </Typography>
                 </Box>
               </Box>
