@@ -536,7 +536,9 @@ class InData(OriginalInputData):
             self.Grid_escalation = grid.Grid_escalation_rate / 100
             self.Grid_credit = grid.Grid_credit
             self.NEM_fee = grid.NEM_fee
-            self.Service_charge = grid.SC_flat 
+            # Only override Service_charge if database has a non-zero value (preserve 9.95 default)
+            if grid.SC_flat and grid.SC_flat > 0:
+                self.Service_charge = grid.SC_flat
             self.Pbuy_max = grid.Pbuy_max
             self.Psell_max = grid.Psell_max
             
