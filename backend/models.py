@@ -98,6 +98,11 @@ class Grid(db.Model):
     onHours = db.Column(db.Text, nullable=True)  # JSON-encoded on-peak hours [summer, winter]
     midHours = db.Column(db.Text, nullable=True)  # JSON-encoded mid-peak hours [summer, winter]
     
+    # Compensation fields
+    compensation_option = db.Column(db.String(50), nullable=True)  # Compensation option (1:1, flat, monthly)
+    flat_compensation = db.Column(db.Float, nullable=True)  # Flat compensation value
+    monthly_compensation = db.Column(db.Text, nullable=True)  # JSON-encoded monthly compensation prices
+    
     # Legacy fields for backward compatibility
     onPeakPrice = db.Column(db.Float, nullable=True)  # On-peak price for TOU rates
     midPeakPrice = db.Column(db.Float, nullable=True)  # Mid-peak price for TOU rates

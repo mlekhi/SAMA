@@ -587,6 +587,24 @@ class InData(OriginalInputData):
                     self.onPeakPrice = grid.onPeakPrice
                 if grid.midPeakPrice is not None:
                     self.midPeakPrice = grid.midPeakPrice
+            
+            # Load compensation fields
+            if grid.compensation_option:
+                if grid.compensation_option == '1:1':
+                    # 1:1 compensation - Csell equals Cbuy
+                    self.sellStructure = 3
+                elif grid.compensation_option == 'flat':
+                    # Flat compensation - single value
+                    self.sellStructure = 1
+                    if grid.flat_compensation is not None:
+                        self.Csell = np.full(8760, grid.flat_compensation)
+                elif grid.compensation_option == 'monthly':
+                    # Monthly compensation - array of 12 monthly values
+                    self.sellStructure = 2
+                    if grid.monthly_compensation:
+                        self.monthlysellprices = json.loads(grid.monthly_compensation)
+                        from sama_python.calcMonthlyRate import calcMonthlyRate
+                        self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
 
         # --- PhotovoltaicSystem ---
         if pv_system:
