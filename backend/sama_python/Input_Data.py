@@ -523,7 +523,7 @@ class Input_Data:
         self.Monthly_fixed_charge_system = 1
 
         if self.Monthly_fixed_charge_system == 1:  # Flat
-            self.SC_flat = 0
+            self.SC_flat = 9.95 
             self.Service_charge = np.ones(12) * self.SC_flat
         else:  # Tiered
             self.SC_1 = 2.30  # tier 1 service charge
