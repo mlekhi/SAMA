@@ -57,7 +57,7 @@ class Grid(db.Model):
     Grid_escalation_rate = db.Column(db.Float, default=5.7)  # Yearly escalation rate in grid electricity price (%)
     Grid_credit = db.Column(db.Float, default=121.4)  # Annual Credits offered by utility grid to user ($)
     NEM_fee = db.Column(db.Float, default=9.95)  # Net metering one time setup fee ($)
-    SC_flat = db.Column(db.Float, default=9.95)  # Grid monthly fixed charge ($/kWh)
+    SC_flat = db.Column(db.Float, default=0)  # Grid monthly fixed charge ($/kWh)
     
     # Technical Parameters
     Pbuy_max = db.Column(db.Float, default=6.0)  # Purchase Capacity (kW)

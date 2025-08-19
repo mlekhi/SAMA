@@ -523,7 +523,7 @@ class Input_Data:
         self.Monthly_fixed_charge_system = 1
 
         if self.Monthly_fixed_charge_system == 1:  # Flat
-            self.SC_flat = 9.95 
+            self.SC_flat = 0
             self.Service_charge = np.ones(12) * self.SC_flat
         else:  # Tiered
             self.SC_1 = 2.30  # tier 1 service charge
@@ -619,7 +619,7 @@ class Input_Data:
 
 
         # Sell to the Grid
-        self.sellStructure = 3  # Changed from 2 to 3 to match old working code
+        self.sellStructure = 2
 
         if self.sellStructure == 1:
             self.Csell = np.full(8760, 0.049)
@@ -706,7 +706,7 @@ class Input_Data:
         self.sellStructure = 3
 
         if self.sellStructure == 1:
-            self.Csell = np.full(8760, 0.049)
+            self.Csell = np.full(8760, 0.05238)
 
         elif self.sellStructure == 2:
             self.monthlysellprices = np.array([0.0638, 0.14538, 0.09079, 0.07914, 0.06469, 0.05336, 0.04612, 0.04411, 0.04737, 0.04591, 0.04512, 0.04415])
