@@ -22,4 +22,3 @@ var/
 
 firebase_service_account.json
 sama_python/output/
-test*.py
