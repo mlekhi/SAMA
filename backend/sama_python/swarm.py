@@ -65,7 +65,7 @@ class Swarm:
             particle_velocities = np.zeros((nPop, self.nVar))
 
             # Evaluate costs per initial particle
-            particle_costs = np.apply_along_axis(lambda x: cost_function(x, data), 1, particle_positions)
+            particle_costs = np.apply_along_axis(lambda x: cost_function(x), 1, particle_positions)
             particle_personal_best_cost = deepcopy(particle_costs)
 
             # Determine global best
@@ -100,7 +100,7 @@ class Swarm:
                     particle_positions[i] = np.minimum(np.maximum(particle_positions[i], self.VarMin), self.VarMax)
 
                     # Evaluation
-                    particle_costs[i] = cost_function(particle_positions[i], data)
+                    particle_costs[i] = cost_function(particle_positions[i])
 
                     # Update Personal Best
                     if particle_costs[i] < particle_personal_best_cost[i]:
@@ -143,16 +143,4 @@ class Swarm:
         # plt.show()
         plt.savefig('../backend/sama_python/output/figs/Optimization.png', dpi=300)
         
-        # Get comprehensive results from Gen_Results and return them
-        comprehensive_results = Gen_Results(X, data, user_id)
-        
-        # Add optimization-specific data to the results
-        comprehensive_results['optimization'] = {
-            'best_solution': X.tolist(),
-            'best_cost': float(Best[index]),
-            'convergence_curve': [float(cost) for cost in best_cost],
-            'all_solutions': [pos.tolist() for pos in self.solution_best_positions],
-            'all_costs': [float(cost) for cost in self.solution_best_costs]
-        }
-        
-        return comprehensive_results
+        return Gen_Results(X, data, user_id)
