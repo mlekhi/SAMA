@@ -498,8 +498,8 @@ class InData(OriginalInputData):
         if sys_config:
             self.WT = sys_config.WT
             self.n = sys_config.lifetime
-            self.LPSP_max = sys_config.LPSP_max_rate
-            self.RE_min = sys_config.RE_min_rate
+            self.LPSP_max = sys_config.LPSP_max_rate / 100
+            self.RE_min = sys_config.RE_min_rate / 100
             self.PV = sys_config.PV
             self.Bat = sys_config.Bat
             self.DG = sys_config.DG
@@ -554,35 +554,126 @@ class InData(OriginalInputData):
                 if grid.rateStructure == 'flat' and grid.flatPrice is not None:
                     self.flatPrice = grid.flatPrice
                 elif grid.rateStructure == 'seasonal' and grid.seasonalPrices:
-                    self.seasonalPrices = json.loads(grid.seasonalPrices)
+                    try:
+                        if isinstance(grid.seasonalPrices, str):
+                            self.seasonalPrices = json.loads(grid.seasonalPrices)
+                        else:
+                            self.seasonalPrices = grid.seasonalPrices
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing seasonalPrices: {e}")
+                        self.seasonalPrices = None
                 elif grid.rateStructure == 'monthly' and grid.monthlyPrices:
-                    self.monthlyPrices = json.loads(grid.monthlyPrices)
+                    try:
+                        if isinstance(grid.monthlyPrices, str):
+                            self.monthlyPrices = json.loads(grid.monthlyPrices)
+                        else:
+                            self.monthlyPrices = grid.monthlyPrices
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing monthlyPrices: {e}")
+                        self.monthlyPrices = None
                 elif grid.rateStructure == 'tiered':
                     if grid.tieredPrices:
-                        self.tieredPrices = json.loads(grid.tieredPrices)
+                        try:
+                            if isinstance(grid.tieredPrices, str):
+                                self.tieredPrices = json.loads(grid.tieredPrices)
+                            else:
+                                self.tieredPrices = grid.tieredPrices
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing tieredPrices: {e}")
+                            self.tieredPrices = None
                     if grid.tierMax:
-                        self.tierMax = json.loads(grid.tierMax)
+                        try:
+                            if isinstance(grid.tierMax, str):
+                                self.tierMax = json.loads(grid.tierMax)
+                            else:
+                                self.tierMax = grid.tierMax
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing tierMax: {e}")
+                            self.tierMax = None
                 elif grid.rateStructure == 'seasonalTiered':
                     if grid.seasonalTieredPrices:
-                        self.seasonalTieredPrices = json.loads(grid.seasonalTieredPrices)
+                        try:
+                            if isinstance(grid.seasonalTieredPrices, str):
+                                self.seasonalTieredPrices = json.loads(grid.seasonalTieredPrices)
+                            else:
+                                self.seasonalTieredPrices = grid.seasonalTieredPrices
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing seasonalTieredPrices: {e}")
+                            self.seasonalTieredPrices = None
                     if grid.seasonalTierMax:
-                        self.seasonalTierMax = json.loads(grid.seasonalTierMax)
+                        try:
+                            if isinstance(grid.seasonalTierMax, str):
+                                self.seasonalTierMax = json.loads(grid.seasonalTierMax)
+                            else:
+                                self.seasonalTierMax = grid.seasonalTierMax
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing seasonalTierMax: {e}")
+                            self.seasonalTierMax = None
                 elif grid.rateStructure == 'monthlyTiered':
                     if grid.monthlyTieredPrices:
-                        self.monthlyTieredPrices = json.loads(grid.monthlyTieredPrices)
+                        try:
+                            if isinstance(grid.monthlyTieredPrices, str):
+                                self.monthlyTieredPrices = json.loads(grid.monthlyTieredPrices)
+                            else:
+                                self.monthlyTieredPrices = grid.monthlyTieredPrices
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing monthlyTieredPrices: {e}")
+                            self.monthlyTieredPrices = None
                     if grid.monthlyTierLimits:
-                        self.monthlyTierLimits = json.loads(grid.monthlyTierLimits)
+                        try:
+                            if isinstance(grid.monthlyTierLimits, str):
+                                self.monthlyTierLimits = json.loads(grid.monthlyTierLimits)
+                            else:
+                                self.monthlyTierLimits = grid.monthlyTierLimits
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing monthlyTierLimits: {e}")
+                            self.monthlyTierLimits = None
                 elif grid.rateStructure == 'tou':
                     if grid.onPrice:
-                        self.onPrice = json.loads(grid.onPrice)
+                        try:
+                            if isinstance(grid.onPrice, str):
+                                self.onPrice = json.loads(grid.onPrice)
+                            else:
+                                self.onPrice = grid.onPrice
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing onPrice: {e}")
+                            self.onPrice = None
                     if grid.midPrice:
-                        self.midPrice = json.loads(grid.midPrice)
+                        try:
+                            if isinstance(grid.midPrice, str):
+                                self.midPrice = json.loads(grid.midPrice)
+                            else:
+                                self.midPrice = grid.midPrice
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing midPrice: {e}")
+                            self.midPrice = None
                     if grid.offPrice:
-                        self.offPrice = json.loads(grid.offPrice)
+                        try:
+                            if isinstance(grid.offPrice, str):
+                                self.offPrice = json.loads(grid.offPrice)
+                            else:
+                                self.offPrice = grid.offPrice
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing offPrice: {e}")
+                            self.offPrice = None
                     if grid.onHours:
-                        self.onHours = json.loads(grid.onHours)
+                        try:
+                            if isinstance(grid.onHours, str):
+                                self.onHours = json.loads(grid.onHours)
+                            else:
+                                self.onHours = grid.onHours
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing onHours: {e}")
+                            self.onHours = None
                     if grid.midHours:
-                        self.midHours = json.loads(grid.midHours)
+                        try:
+                            if isinstance(grid.midHours, str):
+                                self.midHours = json.loads(grid.midHours)
+                            else:
+                                self.midHours = grid.midHours
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.error(f"Error parsing midHours: {e}")
+                            self.midHours = None
                 
                 # Legacy TOU fields for backward compatibility
                 if grid.onPeakPrice is not None:
@@ -702,7 +793,9 @@ class InData(OriginalInputData):
 
         # --- GeographyEconomy ---
         if geo_econ:
-            self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100
+            self.n_ir_rate = geo_econ.n_ir_rate
+            self.e_ir_rate = geo_econ.e_ir_rate
+            self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100 # fix?     self.ir = (self.n_ir - self.e_ir) / (1.0 + self.e_ir)
             self.System_Tax = geo_econ.Tax_rate / 100
             self.RE_incentives = geo_econ.RE_incentives_rate / 100
         
@@ -724,6 +817,140 @@ class InData(OriginalInputData):
         logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
         logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
         logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
+        
+        # Comprehensive fitness function values check
+        logger.info(f"\n=== COMPREHENSIVE FITNESS VALUES CHECK ===")
+        
+        # Basic system parameters
+        logger.info(f"  Eload size: {len(self.Eload) if hasattr(self, 'Eload') else 'MISSING'}")
+        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'MISSING')}")
+        logger.info(f"  Pwt_r: {getattr(self, 'Pwt_r', 'MISSING')}")
+        logger.info(f"  Cbt_r: {getattr(self, 'Cbt_r', 'MISSING')}")
+        logger.info(f"  Cdg_r: {getattr(self, 'Cdg_r', 'MISSING')}")
+        
+        # Weather and environment
+        logger.info(f"  T size: {len(self.T) if hasattr(self, 'T') else 'MISSING'}")
+        logger.info(f"  G size: {len(self.G) if hasattr(self, 'G') else 'MISSING'}")
+        logger.info(f"  Vw size: {len(self.Vw) if hasattr(self, 'Vw') else 'MISSING'}")
+        logger.info(f"  Tc_noct: {getattr(self, 'Tc_noct', 'MISSING')}")
+        logger.info(f"  Ta_noct: {getattr(self, 'Ta_noct', 'MISSING')}")
+        logger.info(f"  G_noct: {getattr(self, 'G_noct', 'MISSING')}")
+        logger.info(f"  Gref: {getattr(self, 'Gref', 'MISSING')}")
+        logger.info(f"  Tcof: {getattr(self, 'Tcof', 'MISSING')}")
+        logger.info(f"  Tref: {getattr(self, 'Tref', 'MISSING')}")
+        logger.info(f"  n_PV: {getattr(self, 'n_PV', 'MISSING')}")
+        logger.info(f"  gama: {getattr(self, 'gama', 'MISSING')}")
+        logger.info(f"  fpv: {getattr(self, 'fpv', 'MISSING')}")
+        
+        # Wind turbine parameters
+        logger.info(f"  h_hub: {getattr(self, 'h_hub', 'MISSING')}")
+        logger.info(f"  h0: {getattr(self, 'h0', 'MISSING')}")
+        logger.info(f"  alfa_wind_turbine: {getattr(self, 'alfa_wind_turbine', 'MISSING')}")
+        logger.info(f"  v_cut_in: {getattr(self, 'v_cut_in', 'MISSING')}")
+        logger.info(f"  v_cut_out: {getattr(self, 'v_cut_out', 'MISSING')}")
+        logger.info(f"  v_rated: {getattr(self, 'v_rated', 'MISSING')}")
+        
+        # Battery parameters
+        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
+        logger.info(f"  Q_lifetime_leadacid: {getattr(self, 'Q_lifetime_leadacid', 'MISSING')}")
+        logger.info(f"  ef_bat_leadacid: {getattr(self, 'ef_bat_leadacid', 'MISSING')}")
+        logger.info(f"  self_discharge_rate: {getattr(self, 'self_discharge_rate', 'MISSING')}")
+        logger.info(f"  alfa_battery_leadacid: {getattr(self, 'alfa_battery_leadacid', 'MISSING')}")
+        logger.info(f"  c: {getattr(self, 'c', 'MISSING')}")
+        logger.info(f"  k: {getattr(self, 'k', 'MISSING')}")
+        logger.info(f"  Ich_max_leadacid: {getattr(self, 'Ich_max_leadacid', 'MISSING')}")
+        logger.info(f"  Vnom_leadacid: {getattr(self, 'Vnom_leadacid', 'MISSING')}")
+        
+        # Diesel generator parameters
+        logger.info(f"  a: {getattr(self, 'a', 'MISSING')}")
+        logger.info(f"  b: {getattr(self, 'b', 'MISSING')}")
+        logger.info(f"  C_fuel: {getattr(self, 'C_fuel', 'MISSING')}")
+        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
+        logger.info(f"  TL_DG: {getattr(self, 'TL_DG', 'MISSING')}")
+        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
+        logger.info(f"  LR_DG: {getattr(self, 'LR_DG', 'MISSING')}")
+        
+        # System configuration
+        logger.info(f"  SOC_max: {getattr(self, 'SOC_max', 'MISSING')}")
+        logger.info(f"  SOC_min: {getattr(self, 'SOC_min', 'MISSING')}")
+        logger.info(f"  SOC_initial: {getattr(self, 'SOC_initial', 'MISSING')}")
+        logger.info(f"  n_I: {getattr(self, 'n_I', 'MISSING')}")
+        logger.info(f"  DC_AC_ratio: {getattr(self, 'DC_AC_ratio', 'MISSING')}")
+        logger.info(f"  Grid: {getattr(self, 'Grid', 'MISSING')}")
+        logger.info(f"  Pbuy_max: {getattr(self, 'Pbuy_max', 'MISSING')}")
+        logger.info(f"  Psell_max: {getattr(self, 'Psell_max', 'MISSING')}")
+        
+        # Economic parameters
+        logger.info(f"  ir: {getattr(self, 'ir', 'MISSING')}")
+        logger.info(f"  RE_incentives: {getattr(self, 'RE_incentives', 'MISSING')}")
+        logger.info(f"  Budget: {getattr(self, 'Budget', 'MISSING')}")
+        logger.info(f"  System_Tax: {getattr(self, 'System_Tax', 'MISSING')}")
+        logger.info(f"  EM: {getattr(self, 'EM', 'MISSING')}")
+        logger.info(f"  LPSP_max: {getattr(self, 'LPSP_max', 'MISSING')}")
+        logger.info(f"  RE_min: {getattr(self, 'RE_min', 'MISSING')}")
+        
+        # Capital costs
+        logger.info(f"  C_PV: {getattr(self, 'C_PV', 'MISSING')}")
+        logger.info(f"  C_WT: {getattr(self, 'C_WT', 'MISSING')}")
+        logger.info(f"  C_DG: {getattr(self, 'C_DG', 'MISSING')}")
+        logger.info(f"  C_B: {getattr(self, 'C_B', 'MISSING')}")
+        logger.info(f"  C_I: {getattr(self, 'C_I', 'MISSING')}")
+        logger.info(f"  C_CH: {getattr(self, 'C_CH', 'MISSING')}")
+        logger.info(f"  Engineering_Costs: {getattr(self, 'Engineering_Costs', 'MISSING')}")
+        
+        # Replacement costs
+        logger.info(f"  R_PV: {getattr(self, 'R_PV', 'MISSING')}")
+        logger.info(f"  R_WT: {getattr(self, 'R_WT', 'MISSING')}")
+        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
+        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
+        logger.info(f"  R_I: {getattr(self, 'R_I', 'MISSING')}")
+        logger.info(f"  R_CH: {getattr(self, 'R_CH', 'MISSING')}")
+        
+        # Maintenance costs
+        logger.info(f"  MO_PV: {getattr(self, 'MO_PV', 'MISSING')}")
+        logger.info(f"  MO_WT: {getattr(self, 'MO_WT', 'MISSING')}")
+        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
+        logger.info(f"  MO_B: {getattr(self, 'MO_B', 'MISSING')}")
+        logger.info(f"  MO_I: {getattr(self, 'MO_I', 'MISSING')}")
+        logger.info(f"  MO_CH: {getattr(self, 'MO_CH', 'MISSING')}")
+        
+        # Grid parameters
+        logger.info(f"  Cbuy size: {len(self.Cbuy) if hasattr(self, 'Cbuy') and hasattr(self.Cbuy, '__len__') else 'MISSING'}")
+        logger.info(f"  Csell size: {len(self.Csell) if hasattr(self, 'Csell') and hasattr(self.Csell, '__len__') else 'MISSING'}")
+        logger.info(f"  Service_charge: {getattr(self, 'Service_charge', 'MISSING')} (type: {type(getattr(self, 'Service_charge', None))})")
+        logger.info(f"  Annual_expenses: {getattr(self, 'Annual_expenses', 'MISSING')}")
+        logger.info(f"  Grid_Tax: {getattr(self, 'Grid_Tax', 'MISSING')}")
+        logger.info(f"  Grid_Tax_amount: {getattr(self, 'Grid_Tax_amount', 'MISSING')}")
+        logger.info(f"  Grid_credit: {getattr(self, 'Grid_credit', 'MISSING')}")
+        logger.info(f"  Grid_escalation: {getattr(self, 'Grid_escalation', 'MISSING')}")
+        logger.info(f"  NEM: {getattr(self, 'NEM', 'MISSING')}")
+        logger.info(f"  NEM_fee: {getattr(self, 'NEM_fee', 'MISSING')}")
+        
+        # Battery type flags
+        logger.info(f"  Lead_acid: {getattr(self, 'Lead_acid', 'MISSING')}")
+        logger.info(f"  Li_ion: {getattr(self, 'Li_ion', 'MISSING')}")
+        
+        # Lithium battery parameters
+        logger.info(f"  Ich_max_Li_ion: {getattr(self, 'Ich_max_Li_ion', 'MISSING')}")
+        logger.info(f"  Idch_max_Li_ion: {getattr(self, 'Idch_max_Li_ion', 'MISSING')}")
+        logger.info(f"  Vnom_Li_ion: {getattr(self, 'Vnom_Li_ion', 'MISSING')}")
+        logger.info(f"  Cnom_Li: {getattr(self, 'Cnom_Li', 'MISSING')}")
+        logger.info(f"  ef_bat_Li: {getattr(self, 'ef_bat_Li', 'MISSING')}")
+        logger.info(f"  Q_lifetime_Li: {getattr(self, 'Q_lifetime_Li', 'MISSING')}")
+        logger.info(f"  alfa_battery_Li_ion: {getattr(self, 'alfa_battery_Li_ion', 'MISSING')}")
+        
+        # Fuel adjustment
+        logger.info(f"  C_fuel_adj: {getattr(self, 'C_fuel_adj', 'MISSING')}")
+        
+        # Emissions
+        logger.info(f"  CO2: {getattr(self, 'CO2', 'MISSING')}")
+        logger.info(f"  NOx: {getattr(self, 'NOx', 'MISSING')}")
+        logger.info(f"  SO2: {getattr(self, 'SO2', 'MISSING')}")
+        logger.info(f"  E_CO2: {getattr(self, 'E_CO2', 'MISSING')}")
+        logger.info(f"  E_SO2: {getattr(self, 'E_SO2', 'MISSING')}")
+        logger.info(f"  E_NOx: {getattr(self, 'E_NOx', 'MISSING')}")
+        
+        logger.info(f"=== END FITNESS VALUES CHECK ===\n")
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth
@@ -734,9 +961,7 @@ def submit_results():
         
         # Load user data
         in_data = InData(user_id)
-        
-        in_data.completeInitialization()
-        
+                
         # Call PSO optimizer and get comprehensive results
         result = pso_run(in_data, user_id)
         
