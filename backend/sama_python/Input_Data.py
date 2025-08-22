@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 from math import ceil
 from sama_python.daysInMonth import daysInMonth
 
@@ -8,7 +9,6 @@ from sama_python.daysInMonth import daysInMonth
 class Input_Data:
     def __init__(self):
         # Calculate the directory where this file is located for robust path construction
-        import os
         self.current_dir = os.path.dirname(os.path.abspath(__file__))
         
         self.Cash_Flow_adv = 0
