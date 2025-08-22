@@ -58,7 +58,7 @@ def test_case_1_pv_grid():
     # Component Information - Photovoltaic - EXACT SAME AS test_endpoints_input.py
     print("Setting Photovoltaic parameters...")
     input_data.fpv = 0.9
-    input_data.Tcof = -0.0047
+    input_data.Tcof = -0.003
     input_data.Tref = 25
     input_data.Tc_noct = 45
     input_data.Ta_noct = 20
