@@ -11,7 +11,7 @@ import pandas as pd
 from math import ceil
 
 # Add the sama_python directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'sama_python'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sama_python'))
 
 from Input_Data import Input_Data
 from sama_python.pso import run as pso_run
@@ -47,7 +47,7 @@ def test_case_1_pv_grid():
     input_data.e_ir = input_data.e_ir_rate / 100
     input_data.ir = (input_data.n_ir - input_data.e_ir) / (1 + input_data.e_ir)  # Real discount rate
     input_data.System_Tax = 0 / 100  # Tax_rate: 0%
-    input_data.RE_incentives = 30 / 100  # RE_incentives_rate: 30%
+    input_data.RE_incentives = 0 / 100  # RE_incentives_rate: 0%
     
     # System Configuration - EXACT SAME AS test_endpoints_input.py
     print("Setting System Configuration...")
