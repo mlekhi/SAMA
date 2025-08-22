@@ -7,6 +7,10 @@ from sama_python.daysInMonth import daysInMonth
 # PSO Parameters
 class Input_Data:
     def __init__(self):
+        # Calculate the directory where this file is located for robust path construction
+        import os
+        self.current_dir = os.path.dirname(os.path.abspath(__file__))
+        
         self.Cash_Flow_adv = 0
         self.MaxIt = 200  # Maximum Number of Iterations
         self.nPop = 50  # Population Size (Swarm Size)
@@ -41,9 +45,7 @@ class Input_Data:
 
         if load_type == 1:
             # Use path relative to this file's location
-            import os
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.path_Eload = os.path.join(current_dir, 'content', 'Eload.csv')
+            self.path_Eload = os.path.join(self.current_dir, 'content', 'Eload.csv')
             self.EloadData = pd.read_csv(self.path_Eload, header=None).values
             self.Eload = np.array(self.EloadData[:, 0])
 
@@ -119,7 +121,7 @@ class Input_Data:
 
         elif self.load_previous_year_type == 2:
 
-            self.path_Eload_Previous = os.path.join(current_dir, 'content', 'Eload_previousyear.csv')
+            self.path_Eload_Previous = os.path.join(self.current_dir, 'content', 'Eload_previousyear.csv')
             self.Eload_PreviousData = pd.read_csv(self.path_Eload_Previous, header=None).values
             self.Eload_Previous = np.array(self.EloadData[:, 0])
 
@@ -177,7 +179,7 @@ class Input_Data:
         # Irradiance definitions
         # 1=Hourly irradiance based on POA calculator
         # 2=Hourly POA irradiance based on the user CSV file
-        self.weather_url = os.path.join(current_dir, 'content', 'METEO.csv')
+        self.weather_url = os.path.join(self.current_dir, 'content', 'METEO.csv')
         self.azimuth = 180
         self.tilt = 28.1  # Tilt angle of PV modules
         self.soiling = 5  # Soiling losses in percentage
@@ -193,7 +195,7 @@ class Input_Data:
 
         elif G_type == 2: # It should be Plane of array irradiance
 
-            self.path_G = os.path.join(current_dir, 'content', 'Irradiance.csv')
+            self.path_G = os.path.join(self.current_dir, 'content', 'Irradiance.csv')
             self.GData = pd.read_csv(self.path_G, header=None).values
             self.G = np.array(self.GData[:, 0])
 
@@ -214,7 +216,7 @@ class Input_Data:
 
         elif T_type == 2:
 
-            self.path_T = os.path.join(current_dir, 'content', 'Temperature.csv')
+            self.path_T = os.path.join(self.current_dir, 'content', 'Temperature.csv')
             self.TData = pd.read_csv(self.path_T, header=None).values
             self.T = np.array(self.TData[:, 0])
 
@@ -247,7 +249,7 @@ class Input_Data:
 
         elif self.WS_type == 2:
 
-            self.path_WS = os.path.join(current_dir, 'content', 'WSPEED.csv')
+            self.path_WS = os.path.join(self.current_dir, 'content', 'WSPEED.csv')
             self.WSData = pd.read_csv(self.path_WS, header=None).values
             self.Vw = np.array(self.WSData[:, 0])
 
@@ -264,7 +266,7 @@ class Input_Data:
 
         data = {'Eload': self.Eload, 'G': self.G, 'T': self.T, 'Vw': self.Vw}
         df = pd.DataFrame(data)
-        df.to_csv('../backend/sama_python/output/data/Inputs.csv', index=False)
+        df.to_csv(os.path.join(self.current_dir, 'output', 'data', 'Inputs.csv'), index=False)
 
         # Other inputs
         # Technical data
@@ -668,7 +670,7 @@ class Input_Data:
 
         elif self.WS_type == 2:
 
-            self.path_WS = os.path.join(current_dir, 'content', 'WSPEED.csv')
+            self.path_WS = os.path.join(self.current_dir, 'content', 'WSPEED.csv')
             self.WSData = pd.read_csv(self.path_WS, header=None).values
             self.Vw = np.array(self.WSData[:, 0])
 
@@ -685,7 +687,7 @@ class Input_Data:
 
         data = {'Eload': self.Eload, 'G': self.G, 'T': self.T, 'Vw': self.Vw}
         df = pd.DataFrame(data)
-        df.to_csv('../backend/sama_python/output/data/Inputs.csv', index=False)
+        df.to_csv(os.path.join(self.current_dir, 'output', 'data', 'Inputs.csv'), index=False)
 
         # Monthly fixed charge structure
         self.Monthly_fixed_charge_system = 1
