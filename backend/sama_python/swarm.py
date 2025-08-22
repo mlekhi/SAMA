@@ -5,6 +5,7 @@ import numpy as np
 import os
 from copy import copy, deepcopy
 from time import process_time
+from sama_python.Results import Gen_Results
 
 start = process_time()
 
