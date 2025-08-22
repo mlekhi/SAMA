@@ -12,7 +12,7 @@ import requests
 from typing import Dict, Any
 
 # Add the current directory to the path
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 class InputEndpointTester:
     def __init__(self):

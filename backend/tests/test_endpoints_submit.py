@@ -14,7 +14,7 @@ import time
 from typing import Dict, Any
 
 # Add the current directory to the path
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 class SubmitEndpointTester:
     def __init__(self):
@@ -281,7 +281,7 @@ class SubmitEndpointTester:
         """Test if files were generated after submit"""
         print("\n📁 Testing file generation...")
         
-        output_dir = f'../backend/sama_python/output/{self.test_user_id}'
+        output_dir = f'../sama_python/output/{self.test_user_id}'
         figs_dir = f'{output_dir}/figs'
         data_dir = f'{output_dir}/data'
         
