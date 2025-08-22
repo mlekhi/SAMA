@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
+import os
 
 def generic_load(load_type, load_previous_year_type, peakmonth, daysInMonth, user_defined_load):
+    # Get the directory where this file is located for robust path construction
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
     if load_type == 8 or load_previous_year_type == 9:
         if peakmonth == 'July':
-            path_generic_load = 'sama_python/content/Generic_load_JulyP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JulyP.csv')
         else:
-            path_generic_load = 'sama_python/content/Generic_load_JanuaryP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JanuaryP.csv')
 
         EloadData = pd.read_csv(path_generic_load, header=None).values
         Eload = np.array(EloadData[:, 0])
@@ -15,18 +19,18 @@ def generic_load(load_type, load_previous_year_type, peakmonth, daysInMonth, use
         scaled_data = scaling_factor * Eload
     elif load_type == 9 or load_previous_year_type == 10:
         if peakmonth == 'July':
-            path_generic_load = 'sama_python/content/Generic_load_JulyP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JulyP.csv')
         else:
-            path_generic_load = 'sama_python/content/Generic_load_JanuaryP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JanuaryP.csv')
 
         EloadData = pd.read_csv(path_generic_load, header=None).values
         Eload = np.array(EloadData[:, 0])
         scaled_data = Eload
     else:
         if peakmonth == 'July':
-            path_generic_load = 'sama_python/content/Generic_load_JulyP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JulyP.csv')
         else:
-            path_generic_load = 'sama_python/content/Generic_load_JanuaryP.csv'
+            path_generic_load = os.path.join(current_dir, 'content', 'Generic_load_JanuaryP.csv')
 
         EloadData = pd.read_csv(path_generic_load, header=None).values
         Eload = np.array(EloadData[:, 0])
