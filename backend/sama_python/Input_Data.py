@@ -40,7 +40,10 @@ class Input_Data:
         load_type = 1  # Determine the way you want to input the electrical load by choosing one of the numbers above
 
         if load_type == 1:
-            self.path_Eload = '../backend/sama_python/content/Eload.csv'
+            # Use path relative to this file's location
+            import os
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            self.path_Eload = os.path.join(current_dir, 'content', 'Eload.csv')
             self.EloadData = pd.read_csv(self.path_Eload, header=None).values
             self.Eload = np.array(self.EloadData[:, 0])
 
