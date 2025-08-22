@@ -1,10 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')  # Use a non-GUI backend to avoid macOS GUI issues
 import matplotlib.pyplot as plt
-from sama_python.Results import Gen_Results
-# Loading Inputs
-# from app import InData
 import numpy as np
+import os
 from copy import copy, deepcopy
 from time import process_time
 
@@ -141,6 +139,10 @@ class Swarm:
         plt.legend()  # Display the legend
         plt.tight_layout()
         # plt.show()
-        plt.savefig('../backend/sama_python/output/figs/Optimization.png', dpi=300)
+        
+        # Use relative path based on this file's location
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        output_path = os.path.join(current_dir, 'output', 'figs', 'Optimization.png')
+        plt.savefig(output_path, dpi=300)
         
         return Gen_Results(X, data, user_id)
