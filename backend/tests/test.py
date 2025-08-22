@@ -16,7 +16,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sama_python'))
 
 from sama_python.Input_Data import Input_Data
 from sama_python.pso import run as pso_run
-from sama_python.generic_load import generic_load
 
 def test_case_1_pv_grid():
     """
@@ -167,64 +166,8 @@ def test_case_1_pv_grid():
     # Set Csell equal to Cbuy for 1:1 compensation
     input_data.Csell = input_data.Cbuy
     
-    # Load hourly consumption data from Eload(in).csv - EXACT SAME AS test_endpoints_input.py
-    print("Loading hourly consumption data...")
-    try:
-        csv_path = 'Eload(in).csv'
-        if os.path.exists(csv_path):
-            print(f"   📊 Loading hourly consumption data from {csv_path}...")
-            
-            with open(csv_path, 'r') as file:
-                lines = file.readlines()
-            
-            # Skip header if it exists, convert to float
-            if len(lines) > 8760:  # More than 8760 hours, likely has header
-                data_lines = lines[1:8761]  # Skip first line, take next 8760
-            else:
-                data_lines = lines[:8760]  # Take first 8760 lines
-            
-            hourly_data = []
-            for line in data_lines:
-                try:
-                    value = float(line.strip())
-                    hourly_data.append(value)
-                except ValueError:
-                    print(f"   ⚠️  Warning: Invalid value in CSV: {line.strip()}")
-                    hourly_data.append(0.0)  # Default to 0 if invalid
-            
-            if len(hourly_data) == 8760:
-                total_consumption = sum(hourly_data)
-                input_data.Eload = np.array(hourly_data)
-                print(f"   ✅ Loaded {len(hourly_data)} hourly values")
-                print(f"   📊 Total annual consumption: {total_consumption:.2f} MWh")
-                print(f"   📊 Average hourly consumption: {total_consumption/8760:.4f} MWh")
-            else:
-                print(f"   ❌ Expected 8760 values, got {len(hourly_data)}")
-                print("   💡 Using default annual consumption")
-                input_data.annualData = 9.0  # Default annual consumption
-                input_data.Eload = generic_load(
-                    load_type=8, user_defined_load=input_data.annualData,
-                    load_previous_year_type=1, peakmonth='July',
-                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                )
-        else:
-            print(f"   ⚠️  Warning: {csv_path} not found, using default annual data")
-            input_data.annualData = 9.0  # Default annual consumption
-            input_data.Eload = generic_load(
-                load_type=8, user_defined_load=input_data.annualData,
-                load_previous_year_type=1, peakmonth='July',
-                daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            )
-            
-    except Exception as e:
-        print(f"   ❌ Error loading hourly data: {str(e)}")
-        print("   💡 Using default annual consumption")
-        input_data.annualData = 9.0  # Default annual consumption
-        input_data.Eload = generic_load(
-            load_type=8, user_defined_load=input_data.annualData,
-            load_previous_year_type=1, peakmonth='July',
-            daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        )
+    # Note: Input_Data class already loads eload from Eload.csv in its __init__ method
+    # No need to override it here - the class will use its own eload data
     
     # Verify critical values
     print(f"Service charge (SC_flat): ${input_data.SC_flat}")
