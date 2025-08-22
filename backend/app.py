@@ -769,10 +769,6 @@ class InData(OriginalInputData):
             self.R_B = battery.R_B
             self.MO_B = battery.MO_B
             
-            # Since we have all battery parameters available, set both types to True
-            self.Lead_acid = True
-            self.Li_ion = True
-
         # --- WindTurbine ---
         if wind:
             self.Pwt_r = wind.Pwt_r
