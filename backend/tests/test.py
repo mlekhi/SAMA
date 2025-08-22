@@ -79,15 +79,15 @@ def test_case_1_pv_grid():
     input_data.Profit_costs = 0
     input_data.Sales_tax = 0
     input_data.azimuth = 180
-    input_data.tilt = 35
-    input_data.soiling = 0.02
+    input_data.tilt = 34
+    input_data.soiling = 0.05
     
     # Inverter Configuration - EXACT SAME AS test_endpoints_input.py
     print("Setting Inverter parameters...")
     input_data.n_I = 0.9
     input_data.L_I = 25
     input_data.DC_AC_ratio = 1.2
-    input_data.C_I = 440
+    input_data.C_I = 0
     input_data.R_I = 0
     input_data.MO_I = 0
     
