@@ -11,9 +11,10 @@ import pandas as pd
 from math import ceil
 
 # Add the sama_python directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sama_python'))
 
-from Input_Data import Input_Data
+from sama_python.Input_Data import Input_Data
 from sama_python.pso import run as pso_run
 from sama_python.generic_load import generic_load
 
