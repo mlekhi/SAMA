@@ -53,10 +53,11 @@ def safe_convert(obj):
 
 #@jit(nopython=True, fastmath=True)
 def Gen_Results(X, InData, user_id):
-    # Set up user-specific output directories
-    output_base = f'../backend/sama_python/output/{user_id}'
-    figs_dir = f'{output_base}/figs'
-    data_dir = f'{output_base}/data'
+    # Set up user-specific output directories using relative paths
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    output_base = os.path.join(current_dir, 'output', str(user_id))
+    figs_dir = os.path.join(output_base, 'figs')
+    data_dir = os.path.join(output_base, 'data')
     
     # Ensure directories exist
     os.makedirs(figs_dir, exist_ok=True)
