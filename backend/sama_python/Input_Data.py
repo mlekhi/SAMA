@@ -119,7 +119,7 @@ class Input_Data:
 
         elif self.load_previous_year_type == 2:
 
-            self.path_Eload_Previous = '../backend/sama_python/content/Eload_previousyear.csv'
+            self.path_Eload_Previous = os.path.join(current_dir, 'content', 'Eload_previousyear.csv')
             self.Eload_PreviousData = pd.read_csv(self.path_Eload_Previous, header=None).values
             self.Eload_Previous = np.array(self.EloadData[:, 0])
 
@@ -177,7 +177,7 @@ class Input_Data:
         # Irradiance definitions
         # 1=Hourly irradiance based on POA calculator
         # 2=Hourly POA irradiance based on the user CSV file
-        self.weather_url = '../backend/sama_python/content/METEO.csv'
+        self.weather_url = os.path.join(current_dir, 'content', 'METEO.csv')
         self.azimuth = 180
         self.tilt = 28.1  # Tilt angle of PV modules
         self.soiling = 5  # Soiling losses in percentage
@@ -193,7 +193,7 @@ class Input_Data:
 
         elif G_type == 2: # It should be Plane of array irradiance
 
-            self.path_G = 'content/Irradiance.csv'
+            self.path_G = os.path.join(current_dir, 'content', 'Irradiance.csv')
             self.GData = pd.read_csv(self.path_G, header=None).values
             self.G = np.array(self.GData[:, 0])
 
@@ -214,7 +214,7 @@ class Input_Data:
 
         elif T_type == 2:
 
-            self.path_T = 'content/Temperature.csv'
+            self.path_T = os.path.join(current_dir, 'content', 'Temperature.csv')
             self.TData = pd.read_csv(self.path_T, header=None).values
             self.T = np.array(self.TData[:, 0])
 
@@ -247,7 +247,7 @@ class Input_Data:
 
         elif self.WS_type == 2:
 
-            self.path_WS = 'content/WSPEED.csv'
+            self.path_WS = os.path.join(current_dir, 'content', 'WSPEED.csv')
             self.WSData = pd.read_csv(self.path_WS, header=None).values
             self.Vw = np.array(self.WSData[:, 0])
 
@@ -668,7 +668,7 @@ class Input_Data:
 
         elif self.WS_type == 2:
 
-            self.path_WS = 'content/WSPEED.csv'
+            self.path_WS = os.path.join(current_dir, 'content', 'WSPEED.csv')
             self.WSData = pd.read_csv(self.path_WS, header=None).values
             self.Vw = np.array(self.WSData[:, 0])
 
