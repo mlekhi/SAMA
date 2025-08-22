@@ -185,17 +185,13 @@ def test_case_1_pv_grid():
     print(f"Inverter Lifetime: {input_data.L_I} years")
     print(f"DC/AC Ratio: {input_data.DC_AC_ratio}")
     
-    # Call completeInitialization to ensure all defaults are set
-    print("Calling completeInitialization...")
-    input_data.completeInitialization()
-    
-    # Verify values after initialization
-    print(f"Service charge after init: ${input_data.SC_flat}")
-    print(f"Sell structure after init: {input_data.sellStructure}")
-    print(f"Service charge array sum: ${np.sum(input_data.Service_charge)}")
-    
     # Test the optimization
     print("Running PSO optimization...")
+    print(f"Input_Data instance ID: {id(input_data)}")
+    print(f"Input_Data has eload: {hasattr(input_data, 'Eload')}")
+    print(f"Input_Data has Cbuy: {hasattr(input_data, 'Cbuy')}")
+    print(f"Input_Data has Service_charge: {hasattr(input_data, 'Service_charge')}")
+    
     try:
         result = pso_run(input_data)
         
@@ -260,17 +256,6 @@ def test_input_data_defaults():
         status = "✓" if actual_value == expected_value else "✗"
         print(f"{status} {attr}: Expected {expected_value}, Got {actual_value}")
     
-    # Test completeInitialization
-    print("\nCalling completeInitialization...")
-    input_data.completeInitialization()
-    
-    # Verify values after initialization
-    print(f"\nAfter completeInitialization:")
-    print(f"SC_flat: {input_data.SC_flat}")
-    print(f"sellStructure: {input_data.sellStructure}")
-    print(f"Service_charge array: {input_data.Service_charge}")
-    print(f"Service_charge sum: {np.sum(input_data.Service_charge)}")
-
 def test_grid_calculations():
     """
     Test grid-related calculations
@@ -280,7 +265,6 @@ def test_grid_calculations():
     print("=" * 60)
     
     input_data = Input_Data()
-    input_data.completeInitialization()
     
     # Test service charge calculation
     print(f"SC_flat: ${input_data.SC_flat}")
