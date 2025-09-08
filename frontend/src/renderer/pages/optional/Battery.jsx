@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Divider, Button, InputAdornment, FormContro
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
+import { useFormData } from '../../hooks/useFormData';
 
 const defaultValues = {
   SOC_min: 0.1,
@@ -38,22 +39,26 @@ const defaultValues = {
 };
 
 function Battery({ auth, user }) {
-  const [batData, setBatData] = useState(defaultValues);
+  const {
+    data: batData,
+    updateData
+  } = useFormData('battery-config', defaultValues);
+  
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => {
-    setBatData(prev => ({ ...prev, [field]: event.target.value }));
+    updateData({ [field]: event.target.value });
   };
 
   const handleCheckboxChange = (field) => (event) => {
     if (field === 'Lead_acid' && event.target.checked) {
-      setBatData(prev => ({ ...prev, Lead_acid: true, Li_ion: false }));
+      updateData({ Lead_acid: true, Li_ion: false });
     } else if (field === 'Li_ion' && event.target.checked) {
-      setBatData(prev => ({ ...prev, Lead_acid: false, Li_ion: true }));
+      updateData({ Lead_acid: false, Li_ion: true });
     } else {
-      setBatData(prev => ({ ...prev, [field]: event.target.checked }));
+      updateData({ [field]: event.target.checked });
     }
   };
 
