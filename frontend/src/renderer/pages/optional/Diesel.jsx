@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mu
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
+import { useFormData } from '../../hooks/useFormData';
 
 const defaultValues = {
   a: 0.273,
@@ -17,13 +18,17 @@ const defaultValues = {
 };
 
 function Diesel({ auth, user }) {
-  const [dgData, setDgData] = useState(defaultValues);
+  const {
+    data: dgData,
+    updateData
+  } = useFormData('dg-config', defaultValues);
+  
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => {
-    setDgData(prev => ({ ...prev, [field]: event.target.value }));
+    updateData({ [field]: event.target.value });
   };
 
   const handleSave = async () => {
