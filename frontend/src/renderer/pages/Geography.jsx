@@ -1,14 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Map from '../components/Map'
 import Search from '../components/Search'
 import NextPageButton from '../components/NextPageButton'
 import SaveMessageAlert from '../components/SaveMessageAlert'
-import { Typography, TextField, Box, Divider, InputAdornment } from "@mui/material"
+import { Typography, TextField, Box, Divider, InputAdornment, Alert } from "@mui/material"
+import { useFormData } from '../hooks/useFormData'
 
 function Geography({ auth, user }) {
   const navigate = useNavigate()
-  const [geoData, setGeoData] = useState({
+  
+  // Use the simple data persistence hook
+  const {
+    data: geoData,
+    updateData
+  } = useFormData('geography', {
     latitude: '',
     longitude: '',
     address: '',
@@ -17,9 +23,22 @@ function Geography({ auth, user }) {
     Tax_rate: 0.0,
     RE_incentives_rate: 0.0
   })
-  const [selectedPosition, setSelectedPosition] = useState(null)
+  
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  
+  const [selectedPosition, setSelectedPosition] = useState(null)
+
+  // Update selectedPosition when geoData loads
+  useEffect(() => {
+    if (geoData.latitude && geoData.longitude && !selectedPosition) {
+      setSelectedPosition({
+        lat: geoData.latitude,
+        lon: geoData.longitude,
+        display_name: geoData.address
+      });
+    }
+  }, [geoData.latitude, geoData.longitude, geoData.address, selectedPosition])
 
   const handlePositionSelect = (position) => {
     setSelectedPosition({
@@ -27,12 +46,11 @@ function Geography({ auth, user }) {
       lat: parseFloat(position.lat),
       lon: parseFloat(position.lon)
     })
-    setGeoData(prev => ({
-      ...prev,
+    updateData({
       latitude: parseFloat(position.lat),
       longitude: parseFloat(position.lon),
       address: position.display_name
-    }))
+    })
   }
 
   const saveGeoData = async () => {
@@ -54,7 +72,6 @@ function Geography({ auth, user }) {
       
       if (response.ok) {
         setSaveMessage('Geography data saved successfully!')
-        // Navigate to optimization page after successful save
         setTimeout(() => {
           navigate('/optimization')
         }, 1500)
@@ -79,10 +96,9 @@ function Geography({ auth, user }) {
   };
 
   const handleEconomicDataChange = (field, value) => {
-    setGeoData(prev => ({
-      ...prev,
+    updateData({
       [field]: value === '' ? '' : parseFloat(value)
-    }));
+    });
   }
 
   return (
@@ -97,6 +113,7 @@ function Geography({ auth, user }) {
             Configure your location and economic parameters
           </Typography>
         </div>
+
         
         {/* Address Search Section */}
         <Box sx={{ mb: 4 }}>
