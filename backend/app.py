@@ -215,11 +215,56 @@ def get_component_selection():
     system_config = SystemConfig.query.get(user_id)
     if not system_config:
         return jsonify({'error': 'No system config found'}), 404
+    
+    # Calculate max step based on what data exists
+    max_step = 0
+    
+    # Check Geography data
+    geo_data = GeographyEconomy.query.get(user_id)
+    if geo_data:
+        max_step = max(max_step, 0)  # Geography = step 0
+    
+    # Check Optimization data
+    opt_data = Optimization.query.get(user_id)
+    if opt_data:
+        max_step = max(max_step, 1)  # Optimization = step 1
+    
+    # Check System Config data
+    if system_config:
+        max_step = max(max_step, 2)  # System Config = step 2
+    
+    # Check component data based on what's selected
+    if system_config.PV:
+        pv_data = PhotovoltaicSystem.query.get(user_id)
+        if pv_data:
+            max_step = max(max_step, 4)  # PV = step 4
+    
+    if system_config.WT:
+        wind_data = WindTurbine.query.get(user_id)
+        if wind_data:
+            max_step = max(max_step, 5)  # Wind = step 5
+    
+    if system_config.Bat:
+        battery_data = Battery.query.get(user_id)
+        if battery_data:
+            max_step = max(max_step, 6)  # Battery = step 6
+    
+    if system_config.DG:
+        dg_data = DieselGenerator.query.get(user_id)
+        if dg_data:
+            max_step = max(max_step, 7)  # Diesel = step 7
+    
+    # Check Grid data
+    grid_data = Grid.query.get(user_id)
+    if grid_data:
+        max_step = max(max_step, 8)  # Grid = step 8
+    
     return jsonify({
         'PV': system_config.PV,
         'WT': system_config.WT,
         'DG': system_config.DG,
-        'Bat': system_config.Bat
+        'Bat': system_config.Bat,
+        'maxStep': max_step
     })
 
 # Data loading endpoints for editing capabilities
@@ -720,8 +765,8 @@ class InData(OriginalInputData):
         if sys_config:
             self.WT = sys_config.WT
             self.n = sys_config.lifetime
-            self.LPSP_max = sys_config.LPSP_max_rate
-            self.RE_min = sys_config.RE_min_rate
+            self.LPSP_max = sys_config.LPSP_max_rate / 100
+            self.RE_min = sys_config.RE_min_rate / 100
             self.PV = sys_config.PV
             self.Bat = sys_config.Bat
             self.DG = sys_config.DG
