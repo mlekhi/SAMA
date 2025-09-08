@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NextPageButton from '../components/NextPageButton'
 import SaveMessageAlert from '../components/SaveMessageAlert'
@@ -13,10 +13,17 @@ import {
   InputAdornment,
   Button
 } from "@mui/material"
+import { useFormData } from '../hooks/useFormData'
 
 function SystemConfig({ auth, user }) {
   const navigate = useNavigate()
-  const [systemData, setSystemData] = useState({
+  
+  // Use the simple data persistence hook for all form data
+  const {
+    data: formData,
+    updateData
+  } = useFormData('system-config', {
+    // System parameters
     lifetime: 25,
     LPSP_max_rate: 0.0999999,
     RE_min_rate: 75.0,
@@ -24,36 +31,55 @@ function SystemConfig({ auth, user }) {
     PV: false,
     WT: false,
     DG: false,
-    Bat: false
+    Bat: false,
+    // Consumption path
+    consumptionPath: { hourly: null, monthly: null, annual: null },
+    // Monthly data
+    monthlyData: Array(12).fill(''),
+    // Hourly data
+    hourlyData: [],
+    // File upload state
+    uploadedFileName: null
   })
-  const [consumptionPath, setConsumptionPath] = useState({ hourly: null, monthly: null, annual: null });
+  
   const [uploadedFile, setUploadedFile] = useState(null);
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
-  const [monthlyData, setMonthlyData] = useState(Array(12).fill(''));
-  const [hourlyData, setHourlyData] = useState([]);
+
+  // Restore uploaded file state when component mounts
+  useEffect(() => {
+    if (formData.uploadedFileName && !uploadedFile) {
+      // Create a mock file object to represent the previously uploaded file
+      const mockFile = {
+        name: formData.uploadedFileName,
+        size: 0, // We don't store the actual file size
+        type: 'text/csv'
+      };
+      setUploadedFile(mockFile);
+    }
+  }, [formData.uploadedFileName, uploadedFile]);
 
   const isFormValid = () => {
     const isSystemParamsValid =
-      systemData.lifetime !== '' &&
-      systemData.LPSP_max_rate !== '' &&
-      systemData.RE_min_rate !== '';
+      formData.lifetime !== '' &&
+      formData.LPSP_max_rate !== '' &&
+      formData.RE_min_rate !== '';
 
     if (!isSystemParamsValid) return false;
 
-    if (consumptionPath.hourly === 'yes') {
+    if (formData.consumptionPath.hourly === 'yes') {
       return !!uploadedFile;
     }
-    if (consumptionPath.hourly === 'no') {
-      if (consumptionPath.monthly === 'yes') {
-        return monthlyData.every(val => val !== '' && !isNaN(parseFloat(val)));
+    if (formData.consumptionPath.hourly === 'no') {
+      if (formData.consumptionPath.monthly === 'yes') {
+        return formData.monthlyData.every(val => val !== '' && !isNaN(parseFloat(val)));
       }
-      if (consumptionPath.monthly === 'no') {
-        if (consumptionPath.annual === 'yes') {
-          return systemData.annualData !== '' && !isNaN(parseFloat(systemData.annualData));
+      if (formData.consumptionPath.monthly === 'no') {
+        if (formData.consumptionPath.annual === 'yes') {
+          return formData.annualData !== '' && !isNaN(parseFloat(formData.annualData));
         }
-        if (consumptionPath.annual === 'no') {
-          return systemData.annualData !== '' && !isNaN(parseFloat(systemData.annualData));
+        if (formData.consumptionPath.annual === 'no') {
+          return formData.annualData !== '' && !isNaN(parseFloat(formData.annualData));
         }
       }
     }
@@ -66,39 +92,41 @@ function SystemConfig({ auth, user }) {
     setSaving(true)
     setSaveMessage('')
 
-    const formData = new FormData();
+    const formDataToSend = new FormData();
     
     // Append system data
-    Object.keys(systemData).forEach(key => {
-      formData.append(key, systemData[key]);
+    Object.keys(formData).forEach(key => {
+      if (key !== 'consumptionPath' && key !== 'monthlyData' && key !== 'hourlyData') {
+        formDataToSend.append(key, formData[key]);
+      }
     });
     
     // Append consumption data source
     const getConsumptionDataSource = () => {
-      if (consumptionPath.hourly === 'yes') return 'hourly';
-      if (consumptionPath.monthly === 'yes') return 'monthly';
-      if (consumptionPath.annual === 'yes') return 'annual';
+      if (formData.consumptionPath.hourly === 'yes') return 'hourly';
+      if (formData.consumptionPath.monthly === 'yes') return 'monthly';
+      if (formData.consumptionPath.annual === 'yes') return 'annual';
       return 'manual';
     };
-    formData.append('consumptionDataSource', getConsumptionDataSource());
+    formDataToSend.append('consumptionDataSource', getConsumptionDataSource());
 
     // Append monthly data if manually entered or from CSV
-    if (consumptionPath.monthly === 'yes') {
-      if (monthlyData.length > 0) {
+    if (formData.consumptionPath.monthly === 'yes') {
+      if (formData.monthlyData.length > 0) {
         // Send as JSON string instead of individual fields
-        formData.append('monthlyData', JSON.stringify(monthlyData.map(v => parseFloat(v))));
+        formDataToSend.append('monthlyData', JSON.stringify(formData.monthlyData.map(v => parseFloat(v))));
       } else {
         // Fallback to individual form fields for backward compatibility
-        monthlyData.forEach((value, index) => {
-          formData.append(`month_${index}`, value);
+        formData.monthlyData.forEach((value, index) => {
+          formDataToSend.append(`month_${index}`, value);
         });
       }
     }
 
     // Append hourly data if uploaded via CSV
-    if (consumptionPath.hourly === 'yes' && hourlyData.length > 0) {
+    if (formData.consumptionPath.hourly === 'yes' && formData.hourlyData.length > 0) {
       // Send as JSON string instead of individual fields
-      formData.append('hourlyData', JSON.stringify(hourlyData));
+      formDataToSend.append('hourlyData', JSON.stringify(formData.hourlyData));
     }
     
     try {
@@ -109,7 +137,7 @@ function SystemConfig({ auth, user }) {
           // Content-Type is not set, browser will set it for FormData
           'Authorization': `Bearer ${token}`
         },
-        body: formData
+        body: formDataToSend
       })
       
       if (response.ok) {
@@ -117,7 +145,7 @@ function SystemConfig({ auth, user }) {
         
         // Navigate to the next page based on component selection
         setTimeout(() => {
-          const { PV, WT, DG, Bat } = systemData
+          const { PV, WT, DG, Bat } = formData
           
           // If PV, WT, or Battery are selected, show inverter first
           if (PV || WT || Bat) {
@@ -141,24 +169,39 @@ function SystemConfig({ auth, user }) {
 
   const handleConsumptionChoice = (step, choice) => {
     if (step === 'hourly') {
-      setConsumptionPath({ hourly: choice, monthly: null, annual: null });
+      updateData({ consumptionPath: { hourly: choice, monthly: null, annual: null } });
     } else if (step === 'monthly') {
-      setConsumptionPath(p => ({ ...p, monthly: choice, annual: null }));
+      updateData({ 
+        consumptionPath: { 
+          ...formData.consumptionPath, 
+          monthly: choice, 
+          annual: null 
+        } 
+      });
     } else if (step === 'annual') {
-      setConsumptionPath(p => ({ ...p, annual: choice }));
+      updateData({ 
+        consumptionPath: { 
+          ...formData.consumptionPath, 
+          annual: choice 
+        } 
+      });
       if (choice === 'yes') {
-        setSystemData(prev => ({ ...prev, annualData: '' }));
+        updateData({ annualData: '' });
       } else if (choice === 'no') {
-        setSystemData(prev => ({ ...prev, annualData: 9 })); // default value
+        updateData({ annualData: 9 }); // default value
       }
     }
     setUploadedFile(null); // Reset file on any choice change
+    updateData({ uploadedFileName: null }); // Clear file name from persistent data
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file && file.name.endsWith('.csv')) {
       setUploadedFile(file);
+      
+      // Save the file name to persistent data
+      updateData({ uploadedFileName: file.name });
       
       // Read and convert CSV to JSON array
       const reader = new FileReader();
@@ -170,45 +213,43 @@ function SystemConfig({ auth, user }) {
         // Validate the data
         if (values.length === 8760) {
           // Store the hourly data
-          setHourlyData(values);
+          updateData({ hourlyData: values });
         } else if (values.length === 12) {
           // Store the monthly data
-          setMonthlyData(values.map(v => v.toString()));
+          updateData({ monthlyData: values.map(v => v.toString()) });
         } else if (values.length === 1) {
           // Store the annual data
-          setSystemData(prev => ({ ...prev, annualData: values[0] }));
+          updateData({ annualData: values[0] });
         } else {
           alert(`Invalid CSV format. Expected 1, 12, or 8760 values, but got ${values.length}.`);
           setUploadedFile(null);
+          updateData({ uploadedFileName: null });
         }
       };
       reader.readAsText(file);
     } else {
       setUploadedFile(null);
+      updateData({ uploadedFileName: null });
       alert('Please upload a valid .csv file.');
     }
   };
 
   const handleCheckboxChange = (field) => (event) => {
-    setSystemData(prev => ({
-      ...prev,
+    updateData({
       [field]: event.target.checked
-    }))
+    })
   }
 
   const handleInputChange = (field) => (event) => {
-    setSystemData(prev => ({
-      ...prev,
+    updateData({
       [field]: event.target.value
-    }))
+    })
   }
 
   const handleMonthlyDataChange = (index, value) => {
-    setMonthlyData(prev => {
-      const newData = [...prev];
-      newData[index] = value;
-      return newData;
-    });
+    const newMonthlyData = [...formData.monthlyData];
+    newMonthlyData[index] = value;
+    updateData({ monthlyData: newMonthlyData });
   };
 
   const YesNoQuestion = ({ question, choice, onChoiceChange }) => (
@@ -247,7 +288,7 @@ function SystemConfig({ auth, user }) {
                 fullWidth
                 type="number"
                 placeholder={`${month}*`}
-                value={monthlyData[index]}
+                value={formData.monthlyData[index]}
                 onChange={(e) => handleMonthlyDataChange(index, e.target.value)}
                 variant="outlined"
                 InputProps={{
@@ -290,7 +331,7 @@ function SystemConfig({ auth, user }) {
                 fullWidth
                 type="number"
                 placeholder="Lifetime of System*"
-                value={systemData.lifetime}
+                value={formData.lifetime}
                 onChange={handleInputChange('lifetime')}
                 variant="outlined"
                 inputProps={{ min: 1, max: 50 }}
@@ -309,8 +350,8 @@ function SystemConfig({ auth, user }) {
                 fullWidth
                 type="number"
                 placeholder="Max Loss of Power*"
-                value={systemData.LPSP_max_rate}
-                onChange={e => handleInputChange('LPSP_max_rate')({ target: { value: e.target.value / 100 } })}
+                value={formData.LPSP_max_rate}
+                onChange={handleInputChange('LPSP_max_rate')}
                 variant="outlined"
                 inputProps={{ min: 0, max: 100, step: 0.01 }}
                 InputProps={{
@@ -328,7 +369,7 @@ function SystemConfig({ auth, user }) {
                 fullWidth
                 type="number"
                 placeholder="Min Renewable Energy*"
-                value={systemData.RE_min_rate}
+                value={formData.RE_min_rate}
                 onChange={handleInputChange('RE_min_rate')}
                 variant="outlined"
                 inputProps={{ min: 0, max: 100, step: 0.1 }}
@@ -350,11 +391,11 @@ function SystemConfig({ auth, user }) {
 
           <YesNoQuestion
             question="Do you have hourly consumption data?"
-            choice={consumptionPath.hourly}
+            choice={formData.consumptionPath.hourly}
             onChoiceChange={(choice) => handleConsumptionChoice('hourly', choice)}
           />
 
-          {consumptionPath.hourly === 'yes' && (
+          {formData.consumptionPath.hourly === 'yes' && (
             <Box sx={{ mt: 2 }}>
               <Button variant="contained" component="label">
                 Upload Hourly CSV File
@@ -371,27 +412,27 @@ function SystemConfig({ auth, user }) {
             </Box>
           )}
 
-          {consumptionPath.hourly === 'no' && (
+          {formData.consumptionPath.hourly === 'no' && (
             <YesNoQuestion
               question="Do you have monthly power consumption data?"
-              choice={consumptionPath.monthly}
+              choice={formData.consumptionPath.monthly}
               onChoiceChange={(choice) => handleConsumptionChoice('monthly', choice)}
             />
           )}
 
-          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'yes' && (
+          {formData.consumptionPath.hourly === 'no' && formData.consumptionPath.monthly === 'yes' && (
             <MonthlyConsumptionInputs />
           )}
 
-          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'no' && (
+          {formData.consumptionPath.hourly === 'no' && formData.consumptionPath.monthly === 'no' && (
             <YesNoQuestion
               question="Do you have annual power consumption data?"
-              choice={consumptionPath.annual}
+              choice={formData.consumptionPath.annual}
               onChoiceChange={(choice) => handleConsumptionChoice('annual', choice)}
             />
           )}
 
-          {consumptionPath.hourly === 'no' && consumptionPath.monthly === 'no' && consumptionPath.annual !== null && (
+          {formData.consumptionPath.hourly === 'no' && formData.consumptionPath.monthly === 'no' && formData.consumptionPath.annual !== null && (
             <Box sx={{ mt: 4 }}>
               <Typography variant="subtitle1" component="h3" gutterBottom>
                 Enter your annual power consumption:
@@ -401,7 +442,7 @@ function SystemConfig({ auth, user }) {
                 type="number"
                 label="Annual Power Consumption"
                 placeholder="Annual Power Consumption*"
-                value={systemData.annualData}
+                value={formData.annualData}
                 onChange={handleInputChange('annualData')}
                 variant="outlined"
                 InputProps={{
@@ -424,7 +465,7 @@ function SystemConfig({ auth, user }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={systemData.PV}
+                  checked={formData.PV}
                   onChange={handleCheckboxChange('PV')}
                 />
               }
@@ -434,7 +475,7 @@ function SystemConfig({ auth, user }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={systemData.WT}
+                  checked={formData.WT}
                   onChange={handleCheckboxChange('WT')}
                 />
               }
@@ -444,7 +485,7 @@ function SystemConfig({ auth, user }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={systemData.DG}
+                  checked={formData.DG}
                   onChange={handleCheckboxChange('DG')}
                 />
               }
@@ -454,7 +495,7 @@ function SystemConfig({ auth, user }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={systemData.Bat}
+                  checked={formData.Bat}
                   onChange={handleCheckboxChange('Bat')}
                 />
               }
