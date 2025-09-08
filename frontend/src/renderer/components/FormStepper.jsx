@@ -1,5 +1,6 @@
 import { Box, Stepper, Step, StepLabel } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 // Define all possible steps in order
 const ALL_STEPS = [
@@ -24,6 +25,8 @@ const PATH_TO_STEP_INDEX = ALL_STEPS.reduce((acc, step, index) => {
 export default function FormStepper({ auth }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [maxReachedStep, setMaxReachedStep] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Get current step index based on exact path match
   const getCurrentStepIndex = () => {
@@ -32,6 +35,41 @@ export default function FormStepper({ auth }) {
   };
 
   const currentStepIndex = getCurrentStepIndex();
+
+  // Load the highest step reached from API based on existing data
+  useEffect(() => {
+    const loadMaxStep = async () => {
+      if (!auth?.currentUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const token = await auth.currentUser.getIdToken();
+        
+        // Get current max step from component-selection endpoint
+        const getResponse = await fetch('http://127.0.0.1:5000/api/component-selection', {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (getResponse.ok) {
+          const data = await getResponse.json();
+          setMaxReachedStep(data.maxStep || 0);
+        }
+      } catch (error) {
+        console.error('Error loading max step:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMaxStep();
+  }, [auth]);
+
+  if (loading) {
+    return <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 4, pt: 4 }} />;
+  }
 
   return (
     <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 4, pt: 4 }}>
@@ -43,19 +81,20 @@ export default function FormStepper({ auth }) {
         {ALL_STEPS.map((step, index) => {
           const isCompleted = index < currentStepIndex;
           const isCurrent = index === currentStepIndex;
-          const isFuture = index > currentStepIndex;
+          const isReached = index <= maxReachedStep;
+          const isFuture = index > maxReachedStep;
           
           return (
             <Step key={step.label}>
               <StepLabel
                 onClick={() => {
-                  // Allow navigation to any previous step
-                  if (isCompleted) {
+                  // Allow navigation to any reached step (completed or current)
+                  if (isReached) {
                     navigate(step.path);
                   }
                 }}
                 style={{
-                  cursor: isCompleted ? 'pointer' : 'default',
+                  cursor: isReached ? 'pointer' : 'default',
                   color: isCompleted ? '#1976d2' : isFuture ? '#9e9e9e' : undefined,
                   fontSize: '0.97rem',
                   opacity: isFuture ? 0.6 : 1,
