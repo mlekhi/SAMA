@@ -10,8 +10,8 @@ const ALL_STEPS = [
   { label: 'Inverter', path: '/inverter' },
   { label: 'PV', path: '/pv-config' },
   { label: 'Wind', path: '/wind-config' },
-  { label: 'Battery', path: '/battery-config' },
   { label: 'Diesel', path: '/dg-config' },
+  { label: 'Battery', path: '/battery-config' },
   { label: 'Grid', path: '/grid-config' },
   { label: 'Results', path: '/results' }
 ];
