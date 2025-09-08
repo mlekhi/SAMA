@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mu
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
+import { useFormData } from '../../hooks/useFormData';
 
 const defaultValues = {
   n_I: 96, // 96%
@@ -14,7 +15,11 @@ const defaultValues = {
 };
 
 function Inverter({ auth, user }) {
-  const [invData, setInvData] = useState(defaultValues);
+  const {
+    data: invData,
+    updateData
+  } = useFormData('inverter-config', defaultValues);
+  
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const navigate = useNavigate();
@@ -25,7 +30,7 @@ function Inverter({ auth, user }) {
       // Clamp to 0-100
       value = Math.max(0, Math.min(100, Number(value)));
     }
-    setInvData(prev => ({ ...prev, [field]: value }));
+    updateData({ [field]: value });
   };
 
   const handleSave = async () => {
@@ -108,7 +113,6 @@ function Inverter({ auth, user }) {
             inputProps={{ min: 0, max: 100 }}
             InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
           />
-          <TextField label="Inverter Efficiency" value={invData.n_I} onChange={handleChange('n_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }} />
           <TextField label="Inverter lifetime" value={invData.L_I} onChange={handleChange('L_I')} variant="outlined" fullWidth InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }} />
           <TextField label="Maximum acceptable DC to AC ratio" value={invData.DC_AC_ratio} onChange={handleChange('DC_AC_ratio')} variant="outlined" fullWidth />
         </Box>
