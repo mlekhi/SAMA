@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Divider, InputAdornment } from '@mui/materi
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
+import { useFormData } from '../../hooks/useFormData';
 
 const defaultValues = {
   // Technical Parameters
@@ -28,13 +29,17 @@ const defaultValues = {
 };
 
 function Wind({ auth, user }) {
-  const [windData, setWindData] = useState(defaultValues);
+  const {
+    data: windData,
+    updateData
+  } = useFormData('wind-config', defaultValues);
+  
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => {
-    setWindData(prev => ({ ...prev, [field]: event.target.value }));
+    updateData({ [field]: event.target.value });
   };
 
   const handleSave = async () => {
