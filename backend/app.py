@@ -818,9 +818,9 @@ class InData(OriginalInputData):
                 self.rateStructure = grid.rateStructure
                 
                 # Load rate structure specific data based on type
-                if grid.rateStructure == 'flat' and grid.flatPrice is not None:
+                if grid.rateStructure == 1 and grid.flatPrice is not None:  # flat
                     self.flatPrice = grid.flatPrice
-                elif grid.rateStructure == 'seasonal' and grid.seasonalPrices:
+                elif grid.rateStructure == 2 and grid.seasonalPrices:  # seasonal
                     try:
                         if isinstance(grid.seasonalPrices, str):
                             self.seasonalPrices = json.loads(grid.seasonalPrices)
@@ -829,7 +829,7 @@ class InData(OriginalInputData):
                     except (json.JSONDecodeError, TypeError) as e:
                         logger.error(f"Error parsing seasonalPrices: {e}")
                         self.seasonalPrices = None
-                elif grid.rateStructure == 'monthly' and grid.monthlyPrices:
+                elif grid.rateStructure == 3 and grid.monthlyPrices:  # monthly
                     try:
                         if isinstance(grid.monthlyPrices, str):
                             self.monthlyPrices = json.loads(grid.monthlyPrices)
@@ -857,7 +857,7 @@ class InData(OriginalInputData):
                         except (json.JSONDecodeError, TypeError) as e:
                             logger.error(f"Error parsing tierMax: {e}")
                             self.tierMax = None
-                elif grid.rateStructure == 'seasonalTiered':
+                elif grid.rateStructure == 5:  # seasonalTiered
                     if grid.seasonalTieredPrices:
                         try:
                             if isinstance(grid.seasonalTieredPrices, str):
@@ -876,7 +876,7 @@ class InData(OriginalInputData):
                         except (json.JSONDecodeError, TypeError) as e:
                             logger.error(f"Error parsing seasonalTierMax: {e}")
                             self.seasonalTierMax = None
-                elif grid.rateStructure == 'monthlyTiered':
+                elif grid.rateStructure == 6:  # monthlyTiered
                     if grid.monthlyTieredPrices:
                         try:
                             if isinstance(grid.monthlyTieredPrices, str):
@@ -895,7 +895,7 @@ class InData(OriginalInputData):
                         except (json.JSONDecodeError, TypeError) as e:
                             logger.error(f"Error parsing monthlyTierLimits: {e}")
                             self.monthlyTierLimits = None
-                elif grid.rateStructure == 'tou':
+                elif grid.rateStructure == 7:  # tou
                     if grid.onPrice:
                         try:
                             if isinstance(grid.onPrice, str):

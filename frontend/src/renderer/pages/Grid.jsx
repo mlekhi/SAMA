@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SaveMessageAlert from '../components/SaveMessageAlert'
 import UtilityStructure from '../components/fields/UtilityStructure'
+import { useFormData } from '../hooks/useFormData'
 import {
   Typography,
   TextField,
@@ -25,7 +26,10 @@ import DatePicker from "react-multi-date-picker";
 
 function GridConfig({ auth, user }) {
   const navigate = useNavigate()
-  const [gridData, setGridData] = useState({
+  
+  // Use useFormData hook for all form state
+  const { data: formData, updateData } = useFormData('grid', {
+    // Grid connection data
     Grid: null,
     NEM: null,
     Annual_expenses: 0.0,
@@ -40,94 +44,101 @@ function GridConfig({ auth, user }) {
     compensation_option: '1:1',
     flat_compensation: '',
     monthly_compensation: {},
-  })
-  const [saving, setSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
-  const [currentStep, setCurrentStep] = useState(1) // 1: Grid connected?, 2: Net metered?, 3: Configuration
-  const [compareOffGrid, setCompareOffGrid] = useState(null); // null, true, or false
-  const [seasonMonths, setSeasonMonths] = useState([]);
-  const [holidayDates, setHolidayDates] = useState([]); // Array of Date objects
-  const [rateStructure, setRateStructure] = useState('');
-  
-  // Rate structure specific state
-  const [flatPrice, setFlatPrice] = useState('');
-  const [summerPrice, setSummerPrice] = useState('');
-  const [winterPrice, setWinterPrice] = useState('');
-  const [monthlyPrices, setMonthlyPrices] = useState({
-    January: '', February: '', March: '', April: '', May: '', June: '',
-    July: '', August: '', September: '', October: '', November: '', December: ''
+    
+    // UI state
+    currentStep: 1, // 1: Grid connected?, 2: Net metered?, 3: Configuration
+    compareOffGrid: null, // null, true, or false
+    seasonMonths: [],
+    holidayDates: [], // Array of Date objects
+    rateStructure: '',
+    
+    // Rate structure specific state
+    flatPrice: '',
+    summerPrice: '',
+    winterPrice: '',
+    monthlyPrices: {
+      January: '', February: '', March: '', April: '', May: '', June: '',
+      July: '', August: '', September: '', October: '', November: '', December: ''
+    },
+    
+    // Tiered rate state
+    lowTierPrice: '',
+    mediumTierPrice: '',
+    highTierPrice: '',
+    lowTierMaxLoad: '',
+    mediumTierMaxLoad: '',
+    highTierMaxLoad: '',
+    
+    // Seasonal tiered rate state
+    summerLowTierPrice: '',
+    summerMediumTierPrice: '',
+    summerHighTierPrice: '',
+    summerLowTierMaxLoad: '',
+    summerMediumTierMaxLoad: '',
+    summerHighTierMaxLoad: '',
+    winterLowTierPrice: '',
+    winterMediumTierPrice: '',
+    winterHighTierPrice: '',
+    winterLowTierMaxLoad: '',
+    winterMediumTierMaxLoad: '',
+    winterHighTierMaxLoad: '',
+    
+    // Monthly tiered rate state
+    monthlyTieredPrices: {},
+    monthlyTieredMaxLoads: {},
+    
+    // Time of Use state
+    summerOnPeakPrice: '',
+    summerMidPeakPrice: '',
+    summerOffPeakPrice: '',
+    winterOnPeakPrice: '',
+    winterMidPeakPrice: '',
+    winterOffPeakPrice: '',
+    summerPeakHours: [],
+    summerMidPeakHours: [],
+    winterPeakHours: [],
+    winterMidPeakHours: []
   });
   
-  // Tiered rate state
-  const [lowTierPrice, setLowTierPrice] = useState('');
-  const [mediumTierPrice, setMediumTierPrice] = useState('');
-  const [highTierPrice, setHighTierPrice] = useState('');
-  const [lowTierMaxLoad, setLowTierMaxLoad] = useState('');
-  const [mediumTierMaxLoad, setMediumTierMaxLoad] = useState('');
-  const [highTierMaxLoad, setHighTierMaxLoad] = useState('');
-  
-  // Seasonal tiered rate state
-  const [summerLowTierPrice, setSummerLowTierPrice] = useState('');
-  const [summerMediumTierPrice, setSummerMediumTierPrice] = useState('');
-  const [summerHighTierPrice, setSummerHighTierPrice] = useState('');
-  const [summerLowTierMaxLoad, setSummerLowTierMaxLoad] = useState('');
-  const [summerMediumTierMaxLoad, setSummerMediumTierMaxLoad] = useState('');
-  const [summerHighTierMaxLoad, setSummerHighTierMaxLoad] = useState('');
-  const [winterLowTierPrice, setWinterLowTierPrice] = useState('');
-  const [winterMediumTierPrice, setWinterMediumTierPrice] = useState('');
-  const [winterHighTierPrice, setWinterHighTierPrice] = useState('');
-  const [winterLowTierMaxLoad, setWinterLowTierMaxLoad] = useState('');
-  const [winterMediumTierMaxLoad, setWinterMediumTierMaxLoad] = useState('');
-  const [winterHighTierMaxLoad, setWinterHighTierMaxLoad] = useState('');
-  
-  // Monthly tiered rate state
-  const [monthlyTieredPrices, setMonthlyTieredPrices] = useState({});
-  const [monthlyTieredMaxLoads, setMonthlyTieredMaxLoads] = useState({});
-  
-  // Time of Use state
-  const [summerOnPeakPrice, setSummerOnPeakPrice] = useState('');
-  const [summerMidPeakPrice, setSummerMidPeakPrice] = useState('');
-  const [summerOffPeakPrice, setSummerOffPeakPrice] = useState('');
-  const [winterOnPeakPrice, setWinterOnPeakPrice] = useState('');
-  const [winterMidPeakPrice, setWinterMidPeakPrice] = useState('');
-  const [winterOffPeakPrice, setWinterOffPeakPrice] = useState('');
-  const [summerPeakHours, setSummerPeakHours] = useState([]);
-  const [summerMidPeakHours, setSummerMidPeakHours] = useState([]);
-  const [winterPeakHours, setWinterPeakHours] = useState([]);
-  const [winterMidPeakHours, setWinterMidPeakHours] = useState([]);
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   // Initialize monthly tiered data
   React.useEffect(() => {
-    const initialMonthlyTiered = {};
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    monthNames.forEach(month => {
-      initialMonthlyTiered[month] = {
-        lowTierPrice: '',
-        mediumTierPrice: '',
-        highTierPrice: '',
-        lowTierMaxLoad: '',
-        mediumTierMaxLoad: '',
-        highTierMaxLoad: ''
-      };
-    });
-    setMonthlyTieredPrices(initialMonthlyTiered);
-    setMonthlyTieredMaxLoads(initialMonthlyTiered);
-  }, []);
+    if (!formData.monthlyTieredPrices || Object.keys(formData.monthlyTieredPrices).length === 0) {
+      const initialMonthlyTiered = {};
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      monthNames.forEach(month => {
+        initialMonthlyTiered[month] = {
+          lowTierPrice: '',
+          mediumTierPrice: '',
+          highTierPrice: '',
+          lowTierMaxLoad: '',
+          mediumTierMaxLoad: '',
+          highTierMaxLoad: ''
+        };
+      });
+      updateData({
+        monthlyTieredPrices: initialMonthlyTiered,
+        monthlyTieredMaxLoads: initialMonthlyTiered
+      });
+    }
+  }, [formData.monthlyTieredPrices, updateData]);
 
   const isFormValid = () => {
     // If grid is not connected and user hasn't answered the comparison question yet
-    if (!gridData.Grid && currentStep < 3) {
+    if (!formData.Grid && formData.currentStep < 3) {
       return false;
     }
     
     // If grid is not connected and user doesn't want to compare, no validation needed
-    if (!gridData.Grid && compareOffGrid === false) {
+    if (!formData.Grid && formData.compareOffGrid === false) {
       return true;
     }
     
     // If grid is connected OR if off-grid user wants to compare, validate required fields
-    if (gridData.Grid || (!gridData.Grid && compareOffGrid === true)) {
+    if (formData.Grid || (!formData.Grid && formData.compareOffGrid === true)) {
       // Check if all required numeric fields have valid values
       const requiredFields = [
         'Annual_expenses',
@@ -142,34 +153,34 @@ function GridConfig({ auth, user }) {
       
       // Validate that all required fields have numeric values (not empty strings or null)
       for (const field of requiredFields) {
-        if (gridData[field] === '' || gridData[field] === null || gridData[field] === undefined) {
+        if (formData[field] === '' || formData[field] === null || formData[field] === undefined) {
           return false;
         }
       }
       
       // Only validate NEM_fee if NEM is enabled
-      if (gridData.NEM && (gridData.NEM_fee === '' || gridData.NEM_fee === null || gridData.NEM_fee === undefined)) {
+      if (formData.NEM && (formData.NEM_fee === '' || formData.NEM_fee === null || formData.NEM_fee === undefined)) {
         return false;
       }
       
       // Validate compensation option if grid is connected
-      if (gridData.Grid && !gridData.compensation_option) {
+      if (formData.Grid && !formData.compensation_option) {
         return false;
       }
       
       // Validate flat compensation if that option is selected
-      if (gridData.compensation_option === 'flat' && 
-          (gridData.flat_compensation === '' || gridData.flat_compensation === null || gridData.flat_compensation === undefined)) {
+      if (formData.compensation_option === 'flat' && 
+          (formData.flat_compensation === '' || formData.flat_compensation === null || formData.flat_compensation === undefined)) {
         return false;
       }
       
       // Validate monthly compensation if that option is selected
-      if (gridData.compensation_option === 'monthly') {
+      if (formData.compensation_option === 'monthly') {
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December'];
         
         for (const month of monthNames) {
-          const monthlyValue = gridData.monthly_compensation?.[month];
+          const monthlyValue = formData.monthly_compensation?.[month];
           if (monthlyValue === '' || monthlyValue === null || monthlyValue === undefined) {
             return false;
           }
@@ -192,7 +203,7 @@ function GridConfig({ auth, user }) {
       const token = await user.getIdToken();
       
       // Convert selected dates to day-of-year numbers
-      const convertedHolidays = holidayDates.map(dateObj => {
+      const convertedHolidays = formData.holidayDates.map(dateObj => {
         const d = new Date(dateObj);
         const start = new Date(d.getFullYear(), 0, 0);
         const diff = d - start;
@@ -200,37 +211,50 @@ function GridConfig({ auth, user }) {
         return Math.floor(diff / oneDay);
       });
       
+      // Map rate structure strings to numbers
+      const rateStructureMapping = {
+        'flat': 1,
+        'seasonal': 2,
+        'monthly': 3,
+        'tiered': 4,
+        'seasonalTiered': 5,
+        'monthlyTiered': 6,
+        'tou': 7
+      };
+
       // Prepare rate structure data based on selected type
       let rateStructureData = {};
-      switch (rateStructure) {
+      const rateStructureNumber = rateStructureMapping[formData.rateStructure] || 6; // Default to 6 if not found
+      
+      switch (formData.rateStructure) {
         case 'flat':
-          rateStructureData = { flatPrice };
+          rateStructureData = { flatPrice: formData.flatPrice };
           break;
         case 'seasonal':
           rateStructureData = { 
-            seasonalPrices: JSON.stringify([summerPrice, winterPrice])
+            seasonalPrices: JSON.stringify([formData.summerPrice, formData.winterPrice])
           };
           break;
         case 'monthly':
           rateStructureData = { 
-            monthlyPrices: JSON.stringify(Object.values(monthlyPrices))
+            monthlyPrices: JSON.stringify(Object.values(formData.monthlyPrices))
           };
           break;
         case 'tiered':
           rateStructureData = {
-            tieredPrices: JSON.stringify([lowTierPrice, mediumTierPrice, highTierPrice]),
-            tierMax: JSON.stringify([lowTierMaxLoad, mediumTierMaxLoad, highTierMaxLoad])
+            tieredPrices: JSON.stringify([formData.lowTierPrice, formData.mediumTierPrice, formData.highTierPrice]),
+            tierMax: JSON.stringify([formData.lowTierMaxLoad, formData.mediumTierMaxLoad, formData.highTierMaxLoad])
           };
           break;
         case 'seasonalTiered':
           rateStructureData = {
             seasonalTieredPrices: JSON.stringify([
-              [summerLowTierPrice, summerMediumTierPrice, summerHighTierPrice],
-              [winterLowTierPrice, winterMediumTierPrice, winterHighTierPrice]
+              [formData.summerLowTierPrice, formData.summerMediumTierPrice, formData.summerHighTierPrice],
+              [formData.winterLowTierPrice, formData.winterMediumTierPrice, formData.winterHighTierPrice]
             ]),
             seasonalTierMax: JSON.stringify([
-              [summerLowTierMaxLoad, summerMediumTierMaxLoad, summerHighTierMaxLoad],
-              [winterLowTierMaxLoad, winterMediumTierMaxLoad, winterHighTierMaxLoad]
+              [formData.summerLowTierMaxLoad, formData.summerMediumTierMaxLoad, formData.summerHighTierMaxLoad],
+              [formData.winterLowTierMaxLoad, formData.winterMediumTierMaxLoad, formData.winterHighTierMaxLoad]
             ])
           };
           break;
@@ -239,14 +263,14 @@ function GridConfig({ auth, user }) {
           const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'];
           const monthlyTieredPricesArray = monthNames.map(month => [
-            monthlyTieredPrices[month]?.lowTierPrice || 0,
-            monthlyTieredPrices[month]?.mediumTierPrice || 0,
-            monthlyTieredPrices[month]?.highTierPrice || 0
+            formData.monthlyTieredPrices[month]?.lowTierPrice || 0,
+            formData.monthlyTieredPrices[month]?.mediumTierPrice || 0,
+            formData.monthlyTieredPrices[month]?.highTierPrice || 0
           ]);
           const monthlyTieredLimitsArray = monthNames.map(month => [
-            monthlyTieredMaxLoads[month]?.lowTierMaxLoad || 0,
-            monthlyTieredMaxLoads[month]?.mediumTierMaxLoad || 0,
-            monthlyTieredMaxLoads[month]?.highTierMaxLoad || 0
+            formData.monthlyTieredMaxLoads[month]?.lowTierMaxLoad || 0,
+            formData.monthlyTieredMaxLoads[month]?.mediumTierMaxLoad || 0,
+            formData.monthlyTieredMaxLoads[month]?.highTierMaxLoad || 0
           ]);
           rateStructureData = {
             monthlyTieredPrices: JSON.stringify(monthlyTieredPricesArray),
@@ -270,16 +294,16 @@ function GridConfig({ auth, user }) {
           };
           
           rateStructureData = {
-            onPrice: JSON.stringify([summerOnPeakPrice, winterOnPeakPrice]),
-            midPrice: JSON.stringify([summerMidPeakPrice, winterMidPeakPrice]),
-            offPrice: JSON.stringify([summerOffPeakPrice, winterOffPeakPrice]),
+            onPrice: JSON.stringify([formData.summerOnPeakPrice, formData.winterOnPeakPrice]),
+            midPrice: JSON.stringify([formData.summerMidPeakPrice, formData.winterMidPeakPrice]),
+            offPrice: JSON.stringify([formData.summerOffPeakPrice, formData.winterOffPeakPrice]),
             onHours: JSON.stringify([
-              convertHourRangesToHours(summerPeakHours),
-              convertHourRangesToHours(winterPeakHours)
+              convertHourRangesToHours(formData.summerPeakHours),
+              convertHourRangesToHours(formData.winterPeakHours)
             ]),
             midHours: JSON.stringify([
-              convertHourRangesToHours(summerMidPeakHours),
-              convertHourRangesToHours(winterMidPeakHours)
+              convertHourRangesToHours(formData.summerMidPeakHours),
+              convertHourRangesToHours(formData.winterMidPeakHours)
             ])
           };
           break;
@@ -288,17 +312,21 @@ function GridConfig({ auth, user }) {
       }
       
       // Convert monthly_compensation to JSON string if it exists and has data
-      const monthlyCompensationJson = Object.keys(gridData.monthly_compensation || {}).length > 0 
-        ? JSON.stringify(gridData.monthly_compensation)
+      const monthlyCompensationJson = Object.keys(formData.monthly_compensation || {}).length > 0 
+        ? JSON.stringify(formData.monthly_compensation)
         : null;
       
       // Send all grid data and new fields
       const payload = {
-        ...gridData,
-        season: JSON.stringify(seasonMonths),
+        ...formData,
+        season: JSON.stringify(formData.seasonMonths),
         holidays: JSON.stringify(convertedHolidays),
-        rateStructure,
+        rateStructure: rateStructureNumber, // Send numeric value instead of string
         monthly_compensation: monthlyCompensationJson, // Convert to JSON string or null
+        // Ensure all complex objects are JSON stringified
+        monthlyPrices: JSON.stringify(formData.monthlyPrices),
+        monthlyTieredPrices: JSON.stringify(formData.monthlyTieredPrices),
+        monthlyTieredMaxLoads: JSON.stringify(formData.monthlyTieredMaxLoads),
         ...rateStructureData
       };
       
@@ -353,17 +381,15 @@ function GridConfig({ auth, user }) {
   };
 
   const handleInputChange = (field) => (event) => {
-    setGridData(prev => ({
-      ...prev,
+    updateData({
       [field]: event.target.value === '' ? '' : parseFloat(event.target.value)
-    }))
+    })
   }
 
   const handleStringInputChange = (field) => (event) => {
-    setGridData(prev => ({
-      ...prev,
+    updateData({
       [field]: event.target.value
-    }))
+    })
   }
 
   const renderStep1 = () => (
@@ -378,18 +404,17 @@ function GridConfig({ auth, user }) {
         <InputLabel id="grid-connection-label">Grid Connection</InputLabel>
         <Select
           labelId="grid-connection-label"
-          value={gridData.Grid === null ? '' : gridData.Grid}
+          value={formData.Grid === null ? '' : formData.Grid}
           onChange={(e) => {
             const isConnected = e.target.value;
-            setGridData(prev => ({
-              ...prev,
+            updateData({
               Grid: isConnected,
               // Reset NEM if grid is disconnected
-              NEM: isConnected ? prev.NEM : false,
+              NEM: isConnected ? formData.NEM : false,
               // Set default compensation option to '1:1' when grid is connected (matches old working code)
-              compensation_option: isConnected ? '1:1' : prev.compensation_option
-            }));
-            setCurrentStep(2); // Move to net metering question
+              compensation_option: isConnected ? '1:1' : formData.compensation_option,
+              currentStep: 2 // Move to net metering question
+            });
           }}
           input={<OutlinedInput label="Grid Connection" />}
         >
@@ -416,10 +441,12 @@ function GridConfig({ auth, user }) {
         <InputLabel id="compare-offgrid-label">Compare with Grid</InputLabel>
         <Select
           labelId="compare-offgrid-label"
-          value={compareOffGrid === null ? '' : compareOffGrid}
+          value={formData.compareOffGrid === null ? '' : formData.compareOffGrid}
           onChange={(e) => {
-            setCompareOffGrid(e.target.value);
-            setCurrentStep(3);
+            updateData({
+              compareOffGrid: e.target.value,
+              currentStep: 3
+            });
           }}
           input={<OutlinedInput label="Compare with Grid" />}
         >
@@ -436,7 +463,7 @@ function GridConfig({ auth, user }) {
         Net Metering
       </Typography>
       <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
-        {gridData.Grid 
+        {formData.Grid 
           ? "Does your utility offer net metering for your grid connection?"
           : "If you were connected to the grid, would your utility offer net metering?"
         }
@@ -445,24 +472,23 @@ function GridConfig({ auth, user }) {
         <InputLabel id="net-metering-label">Net Metering</InputLabel>
         <Select
           labelId="net-metering-label"
-          value={gridData.NEM === null ? '' : gridData.NEM}
+          value={formData.NEM === null ? '' : formData.NEM}
           onChange={(e) => {
-            setGridData(prev => ({
-              ...prev,
-              NEM: e.target.value
-            }));
-            setCurrentStep(3); // Move to next step (comparison question or configuration)
+            updateData({
+              NEM: e.target.value,
+              currentStep: 3 // Move to next step (comparison question or configuration)
+            });
           }}
           input={<OutlinedInput label="Net Metering" />}
         >
           <MenuItem value={true}>
-            {gridData.Grid 
+            {formData.Grid 
               ? "Yes, I have net metering"
               : "Yes, my utility would offer net metering"
             }
           </MenuItem>
           <MenuItem value={false}>
-            {gridData.Grid 
+            {formData.Grid 
               ? "No, I don't have net metering"
               : "No, my utility would not offer net metering"
             }
@@ -497,7 +523,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number"
                 placeholder="Annual Expenses*"
-                value={gridData.Annual_expenses} 
+                value={formData.Annual_expenses} 
                 onChange={handleInputChange('Annual_expenses')} 
                 variant="outlined"
                 InputProps={{
@@ -511,7 +537,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Grid Sale Tax Rate*"
-                value={gridData.Grid_sale_tax_rate} 
+                value={formData.Grid_sale_tax_rate} 
                 onChange={handleInputChange('Grid_sale_tax_rate')} 
                 variant="outlined" 
                 InputProps={{
@@ -525,7 +551,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Grid Tax Amount*"
-                value={gridData.Grid_Tax_amount} 
+                value={formData.Grid_Tax_amount} 
                 onChange={handleInputChange('Grid_Tax_amount')} 
                 variant="outlined"
                 InputProps={{
@@ -539,7 +565,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Grid Escalation Rate*"
-                value={gridData.Grid_escalation_rate} 
+                value={formData.Grid_escalation_rate} 
                 onChange={handleInputChange('Grid_escalation_rate')} 
                 variant="outlined"
                 InputProps={{
@@ -553,7 +579,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Grid Credit*"
-                value={gridData.Grid_credit} 
+                value={formData.Grid_credit} 
                 onChange={handleInputChange('Grid_credit')} 
                 variant="outlined"
                 InputProps={{
@@ -561,14 +587,14 @@ function GridConfig({ auth, user }) {
                 }}
               />
             </Box>
-            {gridData.NEM && (
+            {formData.NEM && (
             <Box>
               <Typography variant="subtitle1" component="h4" gutterBottom>Net Metering Fee</Typography>
               <TextField 
                 fullWidth 
                 type="number" 
                 placeholder="Net Metering Fee*"
-                value={gridData.NEM_fee} 
+                value={formData.NEM_fee} 
                 onChange={handleInputChange('NEM_fee')} 
                 variant="outlined"
                 InputProps={{
@@ -583,7 +609,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Grid Monthly Fixed Charge*"
-                value={gridData.SC_flat} 
+                value={formData.SC_flat} 
                 onChange={handleInputChange('SC_flat')} 
                 variant="outlined"
                 InputProps={{
@@ -608,7 +634,7 @@ function GridConfig({ auth, user }) {
                 <InputLabel id="compensation-option-label">Compensation Option</InputLabel>
                 <Select
                   labelId="compensation-option-label"
-                  value={gridData.compensation_option}
+                  value={formData.compensation_option}
                   onChange={handleStringInputChange('compensation_option')}
                   input={<OutlinedInput label="Compensation Option" />}
                 >
@@ -620,14 +646,14 @@ function GridConfig({ auth, user }) {
             </Box>
 
             {/* Flat Compensation Field */}
-            {gridData.compensation_option === 'flat' && (
+            {formData.compensation_option === 'flat' && (
               <Box>
                 <Typography variant="subtitle1" component="h4" gutterBottom>Flat Compensation</Typography>
                 <TextField
                   fullWidth
                   type="number"
                   placeholder="Enter flat compensation value"
-                  value={gridData.flat_compensation || ''}
+                  value={formData.flat_compensation || ''}
                   onChange={handleInputChange('flat_compensation')}
                   variant="outlined"
                   InputProps={{
@@ -638,7 +664,7 @@ function GridConfig({ auth, user }) {
             )}
 
             {/* Monthly Compensation Grid */}
-            {gridData.compensation_option === 'monthly' && (
+            {formData.compensation_option === 'monthly' && (
               <Box>
                 <Typography variant="subtitle1" component="h4" gutterBottom>Enter Monthly Prices:</Typography>
                 <Grid container spacing={2}>
@@ -647,16 +673,15 @@ function GridConfig({ auth, user }) {
                       <TextField
                         fullWidth
                         label={`${month} Price:`}
-                        value={gridData.monthly_compensation?.[month] || ''}
+                        value={formData.monthly_compensation?.[month] || ''}
                         onChange={(e) => {
                           const value = e.target.value;
-                          setGridData(prev => ({
-                            ...prev,
+                          updateData({
                             monthly_compensation: {
-                              ...prev.monthly_compensation,
+                              ...formData.monthly_compensation,
                               [month]: value
                             }
-                          }));
+                          });
                         }}
                         InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         placeholder={`${month} Price:`}
@@ -672,7 +697,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Purchase Capacity*"
-                value={gridData.Pbuy_max} 
+                value={formData.Pbuy_max} 
                 onChange={handleInputChange('Pbuy_max')} 
                 variant="outlined"
                 InputProps={{
@@ -686,7 +711,7 @@ function GridConfig({ auth, user }) {
                 fullWidth 
                 type="number" 
                 placeholder="Sell Capacity*"
-                value={gridData.Psell_max} 
+                value={formData.Psell_max} 
                 onChange={handleInputChange('Psell_max')} 
                 variant="outlined"
                 InputProps={{
@@ -715,8 +740,8 @@ function GridConfig({ auth, user }) {
           <Select
             labelId="season-months-label"
             multiple
-            value={seasonMonths}
-            onChange={e => setSeasonMonths(e.target.value)}
+            value={formData.seasonMonths}
+            onChange={e => updateData({ seasonMonths: e.target.value })}
             input={<OutlinedInput label="Summer Months" />}
             renderValue={selected => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -737,8 +762,8 @@ function GridConfig({ auth, user }) {
         <Box sx={{ mb: 3 }}>
           <DatePicker
             multiple
-            value={holidayDates}
-            onChange={setHolidayDates}
+            value={formData.holidayDates}
+            onChange={(dates) => updateData({ holidayDates: dates })}
             format="YYYY-MM-DD"
             placeholder="Select holiday dates"
             style={{ 
@@ -754,76 +779,76 @@ function GridConfig({ auth, user }) {
         </Box>
         
         <UtilityStructure
-          rateStructure={rateStructure}
-          setRateStructure={setRateStructure}
-          flatPrice={flatPrice}
-          setFlatPrice={setFlatPrice}
-          summerPrice={summerPrice}
-          setSummerPrice={setSummerPrice}
-          winterPrice={winterPrice}
-          setWinterPrice={setWinterPrice}
-          monthlyPrices={monthlyPrices}
-          setMonthlyPrices={setMonthlyPrices}
-          lowTierPrice={lowTierPrice}
-          setLowTierPrice={setLowTierPrice}
-          mediumTierPrice={mediumTierPrice}
-          setMediumTierPrice={setMediumTierPrice}
-          highTierPrice={highTierPrice}
-          setHighTierPrice={setHighTierPrice}
-          lowTierMaxLoad={lowTierMaxLoad}
-          setLowTierMaxLoad={setLowTierMaxLoad}
-          mediumTierMaxLoad={mediumTierMaxLoad}
-          setMediumTierMaxLoad={setMediumTierMaxLoad}
-          highTierMaxLoad={highTierMaxLoad}
-          setHighTierMaxLoad={setHighTierMaxLoad}
-          summerLowTierPrice={summerLowTierPrice}
-          setSummerLowTierPrice={setSummerLowTierPrice}
-          summerMediumTierPrice={summerMediumTierPrice}
-          setSummerMediumTierPrice={setSummerMediumTierPrice}
-          summerHighTierPrice={summerHighTierPrice}
-          setSummerHighTierPrice={setSummerHighTierPrice}
-          summerLowTierMaxLoad={summerLowTierMaxLoad}
-          setSummerLowTierMaxLoad={setSummerLowTierMaxLoad}
-          summerMediumTierMaxLoad={summerMediumTierMaxLoad}
-          setSummerMediumTierMaxLoad={setSummerMediumTierMaxLoad}
-          summerHighTierMaxLoad={summerHighTierMaxLoad}
-          setSummerHighTierMaxLoad={setSummerHighTierMaxLoad}
-          winterLowTierPrice={winterLowTierPrice}
-          setWinterLowTierPrice={setWinterLowTierPrice}
-          winterMediumTierPrice={winterMediumTierPrice}
-          setWinterMediumTierPrice={setWinterMediumTierPrice}
-          winterHighTierPrice={winterHighTierPrice}
-          setWinterHighTierPrice={setWinterHighTierPrice}
-          winterLowTierMaxLoad={winterLowTierMaxLoad}
-          setWinterLowTierMaxLoad={setWinterLowTierMaxLoad}
-          winterMediumTierMaxLoad={winterMediumTierMaxLoad}
-          setWinterMediumTierMaxLoad={setWinterMediumTierMaxLoad}
-          winterHighTierMaxLoad={winterHighTierMaxLoad}
-          setWinterHighTierMaxLoad={setWinterHighTierMaxLoad}
-          monthlyTieredPrices={monthlyTieredPrices}
-          setMonthlyTieredPrices={setMonthlyTieredPrices}
-          monthlyTieredMaxLoads={monthlyTieredMaxLoads}
-          setMonthlyTieredMaxLoads={setMonthlyTieredMaxLoads}
-          summerOnPeakPrice={summerOnPeakPrice}
-          setSummerOnPeakPrice={setSummerOnPeakPrice}
-          summerMidPeakPrice={summerMidPeakPrice}
-          setSummerMidPeakPrice={setSummerMidPeakPrice}
-          summerOffPeakPrice={summerOffPeakPrice}
-          setSummerOffPeakPrice={setSummerOffPeakPrice}
-          winterOnPeakPrice={winterOnPeakPrice}
-          setWinterOnPeakPrice={setWinterOnPeakPrice}
-          winterMidPeakPrice={winterMidPeakPrice}
-          setWinterMidPeakPrice={setWinterMidPeakPrice}
-          winterOffPeakPrice={winterOffPeakPrice}
-          setWinterOffPeakPrice={setWinterOffPeakPrice}
-          summerPeakHours={summerPeakHours}
-          setSummerPeakHours={setSummerPeakHours}
-          summerMidPeakHours={summerMidPeakHours}
-          setSummerMidPeakHours={setSummerMidPeakHours}
-          winterPeakHours={winterPeakHours}
-          setWinterPeakHours={setWinterPeakHours}
-          winterMidPeakHours={winterMidPeakHours}
-          setWinterMidPeakHours={setWinterMidPeakHours}
+          rateStructure={formData.rateStructure}
+          setRateStructure={(value) => updateData({ rateStructure: value })}
+          flatPrice={formData.flatPrice}
+          setFlatPrice={(value) => updateData({ flatPrice: value })}
+          summerPrice={formData.summerPrice}
+          setSummerPrice={(value) => updateData({ summerPrice: value })}
+          winterPrice={formData.winterPrice}
+          setWinterPrice={(value) => updateData({ winterPrice: value })}
+          monthlyPrices={formData.monthlyPrices}
+          setMonthlyPrices={(value) => updateData({ monthlyPrices: value })}
+          lowTierPrice={formData.lowTierPrice}
+          setLowTierPrice={(value) => updateData({ lowTierPrice: value })}
+          mediumTierPrice={formData.mediumTierPrice}
+          setMediumTierPrice={(value) => updateData({ mediumTierPrice: value })}
+          highTierPrice={formData.highTierPrice}
+          setHighTierPrice={(value) => updateData({ highTierPrice: value })}
+          lowTierMaxLoad={formData.lowTierMaxLoad}
+          setLowTierMaxLoad={(value) => updateData({ lowTierMaxLoad: value })}
+          mediumTierMaxLoad={formData.mediumTierMaxLoad}
+          setMediumTierMaxLoad={(value) => updateData({ mediumTierMaxLoad: value })}
+          highTierMaxLoad={formData.highTierMaxLoad}
+          setHighTierMaxLoad={(value) => updateData({ highTierMaxLoad: value })}
+          summerLowTierPrice={formData.summerLowTierPrice}
+          setSummerLowTierPrice={(value) => updateData({ summerLowTierPrice: value })}
+          summerMediumTierPrice={formData.summerMediumTierPrice}
+          setSummerMediumTierPrice={(value) => updateData({ summerMediumTierPrice: value })}
+          summerHighTierPrice={formData.summerHighTierPrice}
+          setSummerHighTierPrice={(value) => updateData({ summerHighTierPrice: value })}
+          summerLowTierMaxLoad={formData.summerLowTierMaxLoad}
+          setSummerLowTierMaxLoad={(value) => updateData({ summerLowTierMaxLoad: value })}
+          summerMediumTierMaxLoad={formData.summerMediumTierMaxLoad}
+          setSummerMediumTierMaxLoad={(value) => updateData({ summerMediumTierMaxLoad: value })}
+          summerHighTierMaxLoad={formData.summerHighTierMaxLoad}
+          setSummerHighTierMaxLoad={(value) => updateData({ summerHighTierMaxLoad: value })}
+          winterLowTierPrice={formData.winterLowTierPrice}
+          setWinterLowTierPrice={(value) => updateData({ winterLowTierPrice: value })}
+          winterMediumTierPrice={formData.winterMediumTierPrice}
+          setWinterMediumTierPrice={(value) => updateData({ winterMediumTierPrice: value })}
+          winterHighTierPrice={formData.winterHighTierPrice}
+          setWinterHighTierPrice={(value) => updateData({ winterHighTierPrice: value })}
+          winterLowTierMaxLoad={formData.winterLowTierMaxLoad}
+          setWinterLowTierMaxLoad={(value) => updateData({ winterLowTierMaxLoad: value })}
+          winterMediumTierMaxLoad={formData.winterMediumTierMaxLoad}
+          setWinterMediumTierMaxLoad={(value) => updateData({ winterMediumTierMaxLoad: value })}
+          winterHighTierMaxLoad={formData.winterHighTierMaxLoad}
+          setWinterHighTierMaxLoad={(value) => updateData({ winterHighTierMaxLoad: value })}
+          monthlyTieredPrices={formData.monthlyTieredPrices}
+          setMonthlyTieredPrices={(value) => updateData({ monthlyTieredPrices: value })}
+          monthlyTieredMaxLoads={formData.monthlyTieredMaxLoads}
+          setMonthlyTieredMaxLoads={(value) => updateData({ monthlyTieredMaxLoads: value })}
+          summerOnPeakPrice={formData.summerOnPeakPrice}
+          setSummerOnPeakPrice={(value) => updateData({ summerOnPeakPrice: value })}
+          summerMidPeakPrice={formData.summerMidPeakPrice}
+          setSummerMidPeakPrice={(value) => updateData({ summerMidPeakPrice: value })}
+          summerOffPeakPrice={formData.summerOffPeakPrice}
+          setSummerOffPeakPrice={(value) => updateData({ summerOffPeakPrice: value })}
+          winterOnPeakPrice={formData.winterOnPeakPrice}
+          setWinterOnPeakPrice={(value) => updateData({ winterOnPeakPrice: value })}
+          winterMidPeakPrice={formData.winterMidPeakPrice}
+          setWinterMidPeakPrice={(value) => updateData({ winterMidPeakPrice: value })}
+          winterOffPeakPrice={formData.winterOffPeakPrice}
+          setWinterOffPeakPrice={(value) => updateData({ winterOffPeakPrice: value })}
+          summerPeakHours={formData.summerPeakHours}
+          setSummerPeakHours={(value) => updateData({ summerPeakHours: value })}
+          summerMidPeakHours={formData.summerMidPeakHours}
+          setSummerMidPeakHours={(value) => updateData({ summerMidPeakHours: value })}
+          winterPeakHours={formData.winterPeakHours}
+          setWinterPeakHours={(value) => updateData({ winterPeakHours: value })}
+          winterMidPeakHours={formData.winterMidPeakHours}
+          setWinterMidPeakHours={(value) => updateData({ winterMidPeakHours: value })}
         />
       </Box>
     );
@@ -846,17 +871,17 @@ function GridConfig({ auth, user }) {
         {renderStep1()}
 
         {/* Step 2: If grid is connected, ask about net metering. If not, ask about comparison */}
-        {currentStep >= 2 && (
-          gridData.Grid === true
+        {formData.currentStep >= 2 && (
+          formData.Grid === true
             ? renderStep2() // Net Metering
             : renderOffGridCompareQuestion() // Off-grid comparison
         )}
 
         {/* Show grid parameter fields if grid is connected and both questions are answered, or if off-grid and user wants to compare */}
-        {((gridData.Grid === true && currentStep >= 3) || (gridData.Grid === false && currentStep >= 3 && compareOffGrid === true)) && renderStep3()}
+        {((formData.Grid === true && formData.currentStep >= 3) || (formData.Grid === false && formData.currentStep >= 3 && formData.compareOffGrid === true)) && renderStep3()}
 
         {/* Always show summer months, holidays, and rate structure after grid params if grid params are shown */}
-        {((gridData.Grid === true && currentStep >= 3) || (gridData.Grid === false && currentStep >= 3 && compareOffGrid === true)) && renderOffGridExtras()}
+        {((formData.Grid === true && formData.currentStep >= 3) || (formData.Grid === false && formData.currentStep >= 3 && formData.compareOffGrid === true)) && renderOffGridExtras()}
 
         {/* Save Button */}
         <Box sx={{ mb: 4 }}>
@@ -870,9 +895,9 @@ function GridConfig({ auth, user }) {
           />
           {!isFormValid() && (
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
-              {!gridData.Grid && currentStep < 3 
+              {!formData.Grid && formData.currentStep < 3 
                 ? "Please answer both questions to continue"
-                : (gridData.Grid || (!gridData.Grid && compareOffGrid === true))
+                : (formData.Grid || (!formData.Grid && formData.compareOffGrid === true))
                 ? "Please fill in all required fields to continue"
                 : "Please make a selection to continue"
               }
