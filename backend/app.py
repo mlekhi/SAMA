@@ -222,6 +222,228 @@ def get_component_selection():
         'Bat': system_config.Bat
     })
 
+# Data loading endpoints for editing capabilities
+@app.route('/api/geography', methods=['GET'])
+@require_auth
+def get_geography():
+    user_id = request.user['uid']
+    geo_econ = GeographyEconomy.query.get(user_id)
+    if not geo_econ:
+        return jsonify({'error': 'No geography data found'}), 404
+    return jsonify({
+        'n_ir_rate': geo_econ.n_ir_rate,
+        'e_ir_rate': geo_econ.e_ir_rate,
+        'Tax_rate': geo_econ.Tax_rate,
+        'RE_incentives_rate': geo_econ.RE_incentives_rate
+    })
+
+@app.route('/api/optimization', methods=['GET'])
+@require_auth
+def get_optimization():
+    user_id = request.user['uid']
+    opt = Optimization.query.get(user_id)
+    if not opt:
+        return jsonify({'error': 'No optimization data found'}), 404
+    return jsonify({
+        'MaxIt': opt.MaxIt,
+        'nPop': opt.nPop,
+        'w': opt.w,
+        'wdamp': opt.wdamp,
+        'c1': opt.c1,
+        'c2': opt.c2
+    })
+
+@app.route('/api/system-config', methods=['GET'])
+@require_auth
+def get_system_config():
+    user_id = request.user['uid']
+    sys_config = SystemConfig.query.get(user_id)
+    if not sys_config:
+        return jsonify({'error': 'No system config found'}), 404
+    return jsonify({
+        'lifetime': sys_config.lifetime,
+        'LPSP_max_rate': sys_config.LPSP_max_rate,
+        'RE_min_rate': sys_config.RE_min_rate,
+        'PV': sys_config.PV,
+        'WT': sys_config.WT,
+        'DG': sys_config.DG,
+        'Bat': sys_config.Bat,
+        'consumption_data_source': sys_config.consumption_data_source,
+        'annualData': sys_config.annualData,
+        'hourly_consumption': sys_config.hourly_consumption,
+        'monthly_consumption': sys_config.monthly_consumption
+    })
+
+@app.route('/api/pv-config', methods=['GET'])
+@require_auth
+def get_pv_config():
+    user_id = request.user['uid']
+    pv_system = PhotovoltaicSystem.query.get(user_id)
+    if not pv_system:
+        return jsonify({'error': 'No PV data found'}), 404
+    return jsonify({
+        'fpv': pv_system.fpv,
+        'Tcof': pv_system.Tcof,
+        'Tref': pv_system.Tref,
+        'Tc_noct': pv_system.Tc_noct,
+        'Ta_noct': pv_system.Ta_noct,
+        'G_noct': pv_system.G_noct,
+        'n_PV': pv_system.n_PV,
+        'Gref': pv_system.Gref,
+        'L_PV': pv_system.L_PV,
+        'C_PV': pv_system.C_PV,
+        'R_PV': pv_system.R_PV,
+        'MO_PV': pv_system.MO_PV,
+        'Installation_cost': pv_system.Installation_cost,
+        'Overhead': pv_system.Overhead,
+        'Sales_and_marketing': pv_system.Sales_and_marketing,
+        'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
+        'Electrical_BoS': pv_system.Electrical_BoS,
+        'Structural_BoS': pv_system.Structural_BoS,
+        'Supply_Chain_costs': pv_system.Supply_Chain_costs,
+        'Profit_costs': pv_system.Profit_costs,
+        'Sales_tax': pv_system.Sales_tax
+    })
+
+@app.route('/api/inverter', methods=['GET'])
+@require_auth
+def get_inverter():
+    user_id = request.user['uid']
+    inverter = Inverter.query.get(user_id)
+    if not inverter:
+        return jsonify({'error': 'No inverter data found'}), 404
+    return jsonify({
+        'n_I': inverter.n_I,
+        'L_I': inverter.L_I,
+        'DC_AC_ratio': inverter.DC_AC_ratio,
+        'C_I': inverter.C_I,
+        'R_I': inverter.R_I,
+        'MO_I': inverter.MO_I
+    })
+
+@app.route('/api/dg-config', methods=['GET'])
+@require_auth
+def get_diesel_config():
+    user_id = request.user['uid']
+    diesel = DieselGenerator.query.get(user_id)
+    if not diesel:
+        return jsonify({'error': 'No diesel generator data found'}), 404
+    return jsonify({
+        'a': diesel.a,
+        'b': diesel.b,
+        'min_load_ratio': diesel.min_load_ratio,
+        'C_DG': diesel.C_DG,
+        'R_DG': diesel.R_DG,
+        'MO_DG': diesel.MO_DG,
+        'C_fuel': diesel.C_fuel,
+        'C_fuel_adj_rate': diesel.C_fuel_adj_rate,
+        'diesel_lifetime': diesel.diesel_lifetime
+    })
+
+@app.route('/api/battery-config', methods=['GET'])
+@require_auth
+def get_battery_config():
+    user_id = request.user['uid']
+    battery = Battery.query.get(user_id)
+    if not battery:
+        return jsonify({'error': 'No battery data found'}), 404
+    return jsonify({
+        'Lead_acid': battery.Lead_acid,
+        'Li_ion': battery.Li_ion,
+        'SOC_min': battery.SOC_min,
+        'SOC_max': battery.SOC_max,
+        'SOC_initial': battery.SOC_initial,
+        'self_discharge_rate': battery.self_discharge_rate,
+        'L_B': battery.L_B,
+        'Cnom_Leadacid': battery.Cnom_Leadacid,
+        'alfa_battery_leadacid': battery.alfa_battery_leadacid,
+        'c': battery.c,
+        'k': battery.k,
+        'Ich_max_leadacid': battery.Ich_max_leadacid,
+        'Vnom_leadacid': battery.Vnom_leadacid,
+        'ef_bat_leadacid': battery.ef_bat_leadacid,
+        'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
+        'Ich_max_Li_ion': battery.Ich_max_Li_ion,
+        'Idch_max_Li_ion': battery.Idch_max_Li_ion,
+        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion,
+        'Vnom_Li_ion': battery.Vnom_Li_ion,
+        'ef_bat_Li': battery.ef_bat_Li,
+        'Cnom_Li': battery.Cnom_Li,
+        'Q_lifetime_Li': battery.Q_lifetime_Li,
+        'L_B_Li': battery.L_B_Li,
+        'C_B': battery.C_B,
+        'R_B': battery.R_B,
+        'MO_B': battery.MO_B
+    })
+
+@app.route('/api/wind-config', methods=['GET'])
+@require_auth
+def get_wind_config():
+    user_id = request.user['uid']
+    wind = WindTurbine.query.get(user_id)
+    if not wind:
+        return jsonify({'error': 'No wind turbine data found'}), 404
+    return jsonify({
+        'Pwt_r': wind.Pwt_r,
+        'h_hub': wind.h_hub,
+        'h0': wind.h0,
+        'nw': wind.nw,
+        'v_cut_out': wind.v_cut_out,
+        'v_cut_in': wind.v_cut_in,
+        'v_rated': wind.v_rated,
+        'alfa_wind_turbine': wind.alfa_wind_turbine,
+        'L_WT': wind.L_WT,
+        'C_WT': wind.C_WT,
+        'R_WT': wind.R_WT,
+        'MO_WT': wind.MO_WT,
+        'Weibull_k': wind.Weibull_k,
+        'Weibull_c': wind.Weibull_c,
+        'Wind_speed': wind.Wind_speed
+    })
+
+@app.route('/api/grid', methods=['GET'])
+@require_auth
+def get_grid_config():
+    user_id = request.user['uid']
+    grid = Grid.query.get(user_id)
+    if not grid:
+        return jsonify({'error': 'No grid data found'}), 404
+    return jsonify({
+        'Grid': grid.Grid,
+        'NEM': grid.NEM,
+        'Annual_expenses': grid.Annual_expenses,
+        'Grid_sale_tax_rate': grid.Grid_sale_tax_rate,
+        'Grid_Tax_amount': grid.Grid_Tax_amount,
+        'Grid_escalation_rate': grid.Grid_escalation_rate,
+        'Grid_credit': grid.Grid_credit,
+        'NEM_fee': grid.NEM_fee,
+        'SC_flat': grid.SC_flat,
+        'Pbuy_max': grid.Pbuy_max,
+        'Psell_max': grid.Psell_max,
+        'compensation_option': grid.compensation_option,
+        'flat_compensation': grid.flat_compensation,
+        'monthly_compensation': grid.monthly_compensation,
+        'season': grid.season,
+        'holidays': grid.holidays,
+        'rateStructure': grid.rateStructure,
+        'flatPrice': grid.flatPrice,
+        'seasonalPrices': grid.seasonalPrices,
+        'monthlyPrices': grid.monthlyPrices,
+        'tieredPrices': grid.tieredPrices,
+        'tierMax': grid.tierMax,
+        'seasonalTieredPrices': grid.seasonalTieredPrices,
+        'seasonalTierMax': grid.seasonalTierMax,
+        'monthlyTieredPrices': grid.monthlyTieredPrices,
+        'monthlyTierLimits': grid.monthlyTierLimits,
+        'onPrice': grid.onPrice,
+        'midPrice': grid.midPrice,
+        'offPrice': grid.offPrice,
+        'onHours': grid.onHours,
+        'midHours': grid.midHours,
+        'onPeakPrice': grid.onPeakPrice,
+        'midPeakPrice': grid.midPeakPrice
+    })
+
 @app.route('/api/system-config', methods=['POST'])
 @require_auth
 @log_function_input
@@ -498,8 +720,8 @@ class InData(OriginalInputData):
         if sys_config:
             self.WT = sys_config.WT
             self.n = sys_config.lifetime
-            self.LPSP_max = sys_config.LPSP_max_rate / 100
-            self.RE_min = sys_config.RE_min_rate / 100
+            self.LPSP_max = sys_config.LPSP_max_rate
+            self.RE_min = sys_config.RE_min_rate
             self.PV = sys_config.PV
             self.Bat = sys_config.Bat
             self.DG = sys_config.DG
