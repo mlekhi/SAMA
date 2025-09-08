@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Divider, Button, InputAdornment } from '@mu
 import SaveMessageAlert from '../../components/SaveMessageAlert';
 import { useNavigate } from 'react-router-dom';
 import NextPageButton from '../../components/NextPageButton';
+import { useFormData } from '../../hooks/useFormData';
 
 const defaultValues = {
   fpv: 0.9,
@@ -32,13 +33,17 @@ const defaultValues = {
 };
 
 function PV({ auth, user }) {
-  const [pvData, setPvData] = useState(defaultValues);
+  const {
+    data: pvData,
+    updateData
+  } = useFormData('pv-config', defaultValues);
+  
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => {
-    setPvData(prev => ({ ...prev, [field]: event.target.value }));
+    updateData({ [field]: event.target.value });
   };
 
   const handleSave = async () => {
