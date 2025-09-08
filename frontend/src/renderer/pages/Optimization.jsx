@@ -7,12 +7,16 @@ import {
   Box,
   TextField
 } from "@mui/material"
+import { useFormData } from '../hooks/useFormData'
 
 function Optimization({ auth, user }) {
   const navigate = useNavigate()
-  const [saving, setSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
-  const [optimizationSettings, setOptimizationSettings] = useState({
+  
+  // Use the simple data persistence hook
+  const {
+    data: optimizationSettings,
+    updateData
+  } = useFormData('optimization', {
     maxIterations: 200,
     populationSize: 50,
     inertiaWeight: 1,
@@ -20,6 +24,9 @@ function Optimization({ auth, user }) {
     personalLearningCoeff: 2.0,
     globalLearningCoeff: 2.0
   })
+  
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   const isFormValid = () => {
     return (
@@ -66,10 +73,9 @@ function Optimization({ auth, user }) {
   }
 
   const handleSettingChange = (setting) => (event) => {
-    setOptimizationSettings(prev => ({
-      ...prev,
-      [setting]: event.target.value
-    }))
+    updateData({
+      [setting]: event.target.value === '' ? '' : parseFloat(event.target.value)
+    })
   }
 
   return (
