@@ -844,7 +844,7 @@ class InData(OriginalInputData):
                     except (json.JSONDecodeError, TypeError) as e:
                         logger.error(f"Error parsing monthlyPrices: {e}")
                         self.monthlyPrices = None
-                elif grid.rateStructure == 'tiered':
+                elif grid.rateStructure == 4:
                     if grid.tieredPrices:
                         try:
                             if isinstance(grid.tieredPrices, str):
