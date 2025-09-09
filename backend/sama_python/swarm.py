@@ -64,7 +64,7 @@ class Swarm:
             particle_velocities = np.zeros((nPop, self.nVar))
 
             # Evaluate costs per initial particle
-            particle_costs = np.apply_along_axis(lambda x: cost_function(x), 1, particle_positions)
+            particle_costs = np.apply_along_axis(lambda x: cost_function(x, data), 1, particle_positions)
             particle_personal_best_cost = deepcopy(particle_costs)
 
             # Determine global best
@@ -99,7 +99,7 @@ class Swarm:
                     particle_positions[i] = np.minimum(np.maximum(particle_positions[i], self.VarMin), self.VarMax)
 
                     # Evaluation
-                    particle_costs[i] = cost_function(particle_positions[i])
+                    particle_costs[i] = cost_function(particle_positions[i], data)
 
                     # Update Personal Best
                     if particle_costs[i] < particle_personal_best_cost[i]:
@@ -131,6 +131,11 @@ class Swarm:
         Best= [self.solution_best_costs[t] for t in range(len(self.solution_best_positions))]
         index = np.argmin(Best)
         X = self.solution_best_positions[index]
+        
+        # Debug: Print final Best_Cost for validation
+        print(f"Final Best_Cost from optimization: {global_best_cost}")
+        print(f"Final Best_Cost from solution: {self.solution_best_costs[index]}")
+        print(f"Best_Cost / 100: {global_best_cost / 100}")
 
         # Run Results file
 
