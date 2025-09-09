@@ -224,8 +224,3 @@ class WindTurbine(db.Model):
     C_WT = db.Column(db.Float, nullable=False)  # Capital cost of Wind Turbine ($/kW)
     R_WT = db.Column(db.Float, nullable=False)  # Replacement cost of Wind Turbine ($/kW)
     MO_WT = db.Column(db.Float, nullable=False)  # O&M cost of Wind Turbine ($/year/kw)
-    
-    # Wind Resource Parameters
-    Weibull_k = db.Column(db.Float, nullable=False)  # Weibull shape parameter
-    Weibull_c = db.Column(db.Float, nullable=False)  # Weibull scale parameter (m/s)
-    Wind_speed = db.Column(db.Float, nullable=False)  # Average wind speed (m/s)

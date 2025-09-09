@@ -441,9 +441,6 @@ def get_wind_config():
         'C_WT': wind.C_WT,
         'R_WT': wind.R_WT,
         'MO_WT': wind.MO_WT,
-        'Weibull_k': wind.Weibull_k,
-        'Weibull_c': wind.Weibull_c,
-        'Wind_speed': wind.Wind_speed
     })
 
 @app.route('/api/grid', methods=['GET'])
@@ -715,13 +712,13 @@ def save_wind_config():
             db.session.add(wind)
         for field in [
             'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT', 'Weibull_k', 'Weibull_c', 'Wind_speed']:
+            'C_WT', 'R_WT', 'MO_WT']:
             if field in data:
                 setattr(wind, field, data[field])
         db.session.commit()
         return jsonify({field: getattr(wind, field) for field in [
             'user_id', 'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT', 'Weibull_k', 'Weibull_c', 'Wind_speed']}), 200
+            'C_WT', 'R_WT', 'MO_WT']}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1050,9 +1047,6 @@ class InData(OriginalInputData):
             self.C_WT = wind.C_WT
             self.R_WT = wind.R_WT
             self.MO_WT = wind.MO_WT
-            self.Weibull_k = wind.Weibull_k
-            self.Weibull_c = wind.Weibull_c
-            self.Wind_speed = wind.Wind_speed
 
         # --- GeographyEconomy ---
         if geo_econ:

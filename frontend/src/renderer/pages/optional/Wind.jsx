@@ -21,12 +21,7 @@ const defaultValues = {
   C_WT: 1200,          // Capital cost of Wind Turbine ($/kW)
   R_WT: 1200,          // Replacement cost of Wind Turbine ($/kW)
   MO_WT: 40,           // O&M cost of Wind Turbine ($/year/kw)
-  
-  // Wind Resource Parameters
-  Weibull_k: 2,        // Weibull shape parameter
-  Weibull_c: 7,        // Weibull scale parameter (m/s)
-  Wind_speed: 7        // Average wind speed (m/s)
-};
+  };
 
 function Wind({ auth, user }) {
   const {
@@ -182,29 +177,7 @@ function Wind({ auth, user }) {
             InputProps={{ endAdornment: <InputAdornment position="end">$/kW/year</InputAdornment> }} 
           />
         </Box>
-        
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="h5" gutterBottom>Wind Resource Parameters</Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField 
-            label="Weibull shape parameter (k)" 
-            value={windData.Weibull_k} 
-            onChange={handleChange('Weibull_k')} 
-          />
-          <TextField 
-            label="Weibull scale parameter (c)" 
-            value={windData.Weibull_c} 
-            onChange={handleChange('Weibull_c')} 
-            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-          />
-          <TextField 
-            label="Average wind speed" 
-            value={windData.Wind_speed} 
-            onChange={handleChange('Wind_speed')} 
-            InputProps={{ endAdornment: <InputAdornment position="end">m/s</InputAdornment> }} 
-          />
-        </Box>
-        
+                
         <Box sx={{ mt: 4 }}>
           <SaveMessageAlert message={saveMessage} />
           <NextPageButton
