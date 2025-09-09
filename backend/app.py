@@ -741,22 +741,14 @@ class InData(OriginalInputData):
         geo_econ = GeographyEconomy.query.get(self.user_id)
         opt = Optimization.query.get(self.user_id)
         sys_config = SystemConfig.query.get(self.user_id)
-        pv_system = PhotovoltaicSystem.query.get(self.user_id)
-        inverter = Inverter.query.get(self.user_id)
-        diesel = DieselGenerator.query.get(self.user_id)
-        battery = Battery.query.get(self.user_id)
-        wind = WindTurbine.query.get(self.user_id)
         grid = Grid.query.get(self.user_id)
 
-        logger.info(f"Loading user data for user_id: {self.user_id}")
-        logger.info(f"sys_config exists: {sys_config is not None}")
-        logger.info(f"pv_system exists: {pv_system is not None}")
-        logger.info(f"inverter exists: {inverter is not None}")
-        logger.info(f"diesel exists: {diesel is not None}")
-        logger.info(f"battery exists: {battery is not None}")
-        logger.info(f"wind exists: {wind is not None}")
-        logger.info(f"grid exists: {grid is not None}")
-        logger.info(f"weather_url: {self.weather_url}")
+        # Initialize component data as None
+        pv_system = None
+        diesel = None
+        battery = None
+        wind = None
+        inverter = None
 
         # --- SystemConfig ---
         if sys_config:
@@ -768,6 +760,23 @@ class InData(OriginalInputData):
             self.Bat = sys_config.Bat
             self.DG = sys_config.DG
             
+            # Load component data only if enabled in SystemConfig
+            if self.PV:
+                pv_system = PhotovoltaicSystem.query.get(self.user_id)
+                inverter = Inverter.query.get(self.user_id)
+            
+            if self.WT:
+                wind = WindTurbine.query.get(self.user_id)
+                inverter = Inverter.query.get(self.user_id)
+            
+            if self.DG:
+                diesel = DieselGenerator.query.get(self.user_id)
+                inverter = Inverter.query.get(self.user_id)
+            
+            if self.Bat:
+                battery = Battery.query.get(self.user_id)
+                inverter = Inverter.query.get(self.user_id)
+                    
             # Load consumption data from database JSON fields
             if sys_config.consumption_data_source:
                 if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
@@ -1074,6 +1083,20 @@ class InData(OriginalInputData):
         logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
         logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
         logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
+        
+        # Component loading status
+        logger.info(f"\n=== COMPONENT LOADING STATUS ===")
+        if pv_system:
+            logger.info(f"  PV enabled - pv_system exists: {pv_system is not None}")
+        if inverter:
+            logger.info(f"  PV enabled - inverter exists: {inverter is not None}")
+        if wind:
+            logger.info(f"  WT enabled - wind exists: {wind is not None}")
+        if diesel:
+            logger.info(f"  DG enabled - diesel exists: {diesel is not None}")
+        if battery:
+            logger.info(f"  Battery enabled - battery exists: {battery is not None}")
+        logger.info(f"=== END COMPONENT LOADING STATUS ===\n")
         
         # Comprehensive fitness function values check
         logger.info(f"\n=== COMPREHENSIVE FITNESS VALUES CHECK ===")
