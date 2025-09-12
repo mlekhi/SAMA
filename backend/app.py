@@ -12,13 +12,13 @@ from types import SimpleNamespace
 import numpy as np
 from sama_python.generic_load import generic_load
 from math import ceil
-from sama_python.Input_Data import Input_Data as OriginalInputData
 import glob
 from sama_python.pso import run as pso_run
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import calendar
 import requests
+from tmp import log_function_input
 import csv
 
 NSRDB_API_KEY = os.environ.get('NSRDB_API_KEY')
@@ -60,32 +60,6 @@ with open('firebase_service_account.json') as f:
 
 cred = credentials.Certificate(service_account)
 firebase_app = initialize_app(cred)
-
-# Logging decorator to show function inputs
-# GET RID OF LATER!!!!
-def log_function_input(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        func_name = f.__name__
-        logger.info(f"=== {func_name} called ===")
-        logger.info(f"Args: {args}")
-        logger.info(f"Kwargs: {kwargs}")
-        
-        # Log request data if it's a Flask request
-        if hasattr(request, 'get_json'):
-            try:
-                request_data = request.get_json()
-                logger.info(f"Request JSON: {request_data}")
-            except:
-                logger.info("No JSON data in request")
-        
-        if hasattr(request, 'headers'):
-            logger.info(f"Headers: {dict(request.headers)}")
-        
-        result = f(*args, **kwargs)
-        logger.info(f"=== {func_name} completed ===")
-        return result
-    return decorated_function
 
 # Authentication decorator
 def require_auth(f):
@@ -722,19 +696,7 @@ def save_wind_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-class InData(OriginalInputData):
-    def __init__(self, user_id):
-        # Set user_id first
-        self.user_id = user_id
-        
-        # Override weather_url before calling parent __init__ to ensure correct file is used
-        self.weather_url = f'../backend/sama_python/output/{self.user_id}/data/METEO.csv'
-        
-        # Initialize the original Input_Data class (this will use our weather_url)
-        super().__init__()
-        
-        # Now override other values that come from the database
-        self.load_user_data()
+# InData class removed - replaced with load_user_data_for_optimization function
 
     def load_user_data(self):
         # Load data from database
@@ -1206,6 +1168,36 @@ class InData(OriginalInputData):
         logger.info(f"  NEM: {getattr(self, 'NEM', 'MISSING')}")
         logger.info(f"  NEM_fee: {getattr(self, 'NEM_fee', 'MISSING')}")
         
+        # Rate structure parameters
+        logger.info(f"  rateStructure: {getattr(self, 'rateStructure', 'MISSING')}")
+        logger.info(f"  flatPrice: {getattr(self, 'flatPrice', 'MISSING')}")
+        logger.info(f"  seasonalPrices: {getattr(self, 'seasonalPrices', 'MISSING')}")
+        logger.info(f"  monthlyPrices: {getattr(self, 'monthlyPrices', 'MISSING')}")
+        logger.info(f"  tieredPrices: {getattr(self, 'tieredPrices', 'MISSING')}")
+        logger.info(f"  tierMax: {getattr(self, 'tierMax', 'MISSING')}")
+        logger.info(f"  seasonalTieredPrices: {getattr(self, 'seasonalTieredPrices', 'MISSING')}")
+        logger.info(f"  seasonalTierMax: {getattr(self, 'seasonalTierMax', 'MISSING')}")
+        logger.info(f"  monthlyTieredPrices: {getattr(self, 'monthlyTieredPrices', 'MISSING')}")
+        logger.info(f"  monthlyTierLimits: {getattr(self, 'monthlyTierLimits', 'MISSING')}")
+        logger.info(f"  onPrice: {getattr(self, 'onPrice', 'MISSING')}")
+        logger.info(f"  midPrice: {getattr(self, 'midPrice', 'MISSING')}")
+        logger.info(f"  offPrice: {getattr(self, 'offPrice', 'MISSING')}")
+        logger.info(f"  onHours: {getattr(self, 'onHours', 'MISSING')}")
+        logger.info(f"  midHours: {getattr(self, 'midHours', 'MISSING')}")
+        logger.info(f"  onPeakPrice: {getattr(self, 'onPeakPrice', 'MISSING')}")
+        logger.info(f"  midPeakPrice: {getattr(self, 'midPeakPrice', 'MISSING')}")
+        
+        # Compensation parameters
+        logger.info(f"  compensation_option: {getattr(self, 'compensation_option', 'MISSING')}")
+        logger.info(f"  flat_compensation: {getattr(self, 'flat_compensation', 'MISSING')}")
+        logger.info(f"  monthly_compensation: {getattr(self, 'monthly_compensation', 'MISSING')}")
+        logger.info(f"  monthlysellprices: {getattr(self, 'monthlysellprices', 'MISSING')}")
+        logger.info(f"  sellStructure: {getattr(self, 'sellStructure', 'MISSING')}")
+        
+        # Season and holidays
+        logger.info(f"  season: {getattr(self, 'season', 'MISSING')}")
+        logger.info(f"  holidays: {getattr(self, 'holidays', 'MISSING')}")
+        
         # Battery type flags
         logger.info(f"  Lead_acid: {getattr(self, 'Lead_acid', 'MISSING')}")
         logger.info(f"  Li_ion: {getattr(self, 'Li_ion', 'MISSING')}")
@@ -1239,9 +1231,6 @@ def submit_results():
     try:
         user_id = request.user['uid']
         
-        # Load user data
-        in_data = InData(user_id)
-                
         # Call PSO optimizer and get comprehensive results
         result = pso_run(in_data, user_id)
         
