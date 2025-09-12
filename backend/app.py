@@ -5,7 +5,6 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, WindTurbine
 from config import Config
 import pandas as pd
 from types import SimpleNamespace
@@ -20,6 +19,13 @@ import calendar
 import requests
 from tmp import log_function_input
 import csv
+
+from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, WindTurbine
+from functions.system_config_functions import get_system_config, save_system_config
+from functions.component_functions import get_pv_config, save_pv_config, get_inverter, save_inverter_config, get_diesel_config, save_dg_config, get_battery_config, save_battery_config, get_wind_config, save_wind_config
+from functions.grid_functions import get_grid_config, save_grid
+from functions.optimization_functions import get_optimization, save_optimization
+from functions.geography_functions import get_geography, save_geography_economy
 
 NSRDB_API_KEY = os.environ.get('NSRDB_API_KEY')
 NSRDB_EMAIL = os.environ.get('NSRDB_EMAIL')
@@ -119,68 +125,14 @@ def fetch_and_save_meteo_csv(user_id, latitude, longitude):
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
 @log_function_input
-def save_geography_economy():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        if isinstance(data, str):
-            data = json.loads(data)
-        
-        # Check if record exists
-        geo_economy = GeographyEconomy.query.get(user_id)
-        if not geo_economy:
-            geo_economy = GeographyEconomy(user_id=user_id)
-            db.session.add(geo_economy)
-        
-        logger.info(f"Type of geo_economy: {type(geo_economy)}")
-        logger.info(f"Type of data: {type(data)}")
-
-        # Update fields
-        geo_economy.latitude = data.get('latitude')
-        geo_economy.longitude = data.get('longitude')
-        geo_economy.address = data.get('address')
-        geo_economy.n_ir_rate = data.get('n_ir_rate')
-        geo_economy.e_ir_rate = data.get('e_ir_rate')
-        geo_economy.Tax_rate = data.get('Tax_rate')
-        geo_economy.RE_incentives_rate = data.get('RE_incentives_rate')
-        
-        db.session.commit()
-
-        # Fetch and save METEO.csv
-        fetch_and_save_meteo_csv(user_id, geo_economy.latitude, geo_economy.longitude)
-
-        return jsonify({'id': geo_economy.user_id, 'message': 'Geography and economy data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving geography economy data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_geography_economy_endpoint():
+    return save_geography_economy()
 
 @app.route('/api/optimization', methods=['POST'])
 @require_auth
 @log_function_input
-def save_optimization():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        
-        # Check if record exists
-        optimization = Optimization.query.get(user_id)
-        if not optimization:
-            optimization = Optimization(user_id=user_id)
-            db.session.add(optimization)
-        
-        # Update fields
-        optimization.MaxIt = data.get('maxIterations')
-        optimization.nPop = data.get('populationSize')
-        optimization.w = data.get('inertiaWeight')
-        optimization.wdamp = data.get('inertiaWeightDamping')
-        optimization.c1 = data.get('personalLearningCoeff')
-        optimization.c2 = data.get('globalLearningCoeff')
-        
-        db.session.commit()
-        return jsonify({'id': optimization.user_id, 'message': 'Optimization data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving optimization data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_optimization_endpoint():
+    return save_optimization()
 
 @app.route('/api/component-selection', methods=['GET'])
 @require_auth
@@ -244,985 +196,617 @@ def get_component_selection():
 # Data loading endpoints for editing capabilities
 @app.route('/api/geography', methods=['GET'])
 @require_auth
-def get_geography():
-    user_id = request.user['uid']
-    geo_econ = GeographyEconomy.query.get(user_id)
-    if not geo_econ:
-        return jsonify({'error': 'No geography data found'}), 404
-    return jsonify({
-        'n_ir_rate': geo_econ.n_ir_rate,
-        'e_ir_rate': geo_econ.e_ir_rate,
-        'Tax_rate': geo_econ.Tax_rate,
-        'RE_incentives_rate': geo_econ.RE_incentives_rate
-    })
+def get_geography_endpoint():
+    return get_geography()
 
 @app.route('/api/optimization', methods=['GET'])
 @require_auth
-def get_optimization():
-    user_id = request.user['uid']
-    opt = Optimization.query.get(user_id)
-    if not opt:
-        return jsonify({'error': 'No optimization data found'}), 404
-    return jsonify({
-        'MaxIt': opt.MaxIt,
-        'nPop': opt.nPop,
-        'w': opt.w,
-        'wdamp': opt.wdamp,
-        'c1': opt.c1,
-        'c2': opt.c2
-    })
+def get_optimization_endpoint():
+    return get_optimization()
 
 @app.route('/api/system-config', methods=['GET'])
 @require_auth
-def get_system_config():
-    user_id = request.user['uid']
-    sys_config = SystemConfig.query.get(user_id)
-    if not sys_config:
-        return jsonify({'error': 'No system config found'}), 404
-    return jsonify({
-        'lifetime': sys_config.lifetime,
-        'LPSP_max_rate': sys_config.LPSP_max_rate,
-        'RE_min_rate': sys_config.RE_min_rate,
-        'PV': sys_config.PV,
-        'WT': sys_config.WT,
-        'DG': sys_config.DG,
-        'Bat': sys_config.Bat,
-        'consumption_data_source': sys_config.consumption_data_source,
-        'annualData': sys_config.annualData,
-        'hourly_consumption': sys_config.hourly_consumption,
-        'monthly_consumption': sys_config.monthly_consumption
-    })
+def get_system_config_endpoint():
+    return get_system_config()
 
 @app.route('/api/pv-config', methods=['GET'])
 @require_auth
-def get_pv_config():
-    user_id = request.user['uid']
-    pv_system = PhotovoltaicSystem.query.get(user_id)
-    if not pv_system:
-        return jsonify({'error': 'No PV data found'}), 404
-    return jsonify({
-        'fpv': pv_system.fpv,
-        'Tcof': pv_system.Tcof,
-        'Tref': pv_system.Tref,
-        'Tc_noct': pv_system.Tc_noct,
-        'Ta_noct': pv_system.Ta_noct,
-        'G_noct': pv_system.G_noct,
-        'n_PV': pv_system.n_PV,
-        'Gref': pv_system.Gref,
-        'L_PV': pv_system.L_PV,
-        'C_PV': pv_system.C_PV,
-        'R_PV': pv_system.R_PV,
-        'MO_PV': pv_system.MO_PV,
-        'Installation_cost': pv_system.Installation_cost,
-        'Overhead': pv_system.Overhead,
-        'Sales_and_marketing': pv_system.Sales_and_marketing,
-        'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
-        'Electrical_BoS': pv_system.Electrical_BoS,
-        'Structural_BoS': pv_system.Structural_BoS,
-        'Supply_Chain_costs': pv_system.Supply_Chain_costs,
-        'Profit_costs': pv_system.Profit_costs,
-        'Sales_tax': pv_system.Sales_tax
-    })
+def get_pv_config_endpoint():
+    return get_pv_config()
 
 @app.route('/api/inverter', methods=['GET'])
 @require_auth
-def get_inverter():
-    user_id = request.user['uid']
-    inverter = Inverter.query.get(user_id)
-    if not inverter:
-        return jsonify({'error': 'No inverter data found'}), 404
-    return jsonify({
-        'n_I': inverter.n_I,
-        'L_I': inverter.L_I,
-        'DC_AC_ratio': inverter.DC_AC_ratio,
-        'C_I': inverter.C_I,
-        'R_I': inverter.R_I,
-        'MO_I': inverter.MO_I
-    })
+def get_inverter_endpoint():
+    return get_inverter()
 
 @app.route('/api/dg-config', methods=['GET'])
 @require_auth
-def get_diesel_config():
-    user_id = request.user['uid']
-    diesel = DieselGenerator.query.get(user_id)
-    if not diesel:
-        return jsonify({'error': 'No diesel generator data found'}), 404
-    return jsonify({
-        'a': diesel.a,
-        'b': diesel.b,
-        'min_load_ratio': diesel.min_load_ratio,
-        'C_DG': diesel.C_DG,
-        'R_DG': diesel.R_DG,
-        'MO_DG': diesel.MO_DG,
-        'C_fuel': diesel.C_fuel,
-        'C_fuel_adj_rate': diesel.C_fuel_adj_rate,
-        'diesel_lifetime': diesel.diesel_lifetime
-    })
+def get_diesel_config_endpoint():
+    return get_diesel_config()
 
 @app.route('/api/battery-config', methods=['GET'])
 @require_auth
-def get_battery_config():
-    user_id = request.user['uid']
-    battery = Battery.query.get(user_id)
-    if not battery:
-        return jsonify({'error': 'No battery data found'}), 404
-    return jsonify({
-        'Lead_acid': battery.Lead_acid,
-        'Li_ion': battery.Li_ion,
-        'SOC_min': battery.SOC_min,
-        'SOC_max': battery.SOC_max,
-        'SOC_initial': battery.SOC_initial,
-        'self_discharge_rate': battery.self_discharge_rate,
-        'L_B': battery.L_B,
-        'Cnom_Leadacid': battery.Cnom_Leadacid,
-        'alfa_battery_leadacid': battery.alfa_battery_leadacid,
-        'c': battery.c,
-        'k': battery.k,
-        'Ich_max_leadacid': battery.Ich_max_leadacid,
-        'Vnom_leadacid': battery.Vnom_leadacid,
-        'ef_bat_leadacid': battery.ef_bat_leadacid,
-        'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
-        'Ich_max_Li_ion': battery.Ich_max_Li_ion,
-        'Idch_max_Li_ion': battery.Idch_max_Li_ion,
-        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion,
-        'Vnom_Li_ion': battery.Vnom_Li_ion,
-        'ef_bat_Li': battery.ef_bat_Li,
-        'Cnom_Li': battery.Cnom_Li,
-        'Q_lifetime_Li': battery.Q_lifetime_Li,
-        'L_B_Li': battery.L_B_Li,
-        'C_B': battery.C_B,
-        'R_B': battery.R_B,
-        'MO_B': battery.MO_B
-    })
+def get_battery_config_endpoint():
+    return get_battery_config()
 
 @app.route('/api/wind-config', methods=['GET'])
 @require_auth
-def get_wind_config():
-    user_id = request.user['uid']
-    wind = WindTurbine.query.get(user_id)
-    if not wind:
-        return jsonify({'error': 'No wind turbine data found'}), 404
-    return jsonify({
-        'Pwt_r': wind.Pwt_r,
-        'h_hub': wind.h_hub,
-        'h0': wind.h0,
-        'nw': wind.nw,
-        'v_cut_out': wind.v_cut_out,
-        'v_cut_in': wind.v_cut_in,
-        'v_rated': wind.v_rated,
-        'alfa_wind_turbine': wind.alfa_wind_turbine,
-        'L_WT': wind.L_WT,
-        'C_WT': wind.C_WT,
-        'R_WT': wind.R_WT,
-        'MO_WT': wind.MO_WT,
-    })
+def get_wind_config_endpoint():
+    return get_wind_config()
 
 @app.route('/api/grid', methods=['GET'])
 @require_auth
-def get_grid_config():
-    user_id = request.user['uid']
-    grid = Grid.query.get(user_id)
-    if not grid:
-        return jsonify({'error': 'No grid data found'}), 404
-    return jsonify({
-        'Grid': grid.Grid,
-        'NEM': grid.NEM,
-        'Annual_expenses': grid.Annual_expenses,
-        'Grid_sale_tax_rate': grid.Grid_sale_tax_rate,
-        'Grid_Tax_amount': grid.Grid_Tax_amount,
-        'Grid_escalation_rate': grid.Grid_escalation_rate,
-        'Grid_credit': grid.Grid_credit,
-        'NEM_fee': grid.NEM_fee,
-        'SC_flat': grid.SC_flat,
-        'Pbuy_max': grid.Pbuy_max,
-        'Psell_max': grid.Psell_max,
-        'compensation_option': grid.compensation_option,
-        'flat_compensation': grid.flat_compensation,
-        'monthly_compensation': grid.monthly_compensation,
-        'season': grid.season,
-        'holidays': grid.holidays,
-        'rateStructure': grid.rateStructure,
-        'flatPrice': grid.flatPrice,
-        'seasonalPrices': grid.seasonalPrices,
-        'monthlyPrices': grid.monthlyPrices,
-        'tieredPrices': grid.tieredPrices,
-        'tierMax': grid.tierMax,
-        'seasonalTieredPrices': grid.seasonalTieredPrices,
-        'seasonalTierMax': grid.seasonalTierMax,
-        'monthlyTieredPrices': grid.monthlyTieredPrices,
-        'monthlyTierLimits': grid.monthlyTierLimits,
-        'onPrice': grid.onPrice,
-        'midPrice': grid.midPrice,
-        'offPrice': grid.offPrice,
-        'onHours': grid.onHours,
-        'midHours': grid.midHours,
-        'onPeakPrice': grid.onPeakPrice,
-        'midPeakPrice': grid.midPeakPrice
-    })
+def get_grid_config_endpoint():
+    return get_grid_config()
 
 @app.route('/api/system-config', methods=['POST'])
 @require_auth
 @log_function_input
-def save_system_config():
-    try:
-        user_id = request.user['uid']
-        
-        # Check if record exists
-        system_config = SystemConfig.query.get(user_id)
-        if not system_config:
-            system_config = SystemConfig(user_id=user_id)
-            db.session.add(system_config)
-
-        # Handle form data (from system config page)
-        data = request.form
-        system_config.lifetime = data.get('lifetime')
-        system_config.LPSP_max_rate = data.get('LPSP_max_rate')
-        system_config.RE_min_rate = data.get('RE_min_rate')
-        system_config.annualData = data.get('annualData')
-        
-        # Handle boolean fields from form data
-        system_config.PV = data.get('PV', 'false').lower() == 'true'
-        system_config.WT = data.get('WT', 'false').lower() == 'true'
-        system_config.DG = data.get('DG', 'false').lower() == 'true'
-        system_config.Bat = data.get('Bat', 'false').lower() == 'true'
-        
-        # Handle consumption data source and storage
-        consumption_data_source = data.get('consumptionDataSource')
-        system_config.consumption_data_source = consumption_data_source
-        
-        # Handle CSV data upload
-        if consumption_data_source == 'hourly':
-            # Check if hourly data is provided as JSON string
-            hourly_data_json = data.get('hourlyData')
-            if hourly_data_json:
-                try:
-                    hourly_data = json.loads(hourly_data_json)
-                    if len(hourly_data) == 8760:
-                        system_config.hourly_consumption = hourly_data_json
-                    else:
-                        return jsonify({'error': f'Invalid hourly data length. Expected 8760 values, got {len(hourly_data)}'}), 400
-                except json.JSONDecodeError:
-                    return jsonify({'error': 'Invalid JSON format for hourly data'}), 400
-            else:
-                # Fallback to individual form fields (for backward compatibility)
-                hourly_data = []
-                for i in range(8760):
-                    hour_key = f'hour_{i}'
-                    if hour_key in data and data[hour_key]:
-                        hourly_data.append(float(data[hour_key]))
-                    else:
-                        return jsonify({'error': f'Missing hourly data for hour {i+1}'}), 400
-                
-                system_config.hourly_consumption = json.dumps(hourly_data)
-            
-        elif consumption_data_source == 'monthly':
-            # Check if monthly data is provided as JSON string
-            monthly_data_json = data.get('monthlyData')
-            if monthly_data_json:
-                try:
-                    monthly_data = json.loads(monthly_data_json)
-                    if len(monthly_data) == 12:
-                        system_config.monthly_consumption = monthly_data_json
-                    else:
-                        return jsonify({'error': f'Invalid monthly data length. Expected 12 values, got {len(monthly_data)}'}), 400
-                except json.JSONDecodeError:
-                    return jsonify({'error': 'Invalid JSON format for monthly data'}), 400
-            else:
-                # Fallback to individual form fields (for backward compatibility)
-                monthly_data = []
-                for i in range(12):
-                    month_key = f'month_{i}'
-                    if month_key in data and data[month_key]:
-                        monthly_data.append(float(data[month_key]))
-                    else:
-                        return jsonify({'error': f'Missing monthly data for month {i+1}'}), 400
-                
-                system_config.monthly_consumption = json.dumps(monthly_data)
-            
-        elif consumption_data_source in ['annual', 'manual']:
-            # Annual data is already stored in annualData field
-            if not system_config.annualData or system_config.annualData == '':
-                return jsonify({'error': 'Annual consumption data is required'}), 400
-        
-        db.session.commit()
-        return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving system configuration data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_system_config_endpoint():
+    return save_system_config()
 
 @app.route('/api/grid', methods=['POST'])
 @require_auth
 @log_function_input
-def save_grid():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        
-        # Check if record exists
-        grid = Grid.query.get(user_id)
-        if not grid:
-            grid = Grid(user_id=user_id)
-            db.session.add(grid)
-        
-        # Update fields dynamically
-        for key, value in data.items():
-            if key in ['season', 'holidays']:
-                # Store as JSON-encoded string
-                setattr(grid, key, json.dumps(value))
-            elif hasattr(grid, key):
-                # Handle empty strings for nullable columns
-                column = getattr(grid.__class__, key)
-                if value == '' and column.nullable:
-                    setattr(grid, key, None)
-                else:
-                    setattr(grid, key, value)
-        
-        db.session.commit()
-        return jsonify({'id': grid.user_id, 'message': 'Grid data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving grid data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_grid_endpoint():
+    return save_grid()
 
 @app.route('/api/pv-config', methods=['POST'])
 @require_auth
-def save_pv_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        pv = PhotovoltaicSystem.query.get(user_id)
-        if not pv:
-            pv = PhotovoltaicSystem(user_id=user_id)
-            db.session.add(pv)
-        for field in [
-            'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
-            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
-            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']:
-            if field in data:
-                setattr(pv, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(pv, field) for field in [
-            'user_id', 'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
-            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
-            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def save_pv_config_endpoint():
+    return save_pv_config()
 
 @app.route('/api/inverter-config', methods=['POST'])
 @require_auth
-def save_inverter_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        inv = Inverter.query.get(user_id)
-        if not inv:
-            inv = Inverter(user_id=user_id)
-            db.session.add(inv)
-        for field in ['n_I', 'L_I', 'DC_AC_ratio', 'C_I', 'R_I', 'MO_I']:
-            if field in data:
-                setattr(inv, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(inv, field) for field in [
-            'user_id', 'n_I', 'L_I', 'DC_AC_ratio', 'C_I', 'R_I', 'MO_I']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def save_inverter_config_endpoint():
+    return save_inverter_config()
 
 @app.route('/api/dg-config', methods=['POST'])
 @require_auth
-def save_dg_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        dg = DieselGenerator.query.get(user_id)
-        if not dg:
-            dg = DieselGenerator(user_id=user_id)
-            db.session.add(dg)
-        for field in ['a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']:
-            if field in data:
-                setattr(dg, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(dg, field) for field in [
-            'user_id', 'a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def save_dg_config_endpoint():
+    return save_dg_config()
 
 @app.route('/api/battery-config', methods=['POST'])
 @require_auth
-def save_battery_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        bat = Battery.query.get(user_id)
-        if not bat:
-            bat = Battery(user_id=user_id)
-            db.session.add(bat)
-        for field in [
-            'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
-            'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
-            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']:
-            if field in data:
-                setattr(bat, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(bat, field) for field in [
-            'user_id', 'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
-            'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
-            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def save_battery_config_endpoint():
+    return save_battery_config()
 
 @app.route('/api/wind-config', methods=['POST'])
 @require_auth
 @log_function_input
-def save_wind_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        wind = WindTurbine.query.get(user_id)
-        if not wind:
-            wind = WindTurbine(user_id=user_id)
-            db.session.add(wind)
-        for field in [
-            'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT']:
-            if field in data:
-                setattr(wind, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(wind, field) for field in [
-            'user_id', 'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def save_wind_config_endpoint():
+    return save_wind_config()
 
-# InData class removed - replaced with load_user_data_for_optimization function
 
-    def load_user_data(self):
-        # Load data from database
-        geo_econ = GeographyEconomy.query.get(self.user_id)
-        opt = Optimization.query.get(self.user_id)
-        sys_config = SystemConfig.query.get(self.user_id)
-        grid = Grid.query.get(self.user_id)
+def load_user_data(user_id):
+    # Create a data object to hold all the loaded data
+    data = type('DataObject', (), {})()
+    data.user_id = user_id
+    
+    # Load data from database
+    geo_econ = GeographyEconomy.query.get(user_id)
+    opt = Optimization.query.get(user_id)
+    sys_config = SystemConfig.query.get(user_id)
+    grid = Grid.query.get(user_id)
 
-        # Initialize component data as None
-        pv_system = None
-        diesel = None
-        battery = None
-        wind = None
-        inverter = None
+    # Initialize component data as None
+    pv_system = None
+    diesel = None
+    battery = None
+    wind = None
+    inverter = None
 
-        # --- SystemConfig ---
-        if sys_config:
-            self.WT = sys_config.WT
-            self.n = sys_config.lifetime
-            self.LPSP_max = sys_config.LPSP_max_rate / 100
-            self.RE_min = sys_config.RE_min_rate / 100
-            self.PV = sys_config.PV
-            self.Bat = sys_config.Bat
-            self.DG = sys_config.DG
-            
-            # Load component data only if enabled in SystemConfig
-            if self.PV:
-                pv_system = PhotovoltaicSystem.query.get(self.user_id)
-                inverter = Inverter.query.get(self.user_id)
-            
-            if self.WT:
-                wind = WindTurbine.query.get(self.user_id)
-                inverter = Inverter.query.get(self.user_id)
-            
-            if self.DG:
-                diesel = DieselGenerator.query.get(self.user_id)
-                inverter = Inverter.query.get(self.user_id)
-            
-            if self.Bat:
-                battery = Battery.query.get(self.user_id)
-                inverter = Inverter.query.get(self.user_id)
-                    
-            # Load consumption data from database JSON fields
-            if sys_config.consumption_data_source:
-                if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
-                    hourly_values = json.loads(sys_config.hourly_consumption)
-                    self.Eload = np.array(hourly_values)
-                elif sys_config.consumption_data_source == 'monthly' and sys_config.monthly_consumption:
-                    monthly_values = json.loads(sys_config.monthly_consumption)
-                    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                    hourly_load = []
-                    for month, total_load in enumerate(monthly_values):
-                        days = days_in_month[month]
-                        hourly_avg = float(total_load) / (days * 24)
-                        hourly_load.extend([hourly_avg] * (days * 24))
-                    self.Eload = np.array(hourly_load)
-                elif sys_config.consumption_data_source in ['annual', 'manual'] and sys_config.annualData:
-                    self.annualData = float(sys_config.annualData)
-                    self.Eload = generic_load(
-                        load_type=8, user_defined_load=self.annualData,
-                        load_previous_year_type=1, peakmonth='July',
-                        daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-                    )
-
-        # --- Grid ---
-        if grid:
-            self.Grid = grid.Grid
-            self.NEM = grid.NEM
-            self.Annual_expenses = grid.Annual_expenses
-            self.Grid_Tax = grid.Grid_sale_tax_rate / 100
-            self.Grid_Tax_amount = grid.Grid_Tax_amount
-            self.Grid_escalation = grid.Grid_escalation_rate / 100
-            self.Grid_credit = grid.Grid_credit
-            self.NEM_fee = grid.NEM_fee
-            # Only override Service_charge if database has a non-zero value (preserve 9.95 default)
-            if grid.SC_flat and grid.SC_flat > 0:
-                self.Service_charge = grid.SC_flat
-            self.Pbuy_max = grid.Pbuy_max
-            self.Psell_max = grid.Psell_max
-            
-            # Load new grid fields
-            if grid.season:
-                self.season = json.loads(grid.season)
-            if grid.holidays:
-                self.holidays = json.loads(grid.holidays)
-            if grid.rateStructure:
-                self.rateStructure = grid.rateStructure
+    # --- SystemConfig ---
+    if sys_config:
+        self.WT = sys_config.WT
+        self.n = sys_config.lifetime
+        self.LPSP_max = sys_config.LPSP_max_rate / 100
+        self.RE_min = sys_config.RE_min_rate / 100
+        self.PV = sys_config.PV
+        self.Bat = sys_config.Bat
+        self.DG = sys_config.DG
+        
+        # Load component data only if enabled in SystemConfig
+        if self.PV:
+            pv_system = PhotovoltaicSystem.query.get(self.user_id)
+            inverter = Inverter.query.get(self.user_id)
+        
+        if self.WT:
+            wind = WindTurbine.query.get(self.user_id)
+            inverter = Inverter.query.get(self.user_id)
+        
+        if self.DG:
+            diesel = DieselGenerator.query.get(self.user_id)
+            inverter = Inverter.query.get(self.user_id)
+        
+        if self.Bat:
+            battery = Battery.query.get(self.user_id)
+            inverter = Inverter.query.get(self.user_id)
                 
-                # Load rate structure specific data based on type
-                if grid.rateStructure == 1 and grid.flatPrice is not None:  # flat
-                    self.flatPrice = grid.flatPrice
-                elif grid.rateStructure == 2 and grid.seasonalPrices:  # seasonal
-                    try:
-                        if isinstance(grid.seasonalPrices, str):
-                            self.seasonalPrices = json.loads(grid.seasonalPrices)
-                        else:
-                            self.seasonalPrices = grid.seasonalPrices
-                    except (json.JSONDecodeError, TypeError) as e:
-                        logger.error(f"Error parsing seasonalPrices: {e}")
-                        self.seasonalPrices = None
-                elif grid.rateStructure == 3 and grid.monthlyPrices:  # monthly
-                    try:
-                        if isinstance(grid.monthlyPrices, str):
-                            self.monthlyPrices = json.loads(grid.monthlyPrices)
-                        else:
-                            self.monthlyPrices = grid.monthlyPrices
-                    except (json.JSONDecodeError, TypeError) as e:
-                        logger.error(f"Error parsing monthlyPrices: {e}")
-                        self.monthlyPrices = None
-                elif grid.rateStructure == 4:
-                    if grid.tieredPrices:
-                        try:
-                            if isinstance(grid.tieredPrices, str):
-                                self.tieredPrices = json.loads(grid.tieredPrices)
-                            else:
-                                self.tieredPrices = grid.tieredPrices
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing tieredPrices: {e}")
-                            self.tieredPrices = None
-                    if grid.tierMax:
-                        try:
-                            if isinstance(grid.tierMax, str):
-                                self.tierMax = json.loads(grid.tierMax)
-                            else:
-                                self.tierMax = grid.tierMax
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing tierMax: {e}")
-                            self.tierMax = None
-                elif grid.rateStructure == 5:  # seasonalTiered
-                    if grid.seasonalTieredPrices:
-                        try:
-                            if isinstance(grid.seasonalTieredPrices, str):
-                                self.seasonalTieredPrices = json.loads(grid.seasonalTieredPrices)
-                            else:
-                                self.seasonalTieredPrices = grid.seasonalTieredPrices
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing seasonalTieredPrices: {e}")
-                            self.seasonalTieredPrices = None
-                    if grid.seasonalTierMax:
-                        try:
-                            if isinstance(grid.seasonalTierMax, str):
-                                self.seasonalTierMax = json.loads(grid.seasonalTierMax)
-                            else:
-                                self.seasonalTierMax = grid.seasonalTierMax
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing seasonalTierMax: {e}")
-                            self.seasonalTierMax = None
-                elif grid.rateStructure == 6:  # monthlyTiered
-                    if grid.monthlyTieredPrices:
-                        try:
-                            if isinstance(grid.monthlyTieredPrices, str):
-                                self.monthlyTieredPrices = json.loads(grid.monthlyTieredPrices)
-                            else:
-                                self.monthlyTieredPrices = grid.monthlyTieredPrices
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing monthlyTieredPrices: {e}")
-                            self.monthlyTieredPrices = None
-                    if grid.monthlyTierLimits:
-                        try:
-                            if isinstance(grid.monthlyTierLimits, str):
-                                self.monthlyTierLimits = json.loads(grid.monthlyTierLimits)
-                            else:
-                                self.monthlyTierLimits = grid.monthlyTierLimits
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing monthlyTierLimits: {e}")
-                            self.monthlyTierLimits = None
-                elif grid.rateStructure == 7:  # tou
-                    if grid.onPrice:
-                        try:
-                            if isinstance(grid.onPrice, str):
-                                self.onPrice = json.loads(grid.onPrice)
-                            else:
-                                self.onPrice = grid.onPrice
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing onPrice: {e}")
-                            self.onPrice = None
-                    if grid.midPrice:
-                        try:
-                            if isinstance(grid.midPrice, str):
-                                self.midPrice = json.loads(grid.midPrice)
-                            else:
-                                self.midPrice = grid.midPrice
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing midPrice: {e}")
-                            self.midPrice = None
-                    if grid.offPrice:
-                        try:
-                            if isinstance(grid.offPrice, str):
-                                self.offPrice = json.loads(grid.offPrice)
-                            else:
-                                self.offPrice = grid.offPrice
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing offPrice: {e}")
-                            self.offPrice = None
-                    if grid.onHours:
-                        try:
-                            if isinstance(grid.onHours, str):
-                                self.onHours = json.loads(grid.onHours)
-                            else:
-                                self.onHours = grid.onHours
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing onHours: {e}")
-                            self.onHours = None
-                    if grid.midHours:
-                        try:
-                            if isinstance(grid.midHours, str):
-                                self.midHours = json.loads(grid.midHours)
-                            else:
-                                self.midHours = grid.midHours
-                        except (json.JSONDecodeError, TypeError) as e:
-                            logger.error(f"Error parsing midHours: {e}")
-                            self.midHours = None
-                
-                # Legacy TOU fields for backward compatibility
-                if grid.onPeakPrice is not None:
-                    self.onPeakPrice = grid.onPeakPrice
-                if grid.midPeakPrice is not None:
-                    self.midPeakPrice = grid.midPeakPrice
+        # Load consumption data from database JSON fields
+        if sys_config.consumption_data_source:
+            if sys_config.consumption_data_source == 'hourly' and sys_config.hourly_consumption:
+                hourly_values = json.loads(sys_config.hourly_consumption)
+                self.Eload = np.array(hourly_values)
+            elif sys_config.consumption_data_source == 'monthly' and sys_config.monthly_consumption:
+                monthly_values = json.loads(sys_config.monthly_consumption)
+                days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                hourly_load = []
+                for month, total_load in enumerate(monthly_values):
+                    days = days_in_month[month]
+                    hourly_avg = float(total_load) / (days * 24)
+                    hourly_load.extend([hourly_avg] * (days * 24))
+                self.Eload = np.array(hourly_load)
+            elif sys_config.consumption_data_source in ['annual', 'manual'] and sys_config.annualData:
+                self.annualData = float(sys_config.annualData)
+                self.Eload = generic_load(
+                    load_type=8, user_defined_load=self.annualData,
+                    load_previous_year_type=1, peakmonth='July',
+                    daysInMonth=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+                )
+
+    # --- Grid ---
+    if grid:
+        self.Grid = grid.Grid
+        self.NEM = grid.NEM
+        self.Annual_expenses = grid.Annual_expenses
+        self.Grid_Tax = grid.Grid_sale_tax_rate / 100
+        self.Grid_Tax_amount = grid.Grid_Tax_amount
+        self.Grid_escalation = grid.Grid_escalation_rate / 100
+        self.Grid_credit = grid.Grid_credit
+        self.NEM_fee = grid.NEM_fee
+        # Only override Service_charge if database has a non-zero value (preserve 9.95 default)
+        if grid.SC_flat and grid.SC_flat > 0:
+            self.Service_charge = grid.SC_flat
+        self.Pbuy_max = grid.Pbuy_max
+        self.Psell_max = grid.Psell_max
+        
+        # Load new grid fields
+        if grid.season:
+            self.season = json.loads(grid.season)
+        if grid.holidays:
+            self.holidays = json.loads(grid.holidays)
+        if grid.rateStructure:
+            self.rateStructure = grid.rateStructure
             
-            # Load compensation fields
-            if grid.compensation_option:
-                if grid.compensation_option == '1:1':
-                    # 1:1 compensation - Csell equals Cbuy
-                    self.sellStructure = 3
-                elif grid.compensation_option == 'flat':
-                    # Flat compensation - single value
-                    self.sellStructure = 1
-                    if grid.flat_compensation is not None:
-                        self.Csell = np.full(8760, grid.flat_compensation)
-                elif grid.compensation_option == 'monthly':
-                    # Monthly compensation - array of 12 monthly values
-                    self.sellStructure = 2
-                    if grid.monthly_compensation:
-                        self.monthlysellprices = json.loads(grid.monthly_compensation)
-                        from sama_python.calcMonthlyRate import calcMonthlyRate
-                        self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
-
-        # --- PhotovoltaicSystem ---
-        if pv_system:
-            self.fpv = pv_system.fpv
-            self.Tcof = pv_system.Tcof
-            self.Tref = pv_system.Tref
-            self.Tc_noct = pv_system.Tc_noct
-            self.Ta_noct = pv_system.Ta_noct
-            self.G_noct = pv_system.G_noct
-            self.n_PV = pv_system.n_PV
-            self.Gref = pv_system.Gref
-            self.L_PV = pv_system.L_PV
-            self.C_PV = pv_system.C_PV
-            self.R_PV = pv_system.R_PV
-            self.MO_PV = pv_system.MO_PV
-            self.Engineering_Costs = sum([
-                pv_system.Installation_cost or 0, pv_system.Overhead or 0, pv_system.Sales_and_marketing or 0,
-                pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
-                pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
-            ])
-
-        # --- Inverter ---
-        if inverter:
-            self.n_I = inverter.n_I
-            self.L_I = inverter.L_I
-            self.DC_AC_ratio = inverter.DC_AC_ratio
-            self.C_I = inverter.C_I
-            self.R_I = inverter.R_I
-            self.MO_I = inverter.MO_I
-        
-        # --- DieselGenerator ---
-        if diesel:
-            self.a = diesel.a
-            self.b = diesel.b
-            self.LR_DG = diesel.min_load_ratio
-            self.C_DG = diesel.C_DG
-            self.R_DG = diesel.R_DG
-            self.MO_DG = diesel.MO_DG
-            self.C_fuel = diesel.C_fuel
-            self.C_fuel_adj = (diesel.C_fuel_adj_rate / 100)
-            self.TL_DG = diesel.diesel_lifetime
-
-        # --- Battery ---
-        if battery:
-            self.Lead_acid = battery.Lead_acid
-            self.Li_ion = battery.Li_ion
-            self.SOC_min = battery.SOC_min
-            self.SOC_max = battery.SOC_max
-            self.SOC_initial = battery.SOC_initial
-            self.self_discharge_rate = battery.self_discharge_rate
-            self.L_B = battery.L_B
-            self.Cnom_Leadacid = battery.Cnom_Leadacid
-            self.alfa_battery_leadacid = battery.alfa_battery_leadacid
-            self.c = battery.c
-            self.k = battery.k
-            self.Ich_max_leadacid = battery.Ich_max_leadacid
-            self.Vnom_leadacid = battery.Vnom_leadacid
-            self.ef_bat_leadacid = battery.ef_bat_leadacid
-            self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid
-            self.Ich_max_Li_ion = battery.Ich_max_Li_ion
-            self.Idch_max_Li_ion = battery.Idch_max_Li_ion
-            self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
-            self.Vnom_Li_ion = battery.Vnom_Li_ion
-            self.ef_bat_Li = battery.ef_bat_Li
-            self.Cnom_Li = battery.Cnom_Li
-            self.Q_lifetime_Li = battery.Q_lifetime_Li
-            self.L_B_Li = battery.L_B_Li
-            self.C_B = battery.C_B
-            self.R_B = battery.R_B
-            self.MO_B = battery.MO_B
+            # Load rate structure specific data based on type
+            if grid.rateStructure == 1 and grid.flatPrice is not None:  # flat
+                self.flatPrice = grid.flatPrice
+            elif grid.rateStructure == 2 and grid.seasonalPrices:  # seasonal
+                try:
+                    if isinstance(grid.seasonalPrices, str):
+                        self.seasonalPrices = json.loads(grid.seasonalPrices)
+                    else:
+                        self.seasonalPrices = grid.seasonalPrices
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.error(f"Error parsing seasonalPrices: {e}")
+                    self.seasonalPrices = None
+            elif grid.rateStructure == 3 and grid.monthlyPrices:  # monthly
+                try:
+                    if isinstance(grid.monthlyPrices, str):
+                        self.monthlyPrices = json.loads(grid.monthlyPrices)
+                    else:
+                        self.monthlyPrices = grid.monthlyPrices
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.error(f"Error parsing monthlyPrices: {e}")
+                    self.monthlyPrices = None
+            elif grid.rateStructure == 4:
+                if grid.tieredPrices:
+                    try:
+                        if isinstance(grid.tieredPrices, str):
+                            self.tieredPrices = json.loads(grid.tieredPrices)
+                        else:
+                            self.tieredPrices = grid.tieredPrices
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing tieredPrices: {e}")
+                        self.tieredPrices = None
+                if grid.tierMax:
+                    try:
+                        if isinstance(grid.tierMax, str):
+                            self.tierMax = json.loads(grid.tierMax)
+                        else:
+                            self.tierMax = grid.tierMax
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing tierMax: {e}")
+                        self.tierMax = None
+            elif grid.rateStructure == 5:  # seasonalTiered
+                if grid.seasonalTieredPrices:
+                    try:
+                        if isinstance(grid.seasonalTieredPrices, str):
+                            self.seasonalTieredPrices = json.loads(grid.seasonalTieredPrices)
+                        else:
+                            self.seasonalTieredPrices = grid.seasonalTieredPrices
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing seasonalTieredPrices: {e}")
+                        self.seasonalTieredPrices = None
+                if grid.seasonalTierMax:
+                    try:
+                        if isinstance(grid.seasonalTierMax, str):
+                            self.seasonalTierMax = json.loads(grid.seasonalTierMax)
+                        else:
+                            self.seasonalTierMax = grid.seasonalTierMax
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing seasonalTierMax: {e}")
+                        self.seasonalTierMax = None
+            elif grid.rateStructure == 6:  # monthlyTiered
+                if grid.monthlyTieredPrices:
+                    try:
+                        if isinstance(grid.monthlyTieredPrices, str):
+                            self.monthlyTieredPrices = json.loads(grid.monthlyTieredPrices)
+                        else:
+                            self.monthlyTieredPrices = grid.monthlyTieredPrices
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing monthlyTieredPrices: {e}")
+                        self.monthlyTieredPrices = None
+                if grid.monthlyTierLimits:
+                    try:
+                        if isinstance(grid.monthlyTierLimits, str):
+                            self.monthlyTierLimits = json.loads(grid.monthlyTierLimits)
+                        else:
+                            self.monthlyTierLimits = grid.monthlyTierLimits
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing monthlyTierLimits: {e}")
+                        self.monthlyTierLimits = None
+            elif grid.rateStructure == 7:  # tou
+                if grid.onPrice:
+                    try:
+                        if isinstance(grid.onPrice, str):
+                            self.onPrice = json.loads(grid.onPrice)
+                        else:
+                            self.onPrice = grid.onPrice
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing onPrice: {e}")
+                        self.onPrice = None
+                if grid.midPrice:
+                    try:
+                        if isinstance(grid.midPrice, str):
+                            self.midPrice = json.loads(grid.midPrice)
+                        else:
+                            self.midPrice = grid.midPrice
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing midPrice: {e}")
+                        self.midPrice = None
+                if grid.offPrice:
+                    try:
+                        if isinstance(grid.offPrice, str):
+                            self.offPrice = json.loads(grid.offPrice)
+                        else:
+                            self.offPrice = grid.offPrice
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing offPrice: {e}")
+                        self.offPrice = None
+                if grid.onHours:
+                    try:
+                        if isinstance(grid.onHours, str):
+                            self.onHours = json.loads(grid.onHours)
+                        else:
+                            self.onHours = grid.onHours
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing onHours: {e}")
+                        self.onHours = None
+                if grid.midHours:
+                    try:
+                        if isinstance(grid.midHours, str):
+                            self.midHours = json.loads(grid.midHours)
+                        else:
+                            self.midHours = grid.midHours
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.error(f"Error parsing midHours: {e}")
+                        self.midHours = None
             
-        # --- WindTurbine ---
-        if wind:
-            self.Pwt_r = wind.Pwt_r
-            self.h_hub = wind.h_hub
-            self.h0 = wind.h0
-            self.nw = wind.nw
-            self.v_cut_out = wind.v_cut_out
-            self.v_cut_in = wind.v_cut_in
-            self.v_rated = wind.v_rated
-            self.alfa_wind_turbine = wind.alfa_wind_turbine
-            self.L_WT = wind.L_WT
-            self.C_WT = wind.C_WT
-            self.R_WT = wind.R_WT
-            self.MO_WT = wind.MO_WT
+            # Legacy TOU fields for backward compatibility
+            if grid.onPeakPrice is not None:
+                self.onPeakPrice = grid.onPeakPrice
+            if grid.midPeakPrice is not None:
+                self.midPeakPrice = grid.midPeakPrice
+        
+        # Load compensation fields
+        if grid.compensation_option:
+            if grid.compensation_option == '1:1':
+                # 1:1 compensation - Csell equals Cbuy
+                self.sellStructure = 3
+            elif grid.compensation_option == 'flat':
+                # Flat compensation - single value
+                self.sellStructure = 1
+                if grid.flat_compensation is not None:
+                    self.Csell = np.full(8760, grid.flat_compensation)
+            elif grid.compensation_option == 'monthly':
+                # Monthly compensation - array of 12 monthly values
+                self.sellStructure = 2
+                if grid.monthly_compensation:
+                    self.monthlysellprices = json.loads(grid.monthly_compensation)
+                    from sama_python.calcMonthlyRate import calcMonthlyRate
+                    self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
 
-        # --- GeographyEconomy ---
-        if geo_econ:
-            self.n_ir_rate = geo_econ.n_ir_rate
-            self.e_ir_rate = geo_econ.e_ir_rate
-            self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100 # fix?     self.ir = (self.n_ir - self.e_ir) / (1.0 + self.e_ir)
-            self.System_Tax = geo_econ.Tax_rate / 100
-            self.RE_incentives = geo_econ.RE_incentives_rate / 100
-        
-        # --- Optimization ---
-        if opt:
-            self.MaxIt = opt.MaxIt
-            self.nPop = opt.nPop
-            self.w = opt.w
-            self.wdamp = opt.wdamp
-            self.c1 = opt.c1
-            self.c2 = opt.c2
+    # --- PhotovoltaicSystem ---
+    if pv_system:
+        self.fpv = pv_system.fpv
+        self.Tcof = pv_system.Tcof
+        self.Tref = pv_system.Tref
+        self.Tc_noct = pv_system.Tc_noct
+        self.Ta_noct = pv_system.Ta_noct
+        self.G_noct = pv_system.G_noct
+        self.n_PV = pv_system.n_PV
+        self.Gref = pv_system.Gref
+        self.L_PV = pv_system.L_PV
+        self.C_PV = pv_system.C_PV
+        self.R_PV = pv_system.R_PV
+        self.MO_PV = pv_system.MO_PV
+        self.Engineering_Costs = sum([
+            pv_system.Installation_cost or 0, pv_system.Overhead or 0, pv_system.Sales_and_marketing or 0,
+            pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
+            pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
+        ])
 
-        # Debug: Check for potential division by zero issues
-        logger.info(f"Critical values check:")
-        logger.info(f"  L_PV: {getattr(self, 'L_PV', 'NOT SET')}")
-        logger.info(f"  L_I: {getattr(self, 'L_I', 'NOT SET')}")
-        logger.info(f"  L_B: {getattr(self, 'L_B', 'NOT SET')}")
-        logger.info(f"  L_WT: {getattr(self, 'L_WT', 'NOT SET')}")
-        logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
-        logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
-        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
+    # --- Inverter ---
+    if inverter:
+        self.n_I = inverter.n_I
+        self.L_I = inverter.L_I
+        self.DC_AC_ratio = inverter.DC_AC_ratio
+        self.C_I = inverter.C_I
+        self.R_I = inverter.R_I
+        self.MO_I = inverter.MO_I
+    
+    # --- DieselGenerator ---
+    if diesel:
+        self.a = diesel.a
+        self.b = diesel.b
+        self.LR_DG = diesel.min_load_ratio
+        self.C_DG = diesel.C_DG
+        self.R_DG = diesel.R_DG
+        self.MO_DG = diesel.MO_DG
+        self.C_fuel = diesel.C_fuel
+        self.C_fuel_adj = (diesel.C_fuel_adj_rate / 100)
+        self.TL_DG = diesel.diesel_lifetime
+
+    # --- Battery ---
+    if battery:
+        self.Lead_acid = battery.Lead_acid
+        self.Li_ion = battery.Li_ion
+        self.SOC_min = battery.SOC_min
+        self.SOC_max = battery.SOC_max
+        self.SOC_initial = battery.SOC_initial
+        self.self_discharge_rate = battery.self_discharge_rate
+        self.L_B = battery.L_B
+        self.Cnom_Leadacid = battery.Cnom_Leadacid
+        self.alfa_battery_leadacid = battery.alfa_battery_leadacid
+        self.c = battery.c
+        self.k = battery.k
+        self.Ich_max_leadacid = battery.Ich_max_leadacid
+        self.Vnom_leadacid = battery.Vnom_leadacid
+        self.ef_bat_leadacid = battery.ef_bat_leadacid
+        self.Q_lifetime_leadacid = battery.Q_lifetime_leadacid
+        self.Ich_max_Li_ion = battery.Ich_max_Li_ion
+        self.Idch_max_Li_ion = battery.Idch_max_Li_ion
+        self.alfa_battery_Li_ion = battery.alfa_battery_Li_ion
+        self.Vnom_Li_ion = battery.Vnom_Li_ion
+        self.ef_bat_Li = battery.ef_bat_Li
+        self.Cnom_Li = battery.Cnom_Li
+        self.Q_lifetime_Li = battery.Q_lifetime_Li
+        self.L_B_Li = battery.L_B_Li
+        self.C_B = battery.C_B
+        self.R_B = battery.R_B
+        self.MO_B = battery.MO_B
         
-        # Component loading status
-        logger.info(f"\n=== COMPONENT LOADING STATUS ===")
-        if pv_system:
-            logger.info(f"  PV enabled - pv_system exists: {pv_system is not None}")
-        if inverter:
-            logger.info(f"  PV enabled - inverter exists: {inverter is not None}")
-        if wind:
-            logger.info(f"  WT enabled - wind exists: {wind is not None}")
-        if diesel:
-            logger.info(f"  DG enabled - diesel exists: {diesel is not None}")
-        if battery:
-            logger.info(f"  Battery enabled - battery exists: {battery is not None}")
-        logger.info(f"=== END COMPONENT LOADING STATUS ===\n")
-        
-        # Comprehensive fitness function values check
-        logger.info(f"\n=== COMPREHENSIVE FITNESS VALUES CHECK ===")
-        
-        # Basic system parameters
-        logger.info(f"  Eload size: {len(self.Eload) if hasattr(self, 'Eload') else 'MISSING'}")
-        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'MISSING')}")
-        logger.info(f"  Pwt_r: {getattr(self, 'Pwt_r', 'MISSING')}")
-        logger.info(f"  Cbt_r: {getattr(self, 'Cbt_r', 'MISSING')}")
-        logger.info(f"  Cdg_r: {getattr(self, 'Cdg_r', 'MISSING')}")
-        
-        # Weather and environment
-        logger.info(f"  T size: {len(self.T) if hasattr(self, 'T') else 'MISSING'}")
-        logger.info(f"  G size: {len(self.G) if hasattr(self, 'G') else 'MISSING'}")
-        logger.info(f"  Vw size: {len(self.Vw) if hasattr(self, 'Vw') else 'MISSING'}")
-        logger.info(f"  Tc_noct: {getattr(self, 'Tc_noct', 'MISSING')}")
-        logger.info(f"  Ta_noct: {getattr(self, 'Ta_noct', 'MISSING')}")
-        logger.info(f"  G_noct: {getattr(self, 'G_noct', 'MISSING')}")
-        logger.info(f"  Gref: {getattr(self, 'Gref', 'MISSING')}")
-        logger.info(f"  Tcof: {getattr(self, 'Tcof', 'MISSING')}")
-        logger.info(f"  Tref: {getattr(self, 'Tref', 'MISSING')}")
-        logger.info(f"  n_PV: {getattr(self, 'n_PV', 'MISSING')}")
-        logger.info(f"  gama: {getattr(self, 'gama', 'MISSING')}")
-        logger.info(f"  fpv: {getattr(self, 'fpv', 'MISSING')}")
-        
-        # Wind turbine parameters
-        logger.info(f"  h_hub: {getattr(self, 'h_hub', 'MISSING')}")
-        logger.info(f"  h0: {getattr(self, 'h0', 'MISSING')}")
-        logger.info(f"  alfa_wind_turbine: {getattr(self, 'alfa_wind_turbine', 'MISSING')}")
-        logger.info(f"  v_cut_in: {getattr(self, 'v_cut_in', 'MISSING')}")
-        logger.info(f"  v_cut_out: {getattr(self, 'v_cut_out', 'MISSING')}")
-        logger.info(f"  v_rated: {getattr(self, 'v_rated', 'MISSING')}")
-        
-        # Battery parameters
-        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
-        logger.info(f"  Q_lifetime_leadacid: {getattr(self, 'Q_lifetime_leadacid', 'MISSING')}")
-        logger.info(f"  ef_bat_leadacid: {getattr(self, 'ef_bat_leadacid', 'MISSING')}")
-        logger.info(f"  self_discharge_rate: {getattr(self, 'self_discharge_rate', 'MISSING')}")
-        logger.info(f"  alfa_battery_leadacid: {getattr(self, 'alfa_battery_leadacid', 'MISSING')}")
-        logger.info(f"  c: {getattr(self, 'c', 'MISSING')}")
-        logger.info(f"  k: {getattr(self, 'k', 'MISSING')}")
-        logger.info(f"  Ich_max_leadacid: {getattr(self, 'Ich_max_leadacid', 'MISSING')}")
-        logger.info(f"  Vnom_leadacid: {getattr(self, 'Vnom_leadacid', 'MISSING')}")
-        
-        # Diesel generator parameters
-        logger.info(f"  a: {getattr(self, 'a', 'MISSING')}")
-        logger.info(f"  b: {getattr(self, 'b', 'MISSING')}")
-        logger.info(f"  C_fuel: {getattr(self, 'C_fuel', 'MISSING')}")
-        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
-        logger.info(f"  TL_DG: {getattr(self, 'TL_DG', 'MISSING')}")
-        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
-        logger.info(f"  LR_DG: {getattr(self, 'LR_DG', 'MISSING')}")
-        
-        # System configuration
-        logger.info(f"  SOC_max: {getattr(self, 'SOC_max', 'MISSING')}")
-        logger.info(f"  SOC_min: {getattr(self, 'SOC_min', 'MISSING')}")
-        logger.info(f"  SOC_initial: {getattr(self, 'SOC_initial', 'MISSING')}")
-        logger.info(f"  n_I: {getattr(self, 'n_I', 'MISSING')}")
-        logger.info(f"  DC_AC_ratio: {getattr(self, 'DC_AC_ratio', 'MISSING')}")
-        logger.info(f"  Grid: {getattr(self, 'Grid', 'MISSING')}")
-        logger.info(f"  Pbuy_max: {getattr(self, 'Pbuy_max', 'MISSING')}")
-        logger.info(f"  Psell_max: {getattr(self, 'Psell_max', 'MISSING')}")
-        
-        # Economic parameters
-        logger.info(f"  ir: {getattr(self, 'ir', 'MISSING')}")
-        logger.info(f"  RE_incentives: {getattr(self, 'RE_incentives', 'MISSING')}")
-        logger.info(f"  Budget: {getattr(self, 'Budget', 'MISSING')}")
-        logger.info(f"  System_Tax: {getattr(self, 'System_Tax', 'MISSING')}")
-        logger.info(f"  EM: {getattr(self, 'EM', 'MISSING')}")
-        logger.info(f"  LPSP_max: {getattr(self, 'LPSP_max', 'MISSING')}")
-        logger.info(f"  RE_min: {getattr(self, 'RE_min', 'MISSING')}")
-        
-        # Capital costs
-        logger.info(f"  C_PV: {getattr(self, 'C_PV', 'MISSING')}")
-        logger.info(f"  C_WT: {getattr(self, 'C_WT', 'MISSING')}")
-        logger.info(f"  C_DG: {getattr(self, 'C_DG', 'MISSING')}")
-        logger.info(f"  C_B: {getattr(self, 'C_B', 'MISSING')}")
-        logger.info(f"  C_I: {getattr(self, 'C_I', 'MISSING')}")
-        logger.info(f"  C_CH: {getattr(self, 'C_CH', 'MISSING')}")
-        logger.info(f"  Engineering_Costs: {getattr(self, 'Engineering_Costs', 'MISSING')}")
-        
-        # Replacement costs
-        logger.info(f"  R_PV: {getattr(self, 'R_PV', 'MISSING')}")
-        logger.info(f"  R_WT: {getattr(self, 'R_WT', 'MISSING')}")
-        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
-        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
-        logger.info(f"  R_I: {getattr(self, 'R_I', 'MISSING')}")
-        logger.info(f"  R_CH: {getattr(self, 'R_CH', 'MISSING')}")
-        
-        # Maintenance costs
-        logger.info(f"  MO_PV: {getattr(self, 'MO_PV', 'MISSING')}")
-        logger.info(f"  MO_WT: {getattr(self, 'MO_WT', 'MISSING')}")
-        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
-        logger.info(f"  MO_B: {getattr(self, 'MO_B', 'MISSING')}")
-        logger.info(f"  MO_I: {getattr(self, 'MO_I', 'MISSING')}")
-        logger.info(f"  MO_CH: {getattr(self, 'MO_CH', 'MISSING')}")
-        
-        # Grid parameters
-        logger.info(f"  Cbuy size: {len(self.Cbuy) if hasattr(self, 'Cbuy') and hasattr(self.Cbuy, '__len__') else 'MISSING'}")
-        logger.info(f"  Csell size: {len(self.Csell) if hasattr(self, 'Csell') and hasattr(self.Csell, '__len__') else 'MISSING'}")
-        logger.info(f"  Service_charge: {getattr(self, 'Service_charge', 'MISSING')} (type: {type(getattr(self, 'Service_charge', None))})")
-        logger.info(f"  Annual_expenses: {getattr(self, 'Annual_expenses', 'MISSING')}")
-        logger.info(f"  Grid_Tax: {getattr(self, 'Grid_Tax', 'MISSING')}")
-        logger.info(f"  Grid_Tax_amount: {getattr(self, 'Grid_Tax_amount', 'MISSING')}")
-        logger.info(f"  Grid_credit: {getattr(self, 'Grid_credit', 'MISSING')}")
-        logger.info(f"  Grid_escalation: {getattr(self, 'Grid_escalation', 'MISSING')}")
-        logger.info(f"  NEM: {getattr(self, 'NEM', 'MISSING')}")
-        logger.info(f"  NEM_fee: {getattr(self, 'NEM_fee', 'MISSING')}")
-        
-        # Rate structure parameters
-        logger.info(f"  rateStructure: {getattr(self, 'rateStructure', 'MISSING')}")
-        logger.info(f"  flatPrice: {getattr(self, 'flatPrice', 'MISSING')}")
-        logger.info(f"  seasonalPrices: {getattr(self, 'seasonalPrices', 'MISSING')}")
-        logger.info(f"  monthlyPrices: {getattr(self, 'monthlyPrices', 'MISSING')}")
-        logger.info(f"  tieredPrices: {getattr(self, 'tieredPrices', 'MISSING')}")
-        logger.info(f"  tierMax: {getattr(self, 'tierMax', 'MISSING')}")
-        logger.info(f"  seasonalTieredPrices: {getattr(self, 'seasonalTieredPrices', 'MISSING')}")
-        logger.info(f"  seasonalTierMax: {getattr(self, 'seasonalTierMax', 'MISSING')}")
-        logger.info(f"  monthlyTieredPrices: {getattr(self, 'monthlyTieredPrices', 'MISSING')}")
-        logger.info(f"  monthlyTierLimits: {getattr(self, 'monthlyTierLimits', 'MISSING')}")
-        logger.info(f"  onPrice: {getattr(self, 'onPrice', 'MISSING')}")
-        logger.info(f"  midPrice: {getattr(self, 'midPrice', 'MISSING')}")
-        logger.info(f"  offPrice: {getattr(self, 'offPrice', 'MISSING')}")
-        logger.info(f"  onHours: {getattr(self, 'onHours', 'MISSING')}")
-        logger.info(f"  midHours: {getattr(self, 'midHours', 'MISSING')}")
-        logger.info(f"  onPeakPrice: {getattr(self, 'onPeakPrice', 'MISSING')}")
-        logger.info(f"  midPeakPrice: {getattr(self, 'midPeakPrice', 'MISSING')}")
-        
-        # Compensation parameters
-        logger.info(f"  compensation_option: {getattr(self, 'compensation_option', 'MISSING')}")
-        logger.info(f"  flat_compensation: {getattr(self, 'flat_compensation', 'MISSING')}")
-        logger.info(f"  monthly_compensation: {getattr(self, 'monthly_compensation', 'MISSING')}")
-        logger.info(f"  monthlysellprices: {getattr(self, 'monthlysellprices', 'MISSING')}")
-        logger.info(f"  sellStructure: {getattr(self, 'sellStructure', 'MISSING')}")
-        
-        # Season and holidays
-        logger.info(f"  season: {getattr(self, 'season', 'MISSING')}")
-        logger.info(f"  holidays: {getattr(self, 'holidays', 'MISSING')}")
-        
-        # Battery type flags
-        logger.info(f"  Lead_acid: {getattr(self, 'Lead_acid', 'MISSING')}")
-        logger.info(f"  Li_ion: {getattr(self, 'Li_ion', 'MISSING')}")
-        
-        # Lithium battery parameters
-        logger.info(f"  Ich_max_Li_ion: {getattr(self, 'Ich_max_Li_ion', 'MISSING')}")
-        logger.info(f"  Idch_max_Li_ion: {getattr(self, 'Idch_max_Li_ion', 'MISSING')}")
-        logger.info(f"  Vnom_Li_ion: {getattr(self, 'Vnom_Li_ion', 'MISSING')}")
-        logger.info(f"  Cnom_Li: {getattr(self, 'Cnom_Li', 'MISSING')}")
-        logger.info(f"  ef_bat_Li: {getattr(self, 'ef_bat_Li', 'MISSING')}")
-        logger.info(f"  Q_lifetime_Li: {getattr(self, 'Q_lifetime_Li', 'MISSING')}")
-        logger.info(f"  alfa_battery_Li_ion: {getattr(self, 'alfa_battery_Li_ion', 'MISSING')}")
-        
-        # Fuel adjustment
-        logger.info(f"  C_fuel_adj: {getattr(self, 'C_fuel_adj', 'MISSING')}")
-        
-        # Emissions
-        logger.info(f"  CO2: {getattr(self, 'CO2', 'MISSING')}")
-        logger.info(f"  NOx: {getattr(self, 'NOx', 'MISSING')}")
-        logger.info(f"  SO2: {getattr(self, 'SO2', 'MISSING')}")
-        logger.info(f"  E_CO2: {getattr(self, 'E_CO2', 'MISSING')}")
-        logger.info(f"  E_SO2: {getattr(self, 'E_SO2', 'MISSING')}")
-        logger.info(f"  E_NOx: {getattr(self, 'E_NOx', 'MISSING')}")
-        
-        logger.info(f"=== END FITNESS VALUES CHECK ===\n")
+    # --- WindTurbine ---
+    if wind:
+        self.Pwt_r = wind.Pwt_r
+        self.h_hub = wind.h_hub
+        self.h0 = wind.h0
+        self.nw = wind.nw
+        self.v_cut_out = wind.v_cut_out
+        self.v_cut_in = wind.v_cut_in
+        self.v_rated = wind.v_rated
+        self.alfa_wind_turbine = wind.alfa_wind_turbine
+        self.L_WT = wind.L_WT
+        self.C_WT = wind.C_WT
+        self.R_WT = wind.R_WT
+        self.MO_WT = wind.MO_WT
+
+    # --- GeographyEconomy ---
+    if geo_econ:
+        self.n_ir_rate = geo_econ.n_ir_rate
+        self.e_ir_rate = geo_econ.e_ir_rate
+        self.ir = (geo_econ.n_ir_rate - geo_econ.e_ir_rate) / 100 # fix?     self.ir = (self.n_ir - self.e_ir) / (1.0 + self.e_ir)
+        self.System_Tax = geo_econ.Tax_rate / 100
+        self.RE_incentives = geo_econ.RE_incentives_rate / 100
+    
+    # --- Optimization ---
+    if opt:
+        self.MaxIt = opt.MaxIt
+        self.nPop = opt.nPop
+        self.w = opt.w
+        self.wdamp = opt.wdamp
+        self.c1 = opt.c1
+        self.c2 = opt.c2
+
+    # Debug: Check for potential division by zero issues
+    logger.info(f"Critical values check:")
+    logger.info(f"  L_PV: {getattr(self, 'L_PV', 'NOT SET')}")
+    logger.info(f"  L_I: {getattr(self, 'L_I', 'NOT SET')}")
+    logger.info(f"  L_B: {getattr(self, 'L_B', 'NOT SET')}")
+    logger.info(f"  L_WT: {getattr(self, 'L_WT', 'NOT SET')}")
+    logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
+    logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
+    logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
+    
+    # Component loading status
+    logger.info(f"\n=== COMPONENT LOADING STATUS ===")
+    if pv_system:
+        logger.info(f"  PV enabled - pv_system exists: {pv_system is not None}")
+    if inverter:
+        logger.info(f"  PV enabled - inverter exists: {inverter is not None}")
+    if wind:
+        logger.info(f"  WT enabled - wind exists: {wind is not None}")
+    if diesel:
+        logger.info(f"  DG enabled - diesel exists: {diesel is not None}")
+    if battery:
+        logger.info(f"  Battery enabled - battery exists: {battery is not None}")
+    logger.info(f"=== END COMPONENT LOADING STATUS ===\n")
+    
+    # Comprehensive fitness function values check
+    logger.info(f"\n=== COMPREHENSIVE FITNESS VALUES CHECK ===")
+    
+    # Basic system parameters
+    logger.info(f"  Eload size: {len(self.Eload) if hasattr(self, 'Eload') else 'MISSING'}")
+    logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'MISSING')}")
+    logger.info(f"  Pwt_r: {getattr(self, 'Pwt_r', 'MISSING')}")
+    logger.info(f"  Cbt_r: {getattr(self, 'Cbt_r', 'MISSING')}")
+    logger.info(f"  Cdg_r: {getattr(self, 'Cdg_r', 'MISSING')}")
+    
+    # Weather and environment
+    logger.info(f"  T size: {len(self.T) if hasattr(self, 'T') else 'MISSING'}")
+    logger.info(f"  G size: {len(self.G) if hasattr(self, 'G') else 'MISSING'}")
+    logger.info(f"  Vw size: {len(self.Vw) if hasattr(self, 'Vw') else 'MISSING'}")
+    logger.info(f"  Tc_noct: {getattr(self, 'Tc_noct', 'MISSING')}")
+    logger.info(f"  Ta_noct: {getattr(self, 'Ta_noct', 'MISSING')}")
+    logger.info(f"  G_noct: {getattr(self, 'G_noct', 'MISSING')}")
+    logger.info(f"  Gref: {getattr(self, 'Gref', 'MISSING')}")
+    logger.info(f"  Tcof: {getattr(self, 'Tcof', 'MISSING')}")
+    logger.info(f"  Tref: {getattr(self, 'Tref', 'MISSING')}")
+    logger.info(f"  n_PV: {getattr(self, 'n_PV', 'MISSING')}")
+    logger.info(f"  gama: {getattr(self, 'gama', 'MISSING')}")
+    logger.info(f"  fpv: {getattr(self, 'fpv', 'MISSING')}")
+    
+    # Wind turbine parameters
+    logger.info(f"  h_hub: {getattr(self, 'h_hub', 'MISSING')}")
+    logger.info(f"  h0: {getattr(self, 'h0', 'MISSING')}")
+    logger.info(f"  alfa_wind_turbine: {getattr(self, 'alfa_wind_turbine', 'MISSING')}")
+    logger.info(f"  v_cut_in: {getattr(self, 'v_cut_in', 'MISSING')}")
+    logger.info(f"  v_cut_out: {getattr(self, 'v_cut_out', 'MISSING')}")
+    logger.info(f"  v_rated: {getattr(self, 'v_rated', 'MISSING')}")
+    
+    # Battery parameters
+    logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
+    logger.info(f"  Q_lifetime_leadacid: {getattr(self, 'Q_lifetime_leadacid', 'MISSING')}")
+    logger.info(f"  ef_bat_leadacid: {getattr(self, 'ef_bat_leadacid', 'MISSING')}")
+    logger.info(f"  self_discharge_rate: {getattr(self, 'self_discharge_rate', 'MISSING')}")
+    logger.info(f"  alfa_battery_leadacid: {getattr(self, 'alfa_battery_leadacid', 'MISSING')}")
+    logger.info(f"  c: {getattr(self, 'c', 'MISSING')}")
+    logger.info(f"  k: {getattr(self, 'k', 'MISSING')}")
+    logger.info(f"  Ich_max_leadacid: {getattr(self, 'Ich_max_leadacid', 'MISSING')}")
+    logger.info(f"  Vnom_leadacid: {getattr(self, 'Vnom_leadacid', 'MISSING')}")
+    
+    # Diesel generator parameters
+    logger.info(f"  a: {getattr(self, 'a', 'MISSING')}")
+    logger.info(f"  b: {getattr(self, 'b', 'MISSING')}")
+    logger.info(f"  C_fuel: {getattr(self, 'C_fuel', 'MISSING')}")
+    logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
+    logger.info(f"  TL_DG: {getattr(self, 'TL_DG', 'MISSING')}")
+    logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
+    logger.info(f"  LR_DG: {getattr(self, 'LR_DG', 'MISSING')}")
+    
+    # System configuration
+    logger.info(f"  SOC_max: {getattr(self, 'SOC_max', 'MISSING')}")
+    logger.info(f"  SOC_min: {getattr(self, 'SOC_min', 'MISSING')}")
+    logger.info(f"  SOC_initial: {getattr(self, 'SOC_initial', 'MISSING')}")
+    logger.info(f"  n_I: {getattr(self, 'n_I', 'MISSING')}")
+    logger.info(f"  DC_AC_ratio: {getattr(self, 'DC_AC_ratio', 'MISSING')}")
+    logger.info(f"  Grid: {getattr(self, 'Grid', 'MISSING')}")
+    logger.info(f"  Pbuy_max: {getattr(self, 'Pbuy_max', 'MISSING')}")
+    logger.info(f"  Psell_max: {getattr(self, 'Psell_max', 'MISSING')}")
+    
+    # Economic parameters
+    logger.info(f"  ir: {getattr(self, 'ir', 'MISSING')}")
+    logger.info(f"  RE_incentives: {getattr(self, 'RE_incentives', 'MISSING')}")
+    logger.info(f"  Budget: {getattr(self, 'Budget', 'MISSING')}")
+    logger.info(f"  System_Tax: {getattr(self, 'System_Tax', 'MISSING')}")
+    logger.info(f"  EM: {getattr(self, 'EM', 'MISSING')}")
+    logger.info(f"  LPSP_max: {getattr(self, 'LPSP_max', 'MISSING')}")
+    logger.info(f"  RE_min: {getattr(self, 'RE_min', 'MISSING')}")
+    
+    # Capital costs
+    logger.info(f"  C_PV: {getattr(self, 'C_PV', 'MISSING')}")
+    logger.info(f"  C_WT: {getattr(self, 'C_WT', 'MISSING')}")
+    logger.info(f"  C_DG: {getattr(self, 'C_DG', 'MISSING')}")
+    logger.info(f"  C_B: {getattr(self, 'C_B', 'MISSING')}")
+    logger.info(f"  C_I: {getattr(self, 'C_I', 'MISSING')}")
+    logger.info(f"  C_CH: {getattr(self, 'C_CH', 'MISSING')}")
+    logger.info(f"  Engineering_Costs: {getattr(self, 'Engineering_Costs', 'MISSING')}")
+    
+    # Replacement costs
+    logger.info(f"  R_PV: {getattr(self, 'R_PV', 'MISSING')}")
+    logger.info(f"  R_WT: {getattr(self, 'R_WT', 'MISSING')}")
+    logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
+    logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
+    logger.info(f"  R_I: {getattr(self, 'R_I', 'MISSING')}")
+    logger.info(f"  R_CH: {getattr(self, 'R_CH', 'MISSING')}")
+    
+    # Maintenance costs
+    logger.info(f"  MO_PV: {getattr(self, 'MO_PV', 'MISSING')}")
+    logger.info(f"  MO_WT: {getattr(self, 'MO_WT', 'MISSING')}")
+    logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
+    logger.info(f"  MO_B: {getattr(self, 'MO_B', 'MISSING')}")
+    logger.info(f"  MO_I: {getattr(self, 'MO_I', 'MISSING')}")
+    logger.info(f"  MO_CH: {getattr(self, 'MO_CH', 'MISSING')}")
+    
+    # Grid parameters
+    logger.info(f"  Cbuy size: {len(self.Cbuy) if hasattr(self, 'Cbuy') and hasattr(self.Cbuy, '__len__') else 'MISSING'}")
+    logger.info(f"  Csell size: {len(self.Csell) if hasattr(self, 'Csell') and hasattr(self.Csell, '__len__') else 'MISSING'}")
+    logger.info(f"  Service_charge: {getattr(self, 'Service_charge', 'MISSING')} (type: {type(getattr(self, 'Service_charge', None))})")
+    logger.info(f"  Annual_expenses: {getattr(self, 'Annual_expenses', 'MISSING')}")
+    logger.info(f"  Grid_Tax: {getattr(self, 'Grid_Tax', 'MISSING')}")
+    logger.info(f"  Grid_Tax_amount: {getattr(self, 'Grid_Tax_amount', 'MISSING')}")
+    logger.info(f"  Grid_credit: {getattr(self, 'Grid_credit', 'MISSING')}")
+    logger.info(f"  Grid_escalation: {getattr(self, 'Grid_escalation', 'MISSING')}")
+    logger.info(f"  NEM: {getattr(self, 'NEM', 'MISSING')}")
+    logger.info(f"  NEM_fee: {getattr(self, 'NEM_fee', 'MISSING')}")
+    
+    # Rate structure parameters
+    logger.info(f"  rateStructure: {getattr(self, 'rateStructure', 'MISSING')}")
+    logger.info(f"  flatPrice: {getattr(self, 'flatPrice', 'MISSING')}")
+    logger.info(f"  seasonalPrices: {getattr(self, 'seasonalPrices', 'MISSING')}")
+    logger.info(f"  monthlyPrices: {getattr(self, 'monthlyPrices', 'MISSING')}")
+    logger.info(f"  tieredPrices: {getattr(self, 'tieredPrices', 'MISSING')}")
+    logger.info(f"  tierMax: {getattr(self, 'tierMax', 'MISSING')}")
+    logger.info(f"  seasonalTieredPrices: {getattr(self, 'seasonalTieredPrices', 'MISSING')}")
+    logger.info(f"  seasonalTierMax: {getattr(self, 'seasonalTierMax', 'MISSING')}")
+    logger.info(f"  monthlyTieredPrices: {getattr(self, 'monthlyTieredPrices', 'MISSING')}")
+    logger.info(f"  monthlyTierLimits: {getattr(self, 'monthlyTierLimits', 'MISSING')}")
+    logger.info(f"  onPrice: {getattr(self, 'onPrice', 'MISSING')}")
+    logger.info(f"  midPrice: {getattr(self, 'midPrice', 'MISSING')}")
+    logger.info(f"  offPrice: {getattr(self, 'offPrice', 'MISSING')}")
+    logger.info(f"  onHours: {getattr(self, 'onHours', 'MISSING')}")
+    logger.info(f"  midHours: {getattr(self, 'midHours', 'MISSING')}")
+    logger.info(f"  onPeakPrice: {getattr(self, 'onPeakPrice', 'MISSING')}")
+    logger.info(f"  midPeakPrice: {getattr(self, 'midPeakPrice', 'MISSING')}")
+    
+    # Compensation parameters
+    logger.info(f"  compensation_option: {getattr(self, 'compensation_option', 'MISSING')}")
+    logger.info(f"  flat_compensation: {getattr(self, 'flat_compensation', 'MISSING')}")
+    logger.info(f"  monthly_compensation: {getattr(self, 'monthly_compensation', 'MISSING')}")
+    logger.info(f"  monthlysellprices: {getattr(self, 'monthlysellprices', 'MISSING')}")
+    logger.info(f"  sellStructure: {getattr(self, 'sellStructure', 'MISSING')}")
+    
+    # Season and holidays
+    logger.info(f"  season: {getattr(self, 'season', 'MISSING')}")
+    logger.info(f"  holidays: {getattr(self, 'holidays', 'MISSING')}")
+    
+    # Battery type flags
+    logger.info(f"  Lead_acid: {getattr(self, 'Lead_acid', 'MISSING')}")
+    logger.info(f"  Li_ion: {getattr(self, 'Li_ion', 'MISSING')}")
+    
+    # Lithium battery parameters
+    logger.info(f"  Ich_max_Li_ion: {getattr(self, 'Ich_max_Li_ion', 'MISSING')}")
+    logger.info(f"  Idch_max_Li_ion: {getattr(self, 'Idch_max_Li_ion', 'MISSING')}")
+    logger.info(f"  Vnom_Li_ion: {getattr(self, 'Vnom_Li_ion', 'MISSING')}")
+    logger.info(f"  Cnom_Li: {getattr(self, 'Cnom_Li', 'MISSING')}")
+    logger.info(f"  ef_bat_Li: {getattr(self, 'ef_bat_Li', 'MISSING')}")
+    logger.info(f"  Q_lifetime_Li: {getattr(self, 'Q_lifetime_Li', 'MISSING')}")
+    logger.info(f"  alfa_battery_Li_ion: {getattr(self, 'alfa_battery_Li_ion', 'MISSING')}")
+    
+    # Fuel adjustment
+    logger.info(f"  C_fuel_adj: {getattr(self, 'C_fuel_adj', 'MISSING')}")
+    
+    # Emissions
+    logger.info(f"  CO2: {getattr(self, 'CO2', 'MISSING')}")
+    logger.info(f"  NOx: {getattr(self, 'NOx', 'MISSING')}")
+    logger.info(f"  SO2: {getattr(self, 'SO2', 'MISSING')}")
+    logger.info(f"  E_CO2: {getattr(self, 'E_CO2', 'MISSING')}")
+    logger.info(f"  E_SO2: {getattr(self, 'E_SO2', 'MISSING')}")
+    logger.info(f"  E_NOx: {getattr(self, 'E_NOx', 'MISSING')}")
+    
+    logger.info(f"=== END FITNESS VALUES CHECK ===\n")
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth
@@ -1230,6 +814,14 @@ def save_wind_config():
 def submit_results():
     try:
         user_id = request.user['uid']
+        
+        load_user_data(user_id)
+            
+        # Set PSO-specific attributes that the Swarm class expects
+        Run_Time = 1  # Default value, can be made configurable later
+                
+        # Create the data object
+        in_data = OptimizationData(user_id)
         
         # Call PSO optimizer and get comprehensive results
         result = pso_run(in_data, user_id)
