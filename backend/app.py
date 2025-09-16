@@ -282,8 +282,145 @@ class InputData:
     
     def __init__(self, user_id):
         self.user_id = user_id
+
+        self.set_default_values()
+
         self.load_all_data()
     
+    def set_default_values(self):
+            # unchanged values
+        self.Run_Time = 1
+        self.Ppv_r = 1
+        self.Pwt_r = 1
+        self.Cbt_r = 1
+        self.Cdg_r = 1
+        
+        # System configuration
+        self.PV = False
+        self.WT = False
+        self.Bat = False
+        self.DG = False
+        self.Grid = False
+        
+        # Battery parameters
+        self.Lead_acid = False
+        self.Li_ion = False
+        
+        # Load weather data from METEO.csv file
+        self.load_weather_from_meteo()
+        
+        self.gama = 0.9 
+        self.Budget = 200e3
+        self.EM = 0
+        
+        # Set default values for parameters that might be needed
+        self.daysInMonth = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+        self.year = 2024
+        self.Eload = np.ones(8760) * 10  # Default load
+        
+        # Set default Cbuy and Csell - these will be overridden if Grid is enabled
+        self.Cbuy = np.ones(8760) * 0.1  # Default electricity price
+        self.Csell = np.ones(8760) * 0.05  # Default sell price
+
+        self.E_CO2 = 1.43
+        self.E_SO2 = 0.01
+        self.E_NOx = 0.39
+        
+    def calculate_cbuy(self):
+        """Calculate Cbuy based on rate structure from user input"""
+        if not hasattr(self, 'rateStructure'):
+            return
+            
+        if self.rateStructure == 1:  # Flat rate
+            if hasattr(self, 'flatPrice'):
+                from sama_python.calcFlatRate import calcFlatRate
+                self.Cbuy = calcFlatRate(self.flatPrice)
+
+        elif self.rateStructure == 2:  # Seasonal rate
+            if hasattr(self, 'seasonalPrices') and hasattr(self, 'season'):
+                from sama_python.calcSeasonalRate import calcSeasonalRate
+                self.Cbuy = calcSeasonalRate(self.seasonalPrices, self.season, self.daysInMonth)
+
+        elif self.rateStructure == 3:  # Monthly rate
+            if hasattr(self, 'monthlyPrices'):
+                from sama_python.calcMonthlyRate import calcMonthlyRate
+                self.Cbuy = calcMonthlyRate(self.monthlyPrices, self.daysInMonth)
+
+        elif self.rateStructure == 4:  # Tiered rate
+            if hasattr(self, 'tieredPrices') and hasattr(self, 'tierMax'):
+                from sama_python.calcTieredRate import calcTieredRate
+                self.Cbuy = calcTieredRate(self.tieredPrices, self.tierMax, self.Eload, self.daysInMonth)
+
+        elif self.rateStructure == 5:  # Seasonal tiered rate
+            if hasattr(self, 'seasonalTieredPrices') and hasattr(self, 'seasonalTierMax') and hasattr(self, 'season'):
+                from sama_python.calcSeasonalTieredRate import calcSeasonalTieredRate
+                self.Cbuy = calcSeasonalTieredRate(self.seasonalTieredPrices, self.seasonalTierMax, self.Eload, self.season)
+
+        elif self.rateStructure == 6:  # Monthly tiered rate
+            if hasattr(self, 'monthlyTieredPrices') and hasattr(self, 'monthlyTierLimits'):
+                from sama_python.calcMonthlyTieredRate import calcMonthlyTieredRate
+                self.Cbuy = calcMonthlyTieredRate(self.monthlyTieredPrices, self.monthlyTierLimits, self.Eload)
+
+        elif self.rateStructure == 7:  # Time of use rate
+            if (hasattr(self, 'onPrice') and hasattr(self, 'midPrice') and hasattr(self, 'offPrice') and 
+                hasattr(self, 'onHours') and hasattr(self, 'midHours') and hasattr(self, 'season') and 
+                hasattr(self, 'holidays')):
+                from sama_python.calcTouRate import calcTouRate
+                self.Cbuy = calcTouRate(self.year, self.onPrice, self.midPrice, self.offPrice, 
+                                      self.onHours, self.midHours, self.season, self.daysInMonth, self.holidays)
+    
+    def calculate_csell(self):
+        """Calculate Csell based on sell structure from user input"""
+        if not hasattr(self, 'sellStructure'):
+            return
+            
+        if self.sellStructure == 1:  # Flat rate
+            if hasattr(self, 'flat_compensation'):
+                self.Csell = np.full(8760, self.flat_compensation)
+            else:
+                self.Csell = np.full(8760, 0.049)  # Default flat rate
+
+        elif self.sellStructure == 2:  # Monthly rate
+            if hasattr(self, 'monthlysellprices'):
+                from sama_python.calcMonthlyRate import calcMonthlyRate
+                self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
+            else:
+                # Default monthly rates
+                self.monthlysellprices = np.array([0.0638, 0.14538, 0.09079, 0.07914, 0.06469, 0.05336, 0.04612, 0.04411, 0.04737, 0.04591, 0.04512, 0.04415])
+                from sama_python.calcMonthlyRate import calcMonthlyRate
+                self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
+
+        elif self.sellStructure == 3:  # 1:1 compensation
+            self.Csell = self.Cbuy
+        
+    def load_weather_from_meteo(self):
+        """Load weather data from METEO.csv file if available, otherwise use defaults"""
+        try:
+            # Check if METEO.csv exists for this user
+            meteo_path = f'sama_python/output/{self.user_id}/data/METEO.csv'
+            if os.path.exists(meteo_path):
+                # Read the METEO.csv file
+                df = pd.read_csv(meteo_path, skiprows=2)  # Skip header rows
+                
+                # Extract weather data
+                self.T = df['Temperature'].values  # Ambient temperature
+                self.G = df['GHI'].values  # Global horizontal irradiance
+                self.Vw = df['Wind Speed'].values  # Wind speed
+                
+                logger.info(f"Weather data loaded from METEO.csv: T={len(self.T)}, G={len(self.G)}, Vw={len(self.Vw)}")
+            else:
+                logger.warning(f"METEO.csv not found at {meteo_path}, using default values")
+                # Set default arrays if no weather data available
+                self.T = np.ones(8760) * 25  # Default temperature 25°C
+                self.G = np.ones(8760) * 1000  # Default irradiance 1000 W/m²
+                self.Vw = np.ones(8760) * 5  # Default wind speed 5 m/s
+        except Exception as e:
+            logger.error(f"Error loading weather data from METEO.csv: {str(e)}")
+            # Set default arrays on error
+            self.T = np.ones(8760) * 25
+            self.G = np.ones(8760) * 1000
+            self.Vw = np.ones(8760) * 5
+
     def load_all_data(self):
         """Load all user data from database"""
         # Load data from database
@@ -363,6 +500,12 @@ class InputData:
                 self.Service_charge = grid.SC_flat
             self.Pbuy_max = grid.Pbuy_max
             self.Psell_max = grid.Psell_max
+            
+            # Calculate Cbuy based on rate structure
+            self.calculate_cbuy()
+            
+            # Calculate Csell based on sell structure
+            self.calculate_csell()
             
             # Load new grid fields
             if grid.season:
@@ -540,6 +683,7 @@ class InputData:
                 pv_system.Permiting_and_Inspection or 0, pv_system.Electrical_BoS or 0, pv_system.Structural_BoS or 0,
                 pv_system.Supply_Chain_costs or 0, pv_system.Profit_costs or 0, pv_system.Sales_tax or 0
             ])
+            self.RT_PV = ceil(self.n/self.L_PV) - 1
 
         # --- Inverter ---
         if inverter:
@@ -549,6 +693,7 @@ class InputData:
             self.C_I = inverter.C_I
             self.R_I = inverter.R_I
             self.MO_I = inverter.MO_I
+            self.RT_I = ceil(self.n/self.L_I) - 1
         
         # --- DieselGenerator ---
         if diesel:
