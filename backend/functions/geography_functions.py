@@ -56,19 +56,34 @@ def save_geography_economy():
         logger.info(f"Type of geo_economy: {type(geo_economy)}")
         logger.info(f"Type of data: {type(data)}")
 
-        # Update fields
-        geo_economy.latitude = data.get('latitude')
-        geo_economy.longitude = data.get('longitude')
-        geo_economy.address = data.get('address')
-        geo_economy.n_ir_rate = data.get('n_ir_rate')
-        geo_economy.e_ir_rate = data.get('e_ir_rate')
-        geo_economy.Tax_rate = data.get('Tax_rate')
-        geo_economy.RE_incentives_rate = data.get('RE_incentives_rate')
+        # Validate required fields for new records
+        if not geo_economy.latitude:  # If this is a new record or missing required fields
+            required_fields = ['latitude', 'longitude', 'address']
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            if missing_fields:
+                return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+        # Update fields - only update if provided
+        if 'latitude' in data and data['latitude'] is not None:
+            geo_economy.latitude = data['latitude']
+        if 'longitude' in data and data['longitude'] is not None:
+            geo_economy.longitude = data['longitude']
+        if 'address' in data and data['address'] is not None:
+            geo_economy.address = data['address']
+        if 'n_ir_rate' in data and data['n_ir_rate'] is not None:
+            geo_economy.n_ir_rate = data['n_ir_rate']
+        if 'e_ir_rate' in data and data['e_ir_rate'] is not None:
+            geo_economy.e_ir_rate = data['e_ir_rate']
+        if 'Tax_rate' in data and data['Tax_rate'] is not None:
+            geo_economy.Tax_rate = data['Tax_rate']
+        if 'RE_incentives_rate' in data and data['RE_incentives_rate'] is not None:
+            geo_economy.RE_incentives_rate = data['RE_incentives_rate']
         
         db.session.commit()
 
-        # Fetch and save METEO.csv
-        fetch_and_save_meteo_csv(user_id, geo_economy.latitude, geo_economy.longitude)
+        # Fetch and save METEO.csv only if we have valid coordinates
+        if geo_economy.latitude and geo_economy.longitude:
+            fetch_and_save_meteo_csv(user_id, geo_economy.latitude, geo_economy.longitude)
 
         return jsonify({'id': geo_economy.user_id, 'message': 'Geography and economy data saved successfully'}), 200
     except Exception as e:
