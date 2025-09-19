@@ -298,11 +298,14 @@ class InData(OriginalInputData):
         geo_econ = GeographyEconomy.query.get(self.user_id)
         opt = Optimization.query.get(self.user_id)
         sys_config = SystemConfig.query.get(self.user_id)
-        pv_system = PhotovoltaicSystem.query.get(self.user_id)
-        inverter = Inverter.query.get(self.user_id)
-        diesel = DieselGenerator.query.get(self.user_id)
-        battery = Battery.query.get(self.user_id)
-        wind = WindTurbine.query.get(self.user_id)
+        
+        # Only load component data if they are enabled in system config
+        pv_system = PhotovoltaicSystem.query.get(self.user_id) if sys_config and sys_config.PV else None
+        inverter = Inverter.query.get(self.user_id) if sys_config and sys_config.PV else None
+        diesel = DieselGenerator.query.get(self.user_id) if sys_config and sys_config.DG else None
+        battery = Battery.query.get(self.user_id) if sys_config and sys_config.Bat else None
+        wind = WindTurbine.query.get(self.user_id) if sys_config and sys_config.WT else None
+        
         grid = Grid.query.get(self.user_id)
 
         logger.info(f"Loading user data for user_id: {self.user_id}")
@@ -621,150 +624,6 @@ class InData(OriginalInputData):
             self.wdamp = opt.wdamp
             self.c1 = opt.c1
             self.c2 = opt.c2
-
-        # Debug: Check for potential division by zero issues
-        logger.info(f"Critical values check:")
-        logger.info(f"  L_PV: {getattr(self, 'L_PV', 'NOT SET')}")
-        logger.info(f"  L_I: {getattr(self, 'L_I', 'NOT SET')}")
-        logger.info(f"  L_B: {getattr(self, 'L_B', 'NOT SET')}")
-        logger.info(f"  L_WT: {getattr(self, 'L_WT', 'NOT SET')}")
-        logger.info(f"  L_CH: {getattr(self, 'L_CH', 'NOT SET')}")
-        logger.info(f"  n: {getattr(self, 'n', 'NOT SET')}")
-        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'NOT SET')}")
-        
-        # Comprehensive fitness function values check
-        logger.info(f"\n=== COMPREHENSIVE FITNESS VALUES CHECK ===")
-        
-        # Basic system parameters
-        logger.info(f"  Eload size: {len(self.Eload) if hasattr(self, 'Eload') else 'MISSING'}")
-        logger.info(f"  Ppv_r: {getattr(self, 'Ppv_r', 'MISSING')}")
-        logger.info(f"  Pwt_r: {getattr(self, 'Pwt_r', 'MISSING')}")
-        logger.info(f"  Cbt_r: {getattr(self, 'Cbt_r', 'MISSING')}")
-        logger.info(f"  Cdg_r: {getattr(self, 'Cdg_r', 'MISSING')}")
-        
-        # Weather and environment
-        logger.info(f"  T size: {len(self.T) if hasattr(self, 'T') else 'MISSING'}")
-        logger.info(f"  G size: {len(self.G) if hasattr(self, 'G') else 'MISSING'}")
-        logger.info(f"  Vw size: {len(self.Vw) if hasattr(self, 'Vw') else 'MISSING'}")
-        logger.info(f"  Tc_noct: {getattr(self, 'Tc_noct', 'MISSING')}")
-        logger.info(f"  Ta_noct: {getattr(self, 'Ta_noct', 'MISSING')}")
-        logger.info(f"  G_noct: {getattr(self, 'G_noct', 'MISSING')}")
-        logger.info(f"  Gref: {getattr(self, 'Gref', 'MISSING')}")
-        logger.info(f"  Tcof: {getattr(self, 'Tcof', 'MISSING')}")
-        logger.info(f"  Tref: {getattr(self, 'Tref', 'MISSING')}")
-        logger.info(f"  n_PV: {getattr(self, 'n_PV', 'MISSING')}")
-        logger.info(f"  gama: {getattr(self, 'gama', 'MISSING')}")
-        logger.info(f"  fpv: {getattr(self, 'fpv', 'MISSING')}")
-        
-        # Wind turbine parameters
-        logger.info(f"  h_hub: {getattr(self, 'h_hub', 'MISSING')}")
-        logger.info(f"  h0: {getattr(self, 'h0', 'MISSING')}")
-        logger.info(f"  alfa_wind_turbine: {getattr(self, 'alfa_wind_turbine', 'MISSING')}")
-        logger.info(f"  v_cut_in: {getattr(self, 'v_cut_in', 'MISSING')}")
-        logger.info(f"  v_cut_out: {getattr(self, 'v_cut_out', 'MISSING')}")
-        logger.info(f"  v_rated: {getattr(self, 'v_rated', 'MISSING')}")
-        
-        # Battery parameters
-        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
-        logger.info(f"  Q_lifetime_leadacid: {getattr(self, 'Q_lifetime_leadacid', 'MISSING')}")
-        logger.info(f"  ef_bat_leadacid: {getattr(self, 'ef_bat_leadacid', 'MISSING')}")
-        logger.info(f"  self_discharge_rate: {getattr(self, 'self_discharge_rate', 'MISSING')}")
-        logger.info(f"  alfa_battery_leadacid: {getattr(self, 'alfa_battery_leadacid', 'MISSING')}")
-        logger.info(f"  c: {getattr(self, 'c', 'MISSING')}")
-        logger.info(f"  k: {getattr(self, 'k', 'MISSING')}")
-        logger.info(f"  Ich_max_leadacid: {getattr(self, 'Ich_max_leadacid', 'MISSING')}")
-        logger.info(f"  Vnom_leadacid: {getattr(self, 'Vnom_leadacid', 'MISSING')}")
-        
-        # Diesel generator parameters
-        logger.info(f"  a: {getattr(self, 'a', 'MISSING')}")
-        logger.info(f"  b: {getattr(self, 'b', 'MISSING')}")
-        logger.info(f"  C_fuel: {getattr(self, 'C_fuel', 'MISSING')}")
-        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
-        logger.info(f"  TL_DG: {getattr(self, 'TL_DG', 'MISSING')}")
-        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
-        logger.info(f"  LR_DG: {getattr(self, 'LR_DG', 'MISSING')}")
-        
-        # System configuration
-        logger.info(f"  SOC_max: {getattr(self, 'SOC_max', 'MISSING')}")
-        logger.info(f"  SOC_min: {getattr(self, 'SOC_min', 'MISSING')}")
-        logger.info(f"  SOC_initial: {getattr(self, 'SOC_initial', 'MISSING')}")
-        logger.info(f"  n_I: {getattr(self, 'n_I', 'MISSING')}")
-        logger.info(f"  DC_AC_ratio: {getattr(self, 'DC_AC_ratio', 'MISSING')}")
-        logger.info(f"  Grid: {getattr(self, 'Grid', 'MISSING')}")
-        logger.info(f"  Pbuy_max: {getattr(self, 'Pbuy_max', 'MISSING')}")
-        logger.info(f"  Psell_max: {getattr(self, 'Psell_max', 'MISSING')}")
-        
-        # Economic parameters
-        logger.info(f"  ir: {getattr(self, 'ir', 'MISSING')}")
-        logger.info(f"  RE_incentives: {getattr(self, 'RE_incentives', 'MISSING')}")
-        logger.info(f"  Budget: {getattr(self, 'Budget', 'MISSING')}")
-        logger.info(f"  System_Tax: {getattr(self, 'System_Tax', 'MISSING')}")
-        logger.info(f"  EM: {getattr(self, 'EM', 'MISSING')}")
-        logger.info(f"  LPSP_max: {getattr(self, 'LPSP_max', 'MISSING')}")
-        logger.info(f"  RE_min: {getattr(self, 'RE_min', 'MISSING')}")
-        
-        # Capital costs
-        logger.info(f"  C_PV: {getattr(self, 'C_PV', 'MISSING')}")
-        logger.info(f"  C_WT: {getattr(self, 'C_WT', 'MISSING')}")
-        logger.info(f"  C_DG: {getattr(self, 'C_DG', 'MISSING')}")
-        logger.info(f"  C_B: {getattr(self, 'C_B', 'MISSING')}")
-        logger.info(f"  C_I: {getattr(self, 'C_I', 'MISSING')}")
-        logger.info(f"  C_CH: {getattr(self, 'C_CH', 'MISSING')}")
-        logger.info(f"  Engineering_Costs: {getattr(self, 'Engineering_Costs', 'MISSING')}")
-        
-        # Replacement costs
-        logger.info(f"  R_PV: {getattr(self, 'R_PV', 'MISSING')}")
-        logger.info(f"  R_WT: {getattr(self, 'R_WT', 'MISSING')}")
-        logger.info(f"  R_DG: {getattr(self, 'R_DG', 'MISSING')}")
-        logger.info(f"  R_B: {getattr(self, 'R_B', 'MISSING')}")
-        logger.info(f"  R_I: {getattr(self, 'R_I', 'MISSING')}")
-        logger.info(f"  R_CH: {getattr(self, 'R_CH', 'MISSING')}")
-        
-        # Maintenance costs
-        logger.info(f"  MO_PV: {getattr(self, 'MO_PV', 'MISSING')}")
-        logger.info(f"  MO_WT: {getattr(self, 'MO_WT', 'MISSING')}")
-        logger.info(f"  MO_DG: {getattr(self, 'MO_DG', 'MISSING')}")
-        logger.info(f"  MO_B: {getattr(self, 'MO_B', 'MISSING')}")
-        logger.info(f"  MO_I: {getattr(self, 'MO_I', 'MISSING')}")
-        logger.info(f"  MO_CH: {getattr(self, 'MO_CH', 'MISSING')}")
-        
-        # Grid parameters
-        logger.info(f"  Cbuy size: {len(self.Cbuy) if hasattr(self, 'Cbuy') and hasattr(self.Cbuy, '__len__') else 'MISSING'}")
-        logger.info(f"  Csell size: {len(self.Csell) if hasattr(self, 'Csell') and hasattr(self.Csell, '__len__') else 'MISSING'}")
-        logger.info(f"  Service_charge: {getattr(self, 'Service_charge', 'MISSING')} (type: {type(getattr(self, 'Service_charge', None))})")
-        logger.info(f"  Annual_expenses: {getattr(self, 'Annual_expenses', 'MISSING')}")
-        logger.info(f"  Grid_Tax: {getattr(self, 'Grid_Tax', 'MISSING')}")
-        logger.info(f"  Grid_Tax_amount: {getattr(self, 'Grid_Tax_amount', 'MISSING')}")
-        logger.info(f"  Grid_credit: {getattr(self, 'Grid_credit', 'MISSING')}")
-        logger.info(f"  Grid_escalation: {getattr(self, 'Grid_escalation', 'MISSING')}")
-        logger.info(f"  NEM: {getattr(self, 'NEM', 'MISSING')}")
-        logger.info(f"  NEM_fee: {getattr(self, 'NEM_fee', 'MISSING')}")
-        
-        # Battery type flags
-        logger.info(f"  Lead_acid: {getattr(self, 'Lead_acid', 'MISSING')}")
-        logger.info(f"  Li_ion: {getattr(self, 'Li_ion', 'MISSING')}")
-        
-        # Lithium battery parameters
-        logger.info(f"  Ich_max_Li_ion: {getattr(self, 'Ich_max_Li_ion', 'MISSING')}")
-        logger.info(f"  Idch_max_Li_ion: {getattr(self, 'Idch_max_Li_ion', 'MISSING')}")
-        logger.info(f"  Vnom_Li_ion: {getattr(self, 'Vnom_Li_ion', 'MISSING')}")
-        logger.info(f"  Cnom_Li: {getattr(self, 'Cnom_Li', 'MISSING')}")
-        logger.info(f"  ef_bat_Li: {getattr(self, 'ef_bat_Li', 'MISSING')}")
-        logger.info(f"  Q_lifetime_Li: {getattr(self, 'Q_lifetime_Li', 'MISSING')}")
-        logger.info(f"  alfa_battery_Li_ion: {getattr(self, 'alfa_battery_Li_ion', 'MISSING')}")
-        
-        # Fuel adjustment
-        logger.info(f"  C_fuel_adj: {getattr(self, 'C_fuel_adj', 'MISSING')}")
-        
-        # Emissions
-        logger.info(f"  CO2: {getattr(self, 'CO2', 'MISSING')}")
-        logger.info(f"  NOx: {getattr(self, 'NOx', 'MISSING')}")
-        logger.info(f"  SO2: {getattr(self, 'SO2', 'MISSING')}")
-        logger.info(f"  E_CO2: {getattr(self, 'E_CO2', 'MISSING')}")
-        logger.info(f"  E_SO2: {getattr(self, 'E_SO2', 'MISSING')}")
-        logger.info(f"  E_NOx: {getattr(self, 'E_NOx', 'MISSING')}")
-        
-        logger.info(f"=== END FITNESS VALUES CHECK ===\n")
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth
