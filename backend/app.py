@@ -26,7 +26,7 @@ from functions.component_functions import get_pv_config, save_pv_config, get_inv
 from functions.grid_functions import get_grid_config, save_grid
 from functions.optimization_functions import get_optimization, save_optimization
 from functions.geography_functions import get_geography, save_geography_economy
-from tmp import log_function_input
+# from tmp import log_function_input
 
 NSRDB_API_KEY = os.environ.get('NSRDB_API_KEY')
 NSRDB_EMAIL = os.environ.get('NSRDB_EMAIL')
@@ -90,7 +90,7 @@ def require_auth(f):
 
 # Health check endpoint
 @app.route('/api/health', methods=['GET'])
-@log_function_input
+# @log_function_input
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
@@ -126,13 +126,13 @@ def fetch_and_save_meteo_csv(user_id, latitude, longitude):
 
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def save_geography_economy_endpoint():
     return save_geography_economy()
 
 @app.route('/api/optimization', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def save_optimization_endpoint():
     return save_optimization()
 
@@ -188,10 +188,10 @@ def get_component_selection():
         max_step = max(max_step, 8)  # Grid = step 8
     
     return jsonify({
-        'PV': system_config.PV,
-        'WT': system_config.WT,
-        'DG': system_config.DG,
-        'Bat': system_config.Bat,
+        'PV': bool(system_config.PV),
+        'WT': bool(system_config.WT),
+        'DG': bool(system_config.DG),
+        'Bat': bool(system_config.Bat),
         'maxStep': max_step
     })
 
@@ -243,13 +243,13 @@ def get_grid_config_endpoint():
 
 @app.route('/api/system-config', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def save_system_config_endpoint():
     return save_system_config()
 
 @app.route('/api/grid', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def save_grid_endpoint():
     return save_grid()
 
@@ -275,155 +275,9 @@ def save_battery_config_endpoint():
 
 @app.route('/api/wind-config', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def save_wind_config_endpoint():
     return save_wind_config()
-
-@app.route('/api/grid', methods=['POST'])
-@require_auth
-@log_function_input
-def save_grid():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        
-        # Check if record exists
-        grid = Grid.query.get(user_id)
-        if not grid:
-            grid = Grid(user_id=user_id)
-            db.session.add(grid)
-        
-        # Update fields dynamically
-        for key, value in data.items():
-            if key in ['season', 'holidays']:
-                # Store as JSON-encoded string
-                setattr(grid, key, json.dumps(value))
-            elif hasattr(grid, key):
-                # Handle empty strings for nullable columns
-                column = getattr(grid.__class__, key)
-                if value == '' and column.nullable:
-                    setattr(grid, key, None)
-                else:
-                    setattr(grid, key, value)
-        
-        db.session.commit()
-        return jsonify({'id': grid.user_id, 'message': 'Grid data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving grid data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/pv-config', methods=['POST'])
-@require_auth
-def save_pv_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        pv = PhotovoltaicSystem.query.get(user_id)
-        if not pv:
-            pv = PhotovoltaicSystem(user_id=user_id)
-            db.session.add(pv)
-        for field in [
-            'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
-            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
-            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']:
-            if field in data:
-                setattr(pv, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(pv, field) for field in [
-            'user_id', 'fpv', 'Tcof', 'Tref', 'Tc_noct', 'Ta_noct', 'G_noct', 'n_PV', 'Gref', 'L_PV',
-            'C_PV', 'R_PV', 'MO_PV', 'Installation_cost', 'Overhead', 'Sales_and_marketing',
-            'Permiting_and_Inspection', 'Electrical_BoS', 'Structural_BoS', 'Supply_Chain_costs',
-            'Profit_costs', 'Sales_tax', 'azimuth', 'tilt', 'soiling']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/inverter-config', methods=['POST'])
-@require_auth
-def save_inverter_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        inv = Inverter.query.get(user_id)
-        if not inv:
-            inv = Inverter(user_id=user_id)
-            db.session.add(inv)
-        for field in ['n_I', 'L_I', 'DC_AC_ratio', 'C_I', 'R_I', 'MO_I']:
-            if field in data:
-                setattr(inv, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(inv, field) for field in [
-            'user_id', 'n_I', 'L_I', 'DC_AC_ratio', 'C_I', 'R_I', 'MO_I']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/dg-config', methods=['POST'])
-@require_auth
-def save_dg_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        dg = DieselGenerator.query.get(user_id)
-        if not dg:
-            dg = DieselGenerator(user_id=user_id)
-            db.session.add(dg)
-        for field in ['a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']:
-            if field in data:
-                setattr(dg, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(dg, field) for field in [
-            'user_id', 'a', 'b', 'min_load_ratio', 'C_DG', 'R_DG', 'MO_DG', 'C_fuel', 'C_fuel_adj_rate', 'diesel_lifetime']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/battery-config', methods=['POST'])
-@require_auth
-def save_battery_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        bat = Battery.query.get(user_id)
-        if not bat:
-            bat = Battery(user_id=user_id)
-            db.session.add(bat)
-        for field in [
-            'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
-            'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
-            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']:
-            if field in data:
-                setattr(bat, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(bat, field) for field in [
-            'user_id', 'Lead_acid', 'Li_ion', 'SOC_min', 'SOC_max', 'SOC_initial', 'self_discharge_rate', 'L_B',
-            'Cnom_Leadacid', 'alfa_battery_leadacid', 'c', 'k', 'Ich_max_leadacid', 'Vnom_leadacid',
-            'ef_bat_leadacid', 'Q_lifetime_leadacid', 'Ich_max_Li_ion', 'Idch_max_Li_ion', 'alfa_battery_Li_ion',
-            'Vnom_Li_ion', 'ef_bat_Li', 'Cnom_Li', 'Q_lifetime_Li', 'L_B_Li', 'C_B', 'R_B', 'MO_B']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/wind-config', methods=['POST'])
-@require_auth
-@log_function_input
-def save_wind_config():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        wind = WindTurbine.query.get(user_id)
-        if not wind:
-            wind = WindTurbine(user_id=user_id)
-            db.session.add(wind)
-        for field in [
-            'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT']:
-            if field in data:
-                setattr(wind, field, data[field])
-        db.session.commit()
-        return jsonify({field: getattr(wind, field) for field in [
-            'user_id', 'Pwt_r', 'h_hub', 'h0', 'nw', 'v_cut_out', 'v_cut_in', 'v_rated', 'alfa_wind_turbine', 'L_WT',
-            'C_WT', 'R_WT', 'MO_WT']}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 class InData(OriginalInputData):
     def __init__(self, user_id):
@@ -914,7 +768,7 @@ class InData(OriginalInputData):
 
 @app.route('/api/submit', methods=['POST'])
 @require_auth
-@log_function_input
+# @log_function_input
 def submit_results():
     try:
         user_id = request.user['uid']
