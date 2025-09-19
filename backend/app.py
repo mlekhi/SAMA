@@ -5,7 +5,6 @@ import os
 from functools import wraps
 import logging
 import json
-from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, WindTurbine
 from config import Config
 import pandas as pd
 from types import SimpleNamespace
@@ -20,6 +19,14 @@ from dateutil.relativedelta import relativedelta
 import calendar
 import requests
 import csv
+
+from models import db, GeographyEconomy, Optimization, SystemConfig, Grid, PhotovoltaicSystem, Inverter, DieselGenerator, Battery, WindTurbine
+from functions.system_config_functions import get_system_config, save_system_config
+from functions.component_functions import get_pv_config, save_pv_config, get_inverter, save_inverter_config, get_diesel_config, save_dg_config, get_battery_config, save_battery_config, get_wind_config, save_wind_config
+from functions.grid_functions import get_grid_config, save_grid
+from functions.optimization_functions import get_optimization, save_optimization
+from functions.geography_functions import get_geography, save_geography_economy
+from tmp import log_function_input
 
 NSRDB_API_KEY = os.environ.get('NSRDB_API_KEY')
 NSRDB_EMAIL = os.environ.get('NSRDB_EMAIL')
@@ -61,31 +68,6 @@ with open('firebase_service_account.json') as f:
 cred = credentials.Certificate(service_account)
 firebase_app = initialize_app(cred)
 
-# Logging decorator to show function inputs
-# GET RID OF LATER!!!!
-def log_function_input(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        func_name = f.__name__
-        logger.info(f"=== {func_name} called ===")
-        logger.info(f"Args: {args}")
-        logger.info(f"Kwargs: {kwargs}")
-        
-        # Log request data if it's a Flask request
-        if hasattr(request, 'get_json'):
-            try:
-                request_data = request.get_json()
-                logger.info(f"Request JSON: {request_data}")
-            except:
-                logger.info("No JSON data in request")
-        
-        if hasattr(request, 'headers'):
-            logger.info(f"Headers: {dict(request.headers)}")
-        
-        result = f(*args, **kwargs)
-        logger.info(f"=== {func_name} completed ===")
-        return result
-    return decorated_function
 
 # Authentication decorator
 def require_auth(f):
@@ -145,68 +127,14 @@ def fetch_and_save_meteo_csv(user_id, latitude, longitude):
 @app.route('/api/geography-economy', methods=['POST'])
 @require_auth
 @log_function_input
-def save_geography_economy():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        if isinstance(data, str):
-            data = json.loads(data)
-        
-        # Check if record exists
-        geo_economy = GeographyEconomy.query.get(user_id)
-        if not geo_economy:
-            geo_economy = GeographyEconomy(user_id=user_id)
-            db.session.add(geo_economy)
-        
-        logger.info(f"Type of geo_economy: {type(geo_economy)}")
-        logger.info(f"Type of data: {type(data)}")
-
-        # Update fields
-        geo_economy.latitude = data.get('latitude')
-        geo_economy.longitude = data.get('longitude')
-        geo_economy.address = data.get('address')
-        geo_economy.n_ir_rate = data.get('n_ir_rate')
-        geo_economy.e_ir_rate = data.get('e_ir_rate')
-        geo_economy.Tax_rate = data.get('Tax_rate')
-        geo_economy.RE_incentives_rate = data.get('RE_incentives_rate')
-        
-        db.session.commit()
-
-        # Fetch and save METEO.csv
-        fetch_and_save_meteo_csv(user_id, geo_economy.latitude, geo_economy.longitude)
-
-        return jsonify({'id': geo_economy.user_id, 'message': 'Geography and economy data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving geography economy data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_geography_economy_endpoint():
+    return save_geography_economy()
 
 @app.route('/api/optimization', methods=['POST'])
 @require_auth
 @log_function_input
-def save_optimization():
-    try:
-        user_id = request.user['uid']
-        data = request.get_json()
-        
-        # Check if record exists
-        optimization = Optimization.query.get(user_id)
-        if not optimization:
-            optimization = Optimization(user_id=user_id)
-            db.session.add(optimization)
-        
-        # Update fields
-        optimization.MaxIt = data.get('maxIterations')
-        optimization.nPop = data.get('populationSize')
-        optimization.w = data.get('inertiaWeight')
-        optimization.wdamp = data.get('inertiaWeightDamping')
-        optimization.c1 = data.get('personalLearningCoeff')
-        optimization.c2 = data.get('globalLearningCoeff')
-        
-        db.session.commit()
-        return jsonify({'id': optimization.user_id, 'message': 'Optimization data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving optimization data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+def save_optimization_endpoint():
+    return save_optimization()
 
 @app.route('/api/component-selection', methods=['GET'])
 @require_auth
@@ -270,311 +198,86 @@ def get_component_selection():
 # Data loading endpoints for editing capabilities
 @app.route('/api/geography', methods=['GET'])
 @require_auth
-def get_geography():
-    user_id = request.user['uid']
-    geo_econ = GeographyEconomy.query.get(user_id)
-    if not geo_econ:
-        return jsonify({'error': 'No geography data found'}), 404
-    return jsonify({
-        'n_ir_rate': geo_econ.n_ir_rate,
-        'e_ir_rate': geo_econ.e_ir_rate,
-        'Tax_rate': geo_econ.Tax_rate,
-        'RE_incentives_rate': geo_econ.RE_incentives_rate
-    })
+def get_geography_endpoint():
+    return get_geography()
 
 @app.route('/api/optimization', methods=['GET'])
 @require_auth
-def get_optimization():
-    user_id = request.user['uid']
-    opt = Optimization.query.get(user_id)
-    if not opt:
-        return jsonify({'error': 'No optimization data found'}), 404
-    return jsonify({
-        'MaxIt': opt.MaxIt,
-        'nPop': opt.nPop,
-        'w': opt.w,
-        'wdamp': opt.wdamp,
-        'c1': opt.c1,
-        'c2': opt.c2
-    })
+def get_optimization_endpoint():
+    return get_optimization()
 
 @app.route('/api/system-config', methods=['GET'])
 @require_auth
-def get_system_config():
-    user_id = request.user['uid']
-    sys_config = SystemConfig.query.get(user_id)
-    if not sys_config:
-        return jsonify({'error': 'No system config found'}), 404
-    return jsonify({
-        'lifetime': sys_config.lifetime,
-        'LPSP_max_rate': sys_config.LPSP_max_rate,
-        'RE_min_rate': sys_config.RE_min_rate,
-        'PV': sys_config.PV,
-        'WT': sys_config.WT,
-        'DG': sys_config.DG,
-        'Bat': sys_config.Bat,
-        'consumption_data_source': sys_config.consumption_data_source,
-        'annualData': sys_config.annualData,
-        'hourly_consumption': sys_config.hourly_consumption,
-        'monthly_consumption': sys_config.monthly_consumption
-    })
+def get_system_config_endpoint():
+    return get_system_config()
 
 @app.route('/api/pv-config', methods=['GET'])
 @require_auth
-def get_pv_config():
-    user_id = request.user['uid']
-    pv_system = PhotovoltaicSystem.query.get(user_id)
-    if not pv_system:
-        return jsonify({'error': 'No PV data found'}), 404
-    return jsonify({
-        'fpv': pv_system.fpv,
-        'Tcof': pv_system.Tcof,
-        'Tref': pv_system.Tref,
-        'Tc_noct': pv_system.Tc_noct,
-        'Ta_noct': pv_system.Ta_noct,
-        'G_noct': pv_system.G_noct,
-        'n_PV': pv_system.n_PV,
-        'Gref': pv_system.Gref,
-        'L_PV': pv_system.L_PV,
-        'C_PV': pv_system.C_PV,
-        'R_PV': pv_system.R_PV,
-        'MO_PV': pv_system.MO_PV,
-        'Installation_cost': pv_system.Installation_cost,
-        'Overhead': pv_system.Overhead,
-        'Sales_and_marketing': pv_system.Sales_and_marketing,
-        'Permiting_and_Inspection': pv_system.Permiting_and_Inspection,
-        'Electrical_BoS': pv_system.Electrical_BoS,
-        'Structural_BoS': pv_system.Structural_BoS,
-        'Supply_Chain_costs': pv_system.Supply_Chain_costs,
-        'Profit_costs': pv_system.Profit_costs,
-        'Sales_tax': pv_system.Sales_tax
-    })
+def get_pv_config_endpoint():
+    return get_pv_config()
 
 @app.route('/api/inverter', methods=['GET'])
 @require_auth
-def get_inverter():
-    user_id = request.user['uid']
-    inverter = Inverter.query.get(user_id)
-    if not inverter:
-        return jsonify({'error': 'No inverter data found'}), 404
-    return jsonify({
-        'n_I': inverter.n_I,
-        'L_I': inverter.L_I,
-        'DC_AC_ratio': inverter.DC_AC_ratio,
-        'C_I': inverter.C_I,
-        'R_I': inverter.R_I,
-        'MO_I': inverter.MO_I
-    })
+def get_inverter_endpoint():
+    return get_inverter()
 
 @app.route('/api/dg-config', methods=['GET'])
 @require_auth
-def get_diesel_config():
-    user_id = request.user['uid']
-    diesel = DieselGenerator.query.get(user_id)
-    if not diesel:
-        return jsonify({'error': 'No diesel generator data found'}), 404
-    return jsonify({
-        'a': diesel.a,
-        'b': diesel.b,
-        'min_load_ratio': diesel.min_load_ratio,
-        'C_DG': diesel.C_DG,
-        'R_DG': diesel.R_DG,
-        'MO_DG': diesel.MO_DG,
-        'C_fuel': diesel.C_fuel,
-        'C_fuel_adj_rate': diesel.C_fuel_adj_rate,
-        'diesel_lifetime': diesel.diesel_lifetime
-    })
+def get_diesel_config_endpoint():
+    return get_diesel_config()
 
 @app.route('/api/battery-config', methods=['GET'])
 @require_auth
-def get_battery_config():
-    user_id = request.user['uid']
-    battery = Battery.query.get(user_id)
-    if not battery:
-        return jsonify({'error': 'No battery data found'}), 404
-    return jsonify({
-        'Lead_acid': battery.Lead_acid,
-        'Li_ion': battery.Li_ion,
-        'SOC_min': battery.SOC_min,
-        'SOC_max': battery.SOC_max,
-        'SOC_initial': battery.SOC_initial,
-        'self_discharge_rate': battery.self_discharge_rate,
-        'L_B': battery.L_B,
-        'Cnom_Leadacid': battery.Cnom_Leadacid,
-        'alfa_battery_leadacid': battery.alfa_battery_leadacid,
-        'c': battery.c,
-        'k': battery.k,
-        'Ich_max_leadacid': battery.Ich_max_leadacid,
-        'Vnom_leadacid': battery.Vnom_leadacid,
-        'ef_bat_leadacid': battery.ef_bat_leadacid,
-        'Q_lifetime_leadacid': battery.Q_lifetime_leadacid,
-        'Ich_max_Li_ion': battery.Ich_max_Li_ion,
-        'Idch_max_Li_ion': battery.Idch_max_Li_ion,
-        'alfa_battery_Li_ion': battery.alfa_battery_Li_ion,
-        'Vnom_Li_ion': battery.Vnom_Li_ion,
-        'ef_bat_Li': battery.ef_bat_Li,
-        'Cnom_Li': battery.Cnom_Li,
-        'Q_lifetime_Li': battery.Q_lifetime_Li,
-        'L_B_Li': battery.L_B_Li,
-        'C_B': battery.C_B,
-        'R_B': battery.R_B,
-        'MO_B': battery.MO_B
-    })
+def get_battery_config_endpoint():
+    return get_battery_config()
 
 @app.route('/api/wind-config', methods=['GET'])
 @require_auth
-def get_wind_config():
-    user_id = request.user['uid']
-    wind = WindTurbine.query.get(user_id)
-    if not wind:
-        return jsonify({'error': 'No wind turbine data found'}), 404
-    return jsonify({
-        'Pwt_r': wind.Pwt_r,
-        'h_hub': wind.h_hub,
-        'h0': wind.h0,
-        'nw': wind.nw,
-        'v_cut_out': wind.v_cut_out,
-        'v_cut_in': wind.v_cut_in,
-        'v_rated': wind.v_rated,
-        'alfa_wind_turbine': wind.alfa_wind_turbine,
-        'L_WT': wind.L_WT,
-        'C_WT': wind.C_WT,
-        'R_WT': wind.R_WT,
-        'MO_WT': wind.MO_WT,
-    })
+def get_wind_config_endpoint():
+    return get_wind_config()
 
 @app.route('/api/grid', methods=['GET'])
 @require_auth
-def get_grid_config():
-    user_id = request.user['uid']
-    grid = Grid.query.get(user_id)
-    if not grid:
-        return jsonify({'error': 'No grid data found'}), 404
-    return jsonify({
-        'Grid': grid.Grid,
-        'NEM': grid.NEM,
-        'Annual_expenses': grid.Annual_expenses,
-        'Grid_sale_tax_rate': grid.Grid_sale_tax_rate,
-        'Grid_Tax_amount': grid.Grid_Tax_amount,
-        'Grid_escalation_rate': grid.Grid_escalation_rate,
-        'Grid_credit': grid.Grid_credit,
-        'NEM_fee': grid.NEM_fee,
-        'SC_flat': grid.SC_flat,
-        'Pbuy_max': grid.Pbuy_max,
-        'Psell_max': grid.Psell_max,
-        'compensation_option': grid.compensation_option,
-        'flat_compensation': grid.flat_compensation,
-        'monthly_compensation': grid.monthly_compensation,
-        'season': grid.season,
-        'holidays': grid.holidays,
-        'rateStructure': grid.rateStructure,
-        'flatPrice': grid.flatPrice,
-        'seasonalPrices': grid.seasonalPrices,
-        'monthlyPrices': grid.monthlyPrices,
-        'tieredPrices': grid.tieredPrices,
-        'tierMax': grid.tierMax,
-        'seasonalTieredPrices': grid.seasonalTieredPrices,
-        'seasonalTierMax': grid.seasonalTierMax,
-        'monthlyTieredPrices': grid.monthlyTieredPrices,
-        'monthlyTierLimits': grid.monthlyTierLimits,
-        'onPrice': grid.onPrice,
-        'midPrice': grid.midPrice,
-        'offPrice': grid.offPrice,
-        'onHours': grid.onHours,
-        'midHours': grid.midHours,
-        'onPeakPrice': grid.onPeakPrice,
-        'midPeakPrice': grid.midPeakPrice
-    })
+def get_grid_config_endpoint():
+    return get_grid_config()
 
 @app.route('/api/system-config', methods=['POST'])
 @require_auth
 @log_function_input
-def save_system_config():
-    try:
-        user_id = request.user['uid']
-        
-        # Check if record exists
-        system_config = SystemConfig.query.get(user_id)
-        if not system_config:
-            system_config = SystemConfig(user_id=user_id)
-            db.session.add(system_config)
+def save_system_config_endpoint():
+    return save_system_config()
 
-        # Handle form data (from system config page)
-        data = request.form
-        system_config.lifetime = data.get('lifetime')
-        system_config.LPSP_max_rate = data.get('LPSP_max_rate')
-        system_config.RE_min_rate = data.get('RE_min_rate')
-        system_config.annualData = data.get('annualData')
-        
-        # Handle boolean fields from form data
-        system_config.PV = data.get('PV', 'false').lower() == 'true'
-        system_config.WT = data.get('WT', 'false').lower() == 'true'
-        system_config.DG = data.get('DG', 'false').lower() == 'true'
-        system_config.Bat = data.get('Bat', 'false').lower() == 'true'
-        
-        # Handle consumption data source and storage
-        consumption_data_source = data.get('consumptionDataSource')
-        system_config.consumption_data_source = consumption_data_source
-        
-        # Handle CSV data upload
-        if consumption_data_source == 'hourly':
-            # Check if hourly data is provided as JSON string
-            hourly_data_json = data.get('hourlyData')
-            if hourly_data_json:
-                try:
-                    hourly_data = json.loads(hourly_data_json)
-                    if len(hourly_data) == 8760:
-                        system_config.hourly_consumption = hourly_data_json
-                    else:
-                        return jsonify({'error': f'Invalid hourly data length. Expected 8760 values, got {len(hourly_data)}'}), 400
-                except json.JSONDecodeError:
-                    return jsonify({'error': 'Invalid JSON format for hourly data'}), 400
-            else:
-                # Fallback to individual form fields (for backward compatibility)
-                hourly_data = []
-                for i in range(8760):
-                    hour_key = f'hour_{i}'
-                    if hour_key in data and data[hour_key]:
-                        hourly_data.append(float(data[hour_key]))
-                    else:
-                        return jsonify({'error': f'Missing hourly data for hour {i+1}'}), 400
-                
-                system_config.hourly_consumption = json.dumps(hourly_data)
-            
-        elif consumption_data_source == 'monthly':
-            # Check if monthly data is provided as JSON string
-            monthly_data_json = data.get('monthlyData')
-            if monthly_data_json:
-                try:
-                    monthly_data = json.loads(monthly_data_json)
-                    if len(monthly_data) == 12:
-                        system_config.monthly_consumption = monthly_data_json
-                    else:
-                        return jsonify({'error': f'Invalid monthly data length. Expected 12 values, got {len(monthly_data)}'}), 400
-                except json.JSONDecodeError:
-                    return jsonify({'error': 'Invalid JSON format for monthly data'}), 400
-            else:
-                # Fallback to individual form fields (for backward compatibility)
-                monthly_data = []
-                for i in range(12):
-                    month_key = f'month_{i}'
-                    if month_key in data and data[month_key]:
-                        monthly_data.append(float(data[month_key]))
-                    else:
-                        return jsonify({'error': f'Missing monthly data for month {i+1}'}), 400
-                
-                system_config.monthly_consumption = json.dumps(monthly_data)
-            
-        elif consumption_data_source in ['annual', 'manual']:
-            # Annual data is already stored in annualData field
-            if not system_config.annualData or system_config.annualData == '':
-                return jsonify({'error': 'Annual consumption data is required'}), 400
-        
-        db.session.commit()
-        return jsonify({'id': system_config.user_id, 'message': 'System configuration data saved successfully'}), 200
-    except Exception as e:
-        logger.error(f"Error saving system configuration data: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+@app.route('/api/grid', methods=['POST'])
+@require_auth
+@log_function_input
+def save_grid_endpoint():
+    return save_grid()
+
+@app.route('/api/pv-config', methods=['POST'])
+@require_auth
+def save_pv_config_endpoint():
+    return save_pv_config()
+
+@app.route('/api/inverter-config', methods=['POST'])
+@require_auth
+def save_inverter_config_endpoint():
+    return save_inverter_config()
+
+@app.route('/api/dg-config', methods=['POST'])
+@require_auth
+def save_dg_config_endpoint():
+    return save_dg_config()
+
+@app.route('/api/battery-config', methods=['POST'])
+@require_auth
+def save_battery_config_endpoint():
+    return save_battery_config()
+
+@app.route('/api/wind-config', methods=['POST'])
+@require_auth
+@log_function_input
+def save_wind_config_endpoint():
+    return save_wind_config()
 
 @app.route('/api/grid', methods=['POST'])
 @require_auth
@@ -1221,7 +924,7 @@ def submit_results():
         in_data.completeInitialization()
         
         # Call PSO optimizer (no return value expected)
-        pso_run(in_data, user_id)
+        pso_run(in_data)
         
         return jsonify({
             'message': 'Optimization completed successfully',

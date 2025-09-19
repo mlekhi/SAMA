@@ -18,7 +18,8 @@ def run(Input_Data):
     start = process_time()
     modifiedInput = convert_ndarrays(vars(Input_Data))
     swarm = Swarm(Input_Data)
-    swarm.optimize(Input_Data)
+    answer = swarm.optimize(Input_Data)
 
     print(process_time()-start, "Total execution time [Sec]")
+    return answer
     
