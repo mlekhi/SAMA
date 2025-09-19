@@ -648,6 +648,89 @@ class Input_Data:
         self.Pbuy_max = 6 # ceil(1.2 * max(self.Eload))  # kWh
         self.Psell_max = 200 # self.Pbuy_max
 
-        print(self)        
+        print(self)
+
+    # copied from Julia's github
+    def completeInitialization(self):
+        if self.load_previous_year_type == 1:
+            self.Eload_Previous = self.Eload
+
+        # Wind speed definitions
+        # 1=Hourly Wind speed based on the NSEDB file
+        # 2=Hourly Wind speed based on the user CSV file
+        # 3=Monthly average Wind speed
+        # 4=Annual average Wind speed
+
+        if self.WS_type == 1:
+
+            from sama_python.sam_monofacial_poa import runSimulation
+            temp_result = runSimulation(self.weather_url, self.tilt, self.azimuth, self.soiling)
+            WS_pd_to_numpy = temp_result[2]
+            self.Vw = WS_pd_to_numpy.values
+
+        elif self.WS_type == 2:
+
+            self.path_WS = 'content/WSPEED.csv'
+            self.WSData = pd.read_csv(self.path_WS, header=None).values
+            self.Vw = np.array(self.WSData[:, 0])
+
+        elif self.WS_type == 3:
+            self.Monthly_average_windspeed = np.array([14.1, 21, 12.2, 31, 12.2, 11.2, 12.1, 13, 21, 9.2, 12.3, 18.1])  # Define the monthly hourly averages for load here
+
+            from dataextender import dataextender
+            self.Vw = dataextender(self.daysInMonth, self.Monthly_average_windspeed)
+
+        else: # Annual average Wind speed
+
+            self.Annual_average_windspeed = 10
+            self.Vw = np.full(8760, self.Annual_average_windspeed)
+
+        data = {'Eload': self.Eload, 'G': self.G, 'T': self.T, 'Vw': self.Vw}
+        df = pd.DataFrame(data)
+        df.to_csv('../backend/sama_python/output/data/Inputs.csv', index=False)
+
+        # Monthly fixed charge structure
+        self.Monthly_fixed_charge_system = 1
+
+        if self.Monthly_fixed_charge_system == 1:  # Flat
+            self.SC_flat = 9.95
+            self.Service_charge = np.ones(12) * self.SC_flat
+        else:  # Tiered
+            self.SC_1 = 2.30  # tier 1 service charge
+            self.Limit_SC_1 = 350  # limit for tier 1
+            self.SC_2 = 7.9  # tier 2 service charge
+            self.Limit_SC_2 = 1050  # limit for tier 2
+            self.SC_3 = 22.70  # tier 3 service charge
+            self.Limit_SC_3 = 1501  # limit for tier 3
+            self.SC_4 = 22.70  # tier 4 service charge
+
+            from sama_python.service_charge import service_charge
+            self.Service_charge = service_charge(self.daysInMonth, self.Eload_Previous, self.Limit_SC_1, self.SC_1, self.Limit_SC_2, self.SC_2, self.Limit_SC_3, self.SC_3, self.SC_4)
+
+        # Sell to the Grid
+        self.sellStructure = 3
+
+        if self.sellStructure == 1:
+            self.Csell = np.full(8760, 0.05238)
+
+        elif self.sellStructure == 2:
+            self.monthlysellprices = np.array([0.0638, 0.14538, 0.09079, 0.07914, 0.06469, 0.05336, 0.04612, 0.04411, 0.04737, 0.04591, 0.04512, 0.04415])
+            
+            from sama_python.calcMonthlyRate import calcMonthlyRate
+            self.Csell = calcMonthlyRate(self.monthlysellprices, self.daysInMonth)
+
+        elif self.sellStructure == 3:
+            self.Csell = self.Cbuy
+
+        # Grid emission information
+        # Emissions produced by Grid generators (kg/kWh)
+        self.E_CO2 = 1.43
+        self.E_SO2 = 0.01
+        self.E_NOx = 0.39
+
+        # Constraints for buying/selling from/to grid
+        self.Pbuy_max = 6 # ceil(1.2 * max(self.Eload))  # kWh
+        self.Psell_max = 200 # self.Pbuy_max
+        
 
 InData = Input_Data()

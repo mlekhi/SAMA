@@ -1218,25 +1218,16 @@ def submit_results():
         
         # Load user data
         in_data = InData(user_id)
-                
-        # Call PSO optimizer and get comprehensive results
-        result = pso_run(in_data, user_id)
+        in_data.completeInitialization()
         
-        # Check if we got valid results
-        if result and 'error' not in result:
-            return jsonify({
-                'message': 'Optimization completed successfully',
-                'result': result,
-                'user_id': user_id,
-                'status': 'success'
-            })
-        else:
-            return jsonify({
-                'message': 'Optimization completed but no valid results generated',
-                'result': result,
-                'user_id': user_id,
-                'status': 'warning'
-            }), 200
+        # Call PSO optimizer (no return value expected)
+        pso_run(in_data, user_id)
+        
+        return jsonify({
+            'message': 'Optimization completed successfully',
+            'user_id': user_id,
+            'status': 'success'
+        })
             
     except Exception as e:
         import traceback

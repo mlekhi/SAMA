@@ -1,11 +1,16 @@
 import matplotlib
 matplotlib.use('Agg')  # Use a non-GUI backend to avoid macOS GUI issues
 import matplotlib.pyplot as plt
+from sama_python.Results import Gen_Results
+# Loading Inputs
+# from app import InData
 import numpy as np
 import os
 from copy import copy, deepcopy
 from time import process_time
-from sama_python.Results import Gen_Results
+
+# Set random seed for reproducible results
+np.random.seed(42)
 
 start = process_time()
 
@@ -64,7 +69,7 @@ class Swarm:
             particle_velocities = np.zeros((nPop, self.nVar))
 
             # Evaluate costs per initial particle
-            particle_costs = np.apply_along_axis(lambda x: cost_function(x), 1, particle_positions)
+            particle_costs = np.apply_along_axis(cost_function, 1, particle_positions)
             particle_personal_best_cost = deepcopy(particle_costs)
 
             # Determine global best
@@ -140,10 +145,8 @@ class Swarm:
         plt.legend()  # Display the legend
         plt.tight_layout()
         # plt.show()
-        
-        # Use relative path based on this file's location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         output_path = os.path.join(current_dir, 'output', 'figs', 'Optimization.png')
         plt.savefig(output_path, dpi=300)
-        
-        return Gen_Results(X, data, user_id)
+
+        Gen_Results(X, data)

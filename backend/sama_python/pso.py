@@ -14,16 +14,11 @@ def convert_ndarrays(obj):
     else:
         return obj
     
-def run(Input_Data, user_id=None):
+def run(Input_Data):
     start = process_time()
+    modifiedInput = convert_ndarrays(vars(Input_Data))
     swarm = Swarm(Input_Data)
-    answer = swarm.optimize(Input_Data, user_id)
+    swarm.optimize(Input_Data)
 
     print(process_time()-start, "Total execution time [Sec]")
-    
-    # Ensure the answer is properly converted for JSON serialization
-    if answer is not None:
-        return convert_ndarrays(answer)
-    else:
-        return {"error": "No results generated from optimization"}
     

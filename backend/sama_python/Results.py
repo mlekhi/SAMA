@@ -10,59 +10,18 @@ from math import ceil
 from sama_python.EMS import EMS
 import numpy_financial as npf
 import csv
-import os
 
 #store output
 output_logs = []
-def log_output(message, *args):
-    # Handle both log_output(message) and log_output(output_logs, message) calls
-    if args and isinstance(message, list):
-        # Called as log_output(output_logs, message)
-        actual_message = args[0]
-    else:
-        # Called as log_output(message)
-        actual_message = message
-    
-    print(actual_message)
-    output_logs.append(actual_message)
-
-def safe_convert(obj):
-    """Convert numpy arrays to lists, handle NaN values, leave other types unchanged"""
-    import numpy as np
-    
-    # Handle NaN and other numpy special values
-    if hasattr(obj, 'tolist'):
-        # It's a numpy array or scalar
-        if np.isscalar(obj):
-            # Handle numpy scalars (including NaN, inf, etc.)
-            if np.isnan(obj) or np.isinf(obj):
-                return None
-            elif isinstance(obj, (np.integer, np.floating)):
-                return float(obj) if isinstance(obj, np.floating) else int(obj)
-            else:
-                return obj.tolist()
-        else:
-            # It's a numpy array
-            return obj.tolist()
-    else:
-        # Not a numpy object, return as is
-        return obj
+def log_output(message):
+    print(message)
+    output_logs.append(message)
 
 # Loading all inputs
 
 
 #@jit(nopython=True, fastmath=True)
-def Gen_Results(X, InData, user_id):
-    # Set up user-specific output directories using relative paths
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    output_base = os.path.join(current_dir, 'output', str(user_id))
-    figs_dir = os.path.join(output_base, 'figs')
-    data_dir = os.path.join(output_base, 'data')
-    
-    # Ensure directories exist
-    os.makedirs(figs_dir, exist_ok=True)
-    os.makedirs(data_dir, exist_ok=True)
-
+def Gen_Results(X, InData):
     WT=InData.WT
     daysInMonth = InData.daysInMonth
     Eload = InData.Eload
@@ -433,72 +392,72 @@ def Gen_Results(X, InData, user_id):
     # Extracting data for plotting
     data = {'Ppv': Ppv, 'Pdg': Pdg, 'Pch': Pch, 'Pdch': Pdch, 'Pdch_max': Pdch_max, 'Pch_max': Pch_max, 'Eb': Eb[1:8761], 'SOC': Eb[1:8761] / Cn_B if (Cn_B != 0 and not np.isnan(Cn_B)) else 0, 'Pbuy':Pbuy, 'Psell':Psell, 'Eload':Eload,'ENS':Ens ,'Edump':Edump, 'P_RE_served':P_RE_served, 'Csell':Csell, 'Cbuy':Cbuy, 'Pserved':P_served_other_than_grid, 'POA':G, 'Temperature':T, "Wind Speed":Vw}
     df = pd.DataFrame(data)
-    df.to_csv(f'{data_dir}/Outputforplotting.csv', index=False)
+    df.to_csv('../backend/sama_python/output/data/Outputforplotting.csv', index=False)
 
 
-    log_output(output_logs, ' ')
-    log_output(output_logs, 'System Size ')
-    log_output(output_logs, f'Cpv  (kW) = {Pn_PV}')
+    log_output(' ')
+    log_output('System Size ')
+    log_output(f'Cpv  (kW) = {Pn_PV}')
     if WT == 1:
-        log_output(output_logs, f'Cwt  (kW) = {Pn_WT}')
-    log_output(output_logs, f'Cbat (kWh) = {round(Cn_B, 4)}')
-    log_output(output_logs, f'Cdg  (kW) = {Pn_DG}')
-    log_output(output_logs, f'Cinverter (kW) = {Cn_I}')
+        log_output(f'Cwt  (kW) = {Pn_WT}')
+    log_output(f'Cbat (kWh) = {round(Cn_B, 4)}')
+    log_output(f'Cdg  (kW) = {Pn_DG}')
+    log_output(f'Cinverter (kW) = {Cn_I}')
 
-    log_output(output_logs, ' ')
-    log_output(output_logs, 'Result: ')
-    log_output(output_logs, f'NPC  = ${round(NPC, 2)}')
-    log_output(output_logs, f'NPC without incentives = ${round(NPC_without_incentives, 2)}')
-    log_output(output_logs, f'Total Solar Cost = ${round(Solar_Cost, 2)}')
-    log_output(output_logs, f'NPC for only Grid connected system = ${round(NPC_Grid, 2)}')
-    log_output(output_logs, f'Total Grid avoidable cost = ${round(np.sum(Grid_avoidable_cost), 2)}')
-    log_output(output_logs, f'Total Grid unavoidable cost = ${round(np.sum(Grid_unavoidable_cost), 2)}')
-    log_output(output_logs, f'Total avoided costs = ${round(np.sum(avoided_costs), 2)}')
-    log_output(output_logs, f'Total net avoided costs by hybrid energy system = ${round(np.sum(avoided_costs) - np.sum(Grid_Cost), 2)}')
-    log_output(output_logs, f'Total grid earning = ${round(np.sum(Sold_electricity), 2)}')
-    log_output(output_logs, f'Total grid costs = ${round(np.sum(Bought_electricity), 2)}')
-    log_output(output_logs, f'Total grid credits = ${round(np.sum(Total_grid_credits), 2)}')
-    log_output(output_logs, f'LCOE  = {round(LCOE, 2)} $/kWh')
-    log_output(output_logs, f'LCOE without incentives = {round(LCOE_without_incentives, 2)} $/kWh')
-    log_output(output_logs, f'LCOE for only Grid connected system = {round(LCOE_Grid, 2)} $/kWh')
-    log_output(output_logs, f'Grid avoidable cost per kWh = {round(Grid_avoidable_cost_perkWh, 2)} $/kWh')
-    log_output(output_logs, f'Grid unavoidable cost per kWh = {round(Grid_unavoidable_cost_perkWh, 2)} $/kWh')
-    log_output(output_logs, f'Solar Cost per kWh = {round(Solar_Cost_perkWh, 2)} $/kWh')
-    log_output(output_logs, f'Operating Cost  = ${round(Operating_Cost, 2)}')
-    log_output(output_logs, f'Initial Cost  = ${round(I_Cost, 2)}')
-    log_output(output_logs, f'Initial Cost without incentives= ${round(I_Cost_without_incentives, 2)}')
-    log_output(output_logs, f'Total incentives received= ${round(Total_incentives_received, 2)}')
-    log_output(output_logs, f'Total operation and maintenance cost = ${round(np.sum(MO_Cost), 2)}')
+    log_output(' ')
+    log_output('Result: ')
+    log_output(f'NPC  = ${round(NPC, 2)}')
+    log_output(f'NPC without incentives = ${round(NPC_without_incentives, 2)}')
+    log_output(f'Total Solar Cost = ${round(Solar_Cost, 2)}')
+    log_output(f'NPC for only Grid connected system = ${round(NPC_Grid, 2)}')
+    log_output(f'Total Grid avoidable cost = ${round(np.sum(Grid_avoidable_cost), 2)}')
+    log_output(f'Total Grid unavoidable cost = ${round(np.sum(Grid_unavoidable_cost), 2)}')
+    log_output(f'Total avoided costs = ${round(np.sum(avoided_costs), 2)}')
+    log_output(f'Total net avoided costs by hybrid energy system = ${round(np.sum(avoided_costs) - np.sum(Grid_Cost), 2)}')
+    log_output(f'Total grid earning = ${round(np.sum(Sold_electricity), 2)}')
+    log_output(f'Total grid costs = ${round(np.sum(Bought_electricity), 2)}')
+    log_output(f'Total grid credits = ${round(np.sum(Total_grid_credits), 2)}')
+    log_output(f'LCOE  = {round(LCOE, 2)} $/kWh')
+    log_output(f'LCOE without incentives = {round(LCOE_without_incentives, 2)} $/kWh')
+    log_output(f'LCOE for only Grid connected system = {round(LCOE_Grid, 2)} $/kWh')
+    log_output(f'Grid avoidable cost per kWh = {round(Grid_avoidable_cost_perkWh, 2)} $/kWh')
+    log_output(f'Grid unavoidable cost per kWh = {round(Grid_unavoidable_cost_perkWh, 2)} $/kWh')
+    log_output(f'Solar Cost per kWh = {round(Solar_Cost_perkWh, 2)} $/kWh')
+    log_output(f'Operating Cost  = ${round(Operating_Cost, 2)}')
+    log_output(f'Initial Cost  = ${round(I_Cost, 2)}')
+    log_output(f'Initial Cost without incentives= ${round(I_Cost_without_incentives, 2)}')
+    log_output(f'Total incentives received= ${round(Total_incentives_received, 2)}')
+    log_output(f'Total operation and maintenance cost = ${round(np.sum(MO_Cost), 2)}')
 
     if Grid == 1:
-        log_output(output_logs, f'Total Money paid to the Grid = ${round(np.sum(Grid_Cost), 2)}')
+        log_output(f'Total Money paid to the Grid = ${round(np.sum(Grid_Cost), 2)}')
 
-    log_output(output_logs, f'Total Money paid by the user = ${round(np.sum(NPC), 2)}')
+    log_output(f'Total Money paid by the user = ${round(np.sum(NPC), 2)}')
 
-    log_output(output_logs, ' ')
-    log_output(output_logs, f'PV Power = {np.sum(Ppv)} kWh')
+    log_output(' ')
+    log_output(f'PV Power = {np.sum(Ppv)} kWh')
     if WT == 1:
-        log_output(output_logs, f'WT Power  = {np.sum(Pwt)} kWh')
-    log_output(output_logs, f'DG Power  = {np.sum(Pdg)} kWh')
-    log_output(output_logs, f'Battery Energy In = {np.sum(Pch)} kWh')
-    log_output(output_logs, f'Battery Energy Out = {np.sum(Pdch)} kWh')
-    log_output(output_logs, f'RE  = {round(100 * RE, 2)} %')
-    log_output(output_logs, f'LPSP  = {round(100 * LPSP, 2)} %')
-    log_output(output_logs, f'Annual Load = {np.sum(Eload)} kWh')
-    log_output(output_logs, f'Annual Served Load = {np.sum(Eload_served)} kWh')
-    log_output(output_logs, f'Annual Capacity Shortage = {np.sum(Ens)} kWh')
-    log_output(output_logs, f'Excess Electricity = {np.sum(Edump)} kWh')
+        log_output(f'WT Power  = {np.sum(Pwt)} kWh')
+    log_output(f'DG Power  = {np.sum(Pdg)} kWh')
+    log_output(f'Battery Energy In = {np.sum(Pch)} kWh')
+    log_output(f'Battery Energy Out = {np.sum(Pdch)} kWh')
+    log_output(f'RE  = {round(100 * RE, 2)} %')
+    log_output(f'LPSP  = {round(100 * LPSP, 2)} %')
+    log_output(f'Annual Load = {np.sum(Eload)} kWh')
+    log_output(f'Annual Served Load = {np.sum(Eload_served)} kWh')
+    log_output(f'Annual Capacity Shortage = {np.sum(Ens)} kWh')
+    log_output(f'Excess Electricity = {np.sum(Edump)} kWh')
 
     if Grid == 1:
         Total_Pbuy = (np.sum(Pbuy)) * (Grid > 0)
         Total_Psell = (np.sum(Psell)) * (Grid > 0)
-        log_output(output_logs, f'Annual power bought from Grid = {Total_Pbuy} kWh')
-        log_output(output_logs, f'Annual Power sold to Grid = {Total_Psell} kWh')
-        log_output(output_logs, f'Grid Emissions = {Grid_Emissions} (kg/year)')
+        log_output(f'Annual power bought from Grid = {Total_Pbuy} kWh')
+        log_output(f'Annual Power sold to Grid = {Total_Psell} kWh')
+        log_output(f'Grid Emissions = {Grid_Emissions} (kg/year)')
 
-    log_output(output_logs, f'Annual fuel consumed by DG ={np.sum(q)} (Liter/year)')
-    log_output(output_logs, f'DG Emissions = {DG_Emissions} (kg/year)')
-    log_output(output_logs, f'LEM  = {LEM} kg/kWh')
+    log_output(f'Annual fuel consumed by DG ={np.sum(q)} (Liter/year)')
+    log_output(f'DG Emissions = {DG_Emissions} (kg/year)')
+    log_output(f'LEM  = {LEM} kg/kWh')
 
     # Set the font to Times New Roman
     plt.rcParams["font.family"] = "Times New Roman"
@@ -528,50 +487,32 @@ def Gen_Results(X, InData, user_id):
     cumulative_total_cost_PP = [sum(yearly_total_cost[:i + 1]) for i in range(n + 1)]
 
     irr = npf.irr(IRR_cost)
-    
-    # Handle NaN and infinite values for IRR
-    if np.isnan(irr) or np.isinf(irr):
-        irr = None
-        log_output(output_logs, "The projected investment IRR could not be calculated")
-    elif irr < 0:
-        log_output(output_logs, "The projected investment is a loss")
-        log_output(output_logs, f"The IRR of the project is: {irr:.2%}")
+    if irr < 0:
+        log_output("The projected investment is a loss")
+        log_output(f"The IRR of the project is: {irr:.2%}")
     else:
-        log_output(output_logs, f"The IRR of the project is: {irr:.2%}")
+        log_output(f"The IRR of the project is: {irr:.2%}")
 
     payback_period = next((i for i, cost in enumerate(cumulative_total_cost_PP) if cost >= 0), None)
     if payback_period is None:
-        log_output(output_logs, "No payback period within the project's lifetime")
+        log_output("No payback period within the project's lifetime")
     else:
-        log_output(output_logs, f"The Payback Period is: {payback_period} years")
+        log_output(f"The Payback Period is: {payback_period} years")
 
     # Calculate Total Revenues and Total Costs
     total_revenues = sum(avoided_costs) + (sum(Salvage) * (1 + System_Tax)) + sum(Grid_Cost_neg)
-    log_output(output_logs, f"Total revenues is: {total_revenues:.2f}")
+    log_output(f"Total revenues is: {total_revenues:.2f}")
     total_costs = -(((-I_Cost + sum(MO_Cost) + sum(R_Cost) + sum(C_Fu)) * (1 + System_Tax)) + sum(Grid_Cost_pos))
 
-    # Handle NaN and infinite values
-    if np.isnan(total_revenues) or np.isinf(total_revenues):
-        total_revenues = None
-    if np.isnan(total_costs) or np.isinf(total_costs):
-        total_costs = None
 
     # Calculate Net Profit
-    net_profit = total_revenues - total_costs if (total_revenues is not None and total_costs is not None) else None
-    if net_profit is not None:
-        log_output(output_logs, f"Total net profit is: {net_profit:.2f}")
-        log_output(output_logs, f"Total costs is: {total_costs:.2f}")
-    else:
-        log_output(output_logs, "Net profit could not be calculated")
+    net_profit = total_revenues - total_costs
+    log_output(f"Total net profit is: {net_profit:.2f}")
+    log_output(f"Total costs is: {total_costs:.2f}")
     # Calculate ROI
-    roi = (net_profit / total_costs) * 100 if total_costs != 0 else None
-    
-    # Handle NaN and infinite values for ROI
-    if roi is not None and (np.isnan(roi) or np.isinf(roi)):
-        roi = None
-        log_output(output_logs, "The ROI could not be calculated")
-    else:
-        log_output(output_logs, f"The ROI of the project is: {roi:.2f}%")
+    roi = (net_profit / total_costs) * 100
+
+    log_output(f"The ROI of the project is: {roi:.2f}%")
 
     # Create the bar chart
     plt.figure(figsize=(10, 6))
@@ -613,7 +554,7 @@ def Gen_Results(X, InData, user_id):
     y_margin = (y_max - y_min) * 0.025
     plt.ylim(y_min - y_margin, y_max + y_margin)
     plt.tight_layout()
-    plt.savefig(f'{figs_dir}/Cash Flow.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Cash Flow.png', dpi=300)
 
     # Cash flow chart ADVANCED
 
@@ -677,7 +618,7 @@ def Gen_Results(X, InData, user_id):
     y_margin = (y_max - y_min) * 0.025
     plt.ylim(y_min - y_margin, y_max + y_margin)
     plt.tight_layout()
-    plt.savefig(f'{figs_dir}/Cash Flow_ADV.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Cash Flow_ADV.png', dpi=300)
 
     # Advanced multi-Cash Flow Chart
     ########################
@@ -774,7 +715,7 @@ def Gen_Results(X, InData, user_id):
         y_margin = (y_max - y_min) * 0.025
         plt.ylim(y_min - y_margin, y_max + y_margin)
         plt.tight_layout()
-        plt.savefig(f'{figs_dir}/Multiple_Cash_Flow_ADV.png', dpi=300)
+        plt.savefig('../backend/sama_python/output/figs/Multiple_Cash_Flow_ADV.png', dpi=300)
 
     #Grid purchase and sale figure
     if Grid == 0:
@@ -800,7 +741,7 @@ def Gen_Results(X, InData, user_id):
         # Adjust the margins and space between subplots
         plt.subplots_adjust(left=0.05, right=0.85, top=0.95, bottom=0.08)
         plt.tight_layout()
-        plt.savefig(f'{figs_dir}/Grid Interconnection.png', dpi=300)
+        plt.savefig('../backend/sama_python/output/figs/Grid Interconnection.png', dpi=300)
 
     # Energy/Power Distribution figure
     fig, ax = plt.subplots(figsize=(30, 10))  # Increased figure size and resolution
@@ -825,10 +766,10 @@ def Gen_Results(X, InData, user_id):
     # Adjust the margins and space between subplots
     plt.subplots_adjust(left=0.08, right=0.78, top=0.95, bottom=0.08)
     plt.tight_layout()
-    plt.savefig(f'{figs_dir}/Energy Distribution.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Energy Distribution.png', dpi=300)
 
     # State of charge figure
-    if Nbat > 0 and Cn_B > 0:
+    if Nbat > 0:
         fig, ax = plt.subplots(figsize=(20, 10))  # Increased figure size and resolution
         # Plot 'State of Charge'
         ax.plot(Eb / Cn_B, marker='.', linestyle='-', linewidth=0.5, color='blue')
@@ -847,7 +788,7 @@ def Gen_Results(X, InData, user_id):
         # Adjust the margins and space between subplots
         plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
         plt.tight_layout()
-        plt.savefig(f'{figs_dir}/Battery State of Charge.png', dpi=300)
+        plt.savefig('../backend/sama_python/output/figs/Battery State of Charge.png', dpi=300)
 
     # Plot results for one specific day
     # Function to filter out data series with sum less than 0.1 in the specified range
@@ -866,7 +807,7 @@ def Gen_Results(X, InData, user_id):
                    ('WT Power', Pwt, '$P_{wt}$ [kW]'),
                    ('Diesel Generator Power', Pdg, '$P_{DG}$ [kW]'),
                    ('Battery Energy Level', Eb, '$E_{b}$ [kWh]'),
-                   ('State of Charge', Eb / Cn_B if Cn_B > 0 else np.zeros_like(Eb), 'SOC (%)'),
+                   ('State of Charge', Eb / Cn_B if not np.all(Eb[t1:t2] == 0) else np.zeros_like(Eb), 'SOC (%)'),
                    ('Loss of Power Supply', Ens, 'LPS[kWh]'),
                    ('Dumped Energy', Edump, '$E_{dump}$ [kWh]'),
                    ('Battery discharge Power', Pdch, '$P_{dch}$ [kW]'),
@@ -895,7 +836,7 @@ def Gen_Results(X, InData, user_id):
         axs[j].axis('off')
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust the layout to make space for the title
-    plt.savefig(f'{figs_dir}/Specific day results.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Specific day results.png', dpi=300)
 
     # Utility figures
 
@@ -982,7 +923,7 @@ def Gen_Results(X, InData, user_id):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average cost of energy system [$]', fontsize=32, rotation=270, x=3.5, y=0.16)
     fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average cost of energy system.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average cost of energy system.png', dpi=300)
 
     # Calculate average hourly grid cost for each day in each month
     Gh_c = np.zeros((12, 31))
@@ -1050,7 +991,7 @@ def Gen_Results(X, InData, user_id):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average hourly cost of connecting to the grid [$/kWh]', fontsize=32, rotation=270, x=3.85, y=0.04)
     fig.subplots_adjust(left=0.075, right=0.9, top=0.98, bottom=0.075)
-    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average hourly cost of connecting to the grid.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average hourly cost of connecting to the grid.png', dpi=300)
 
     # Calculate average only grid connected system cost for each day/month/year
     AG_c = np.round(LCOE_Grid * A_l, 2)
@@ -1110,7 +1051,7 @@ def Gen_Results(X, InData, user_id):
     cbar_total.ax.tick_params(labelsize=22)
     cbar_total.ax.set_title('Monthly average cost of only grid-connected system [$]', fontsize=32, rotation=270, x=3.5, y=0.09)
     fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-    plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average cost of only grid-connected system.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average cost of only grid-connected system.png', dpi=300)
 
     # Hourly Grid electricity price color bar map
     # Assuming Cbuy is a 1D numpy array
@@ -1131,7 +1072,7 @@ def Gen_Results(X, InData, user_id):
     month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     ax.set_xticks(hours_per_month)
     ax.set_xticklabels(month_labels)
-    plt.savefig(f'{figs_dir}/Grid Hourly Cost.png', dpi=300)
+    plt.savefig('../backend/sama_python/output/figs/Grid Hourly Cost.png', dpi=300)
 
     # Calculate average money earned by selling electricity to grid in each day/month/year
     # Calculate average hourly grid sell for each day in each month
@@ -1213,122 +1154,6 @@ def Gen_Results(X, InData, user_id):
         cbar_total.ax.tick_params(labelsize=22)
         cbar_total.ax.set_title('Monthly average Sell earning to the Grid [$]', fontsize=32, rotation=270, x=3.5, y=0.225)
         fig.subplots_adjust(left=0.075, top=0.98, bottom=0.075)
-        plt.savefig(f'{figs_dir}/Daily-Monthly-Yearly average earning Sell to the Grid.png', dpi=300)
+        plt.savefig('../backend/sama_python/output/figs/Daily-Monthly-Yearly average earning Sell to the Grid.png', dpi=300)
 
-    # Initialize results dictionary to store all calculated values
-    results = {
-        'system_size': {},
-        'financial_metrics': {},
-        'energy_metrics': {},
-        'emissions': {},
-        'grid_metrics': {},
-        'battery_metrics': {},
-        'reliability_metrics': {},
-        'cash_flow_data': {},
-    }
 
-    # Store system size results
-    results['system_size'] = {
-        'pv_capacity_kw': Pn_PV,
-        'wind_capacity_kw': Pn_WT if WT == 1 else 0,
-        'battery_capacity_kwh': round(Cn_B, 4),
-        'diesel_capacity_kw': Pn_DG,
-        'inverter_capacity_kw': Cn_I
-    }
-
-    # Store financial metrics
-    results['financial_metrics'] = {
-        'npc': round(NPC, 2),
-        'npc_without_incentives': round(NPC_without_incentives, 2),
-        'total_solar_cost': round(Solar_Cost, 2),
-        'npc_grid_only': round(NPC_Grid, 2),
-        'total_grid_avoidable_cost': round(np.sum(Grid_avoidable_cost), 2),
-        'total_grid_unavoidable_cost': round(np.sum(Grid_unavoidable_cost), 2),
-        'total_avoided_costs': round(np.sum(avoided_costs), 2),
-        'total_net_avoided_costs': round(np.sum(avoided_costs) - np.sum(Grid_Cost), 2),
-        'total_grid_earning': round(np.sum(Sold_electricity), 2),
-        'total_grid_costs': round(np.sum(Bought_electricity), 2),
-        'total_grid_credits': round(np.sum(Total_grid_credits), 2),
-        'lcoe': round(LCOE, 2),
-        'lcoe_without_incentives': round(LCOE_without_incentives, 2),
-        'lcoe_grid_only': round(LCOE_Grid, 2),
-        'grid_avoidable_cost_per_kwh': round(Grid_avoidable_cost_perkWh, 2),
-        'grid_unavoidable_cost_per_kwh': round(Grid_unavoidable_cost_perkWh, 2),
-        'solar_cost_per_kwh': round(Solar_Cost_perkWh, 2),
-        'operating_cost': round(Operating_Cost, 2),
-        'initial_cost': round(I_Cost, 2),
-        'initial_cost_without_incentives': round(I_Cost_without_incentives, 2),
-        'total_incentives_received': round(Total_incentives_received, 2),
-        'total_operation_maintenance_cost': round(np.sum(MO_Cost), 2),
-        'irr': irr if 'irr' in locals() else None,
-        'payback_period_years': payback_period if 'payback_period' in locals() else None,
-        'roi_percent': roi if 'roi' in locals() else None,
-        'total_revenues': total_revenues if 'total_revenues' in locals() else None,
-        'total_costs': total_costs if 'total_costs' in locals() else None,
-        'net_profit': net_profit if 'net_profit' in locals() else None
-    }
-
-    # Store energy metrics
-    results['energy_metrics'] = {
-        'pv_energy_kwh': np.sum(Ppv),
-        'wind_energy_kwh': np.sum(Pwt) if WT == 1 else 0,
-        'diesel_energy_kwh': np.sum(Pdg),
-        'battery_energy_in_kwh': np.sum(Pch),
-        'battery_energy_out_kwh': np.sum(Pdch),
-        'renewable_energy_percentage': round(100 * RE, 2),
-        'annual_load_kwh': np.sum(Eload),
-        'annual_served_load_kwh': np.sum(Eload_served),
-        'annual_capacity_shortage_kwh': np.sum(Ens),
-        'excess_electricity_kwh': np.sum(Edump)
-    }
-
-    # Store emissions metrics
-    results['emissions'] = {
-        'dg_emissions_kg_per_year': DG_Emissions,
-        'grid_emissions_kg_per_year': Grid_Emissions if Grid == 1 else 0,
-        'levelized_emissions_kg_per_kwh': LEM
-    }
-
-    # Store grid metrics
-    if Grid == 1:
-        results['grid_metrics'] = {
-            'annual_power_bought_kwh': np.sum(Pbuy),
-            'annual_power_sold_kwh': np.sum(Psell),
-            'total_money_paid_to_grid': round(np.sum(Grid_Cost), 2),
-            'total_money_paid_by_user': round(np.sum(NPC), 2)
-        }
-    else:
-        results['grid_metrics'] = {
-            'annual_power_bought_kwh': 0,
-            'annual_power_sold_kwh': 0,
-            'total_money_paid_to_grid': 0,
-            'total_money_paid_by_user': round(np.sum(NPC), 2)
-        }
-
-    # Store battery metrics
-    results['battery_metrics'] = {
-        'battery_min_energy_kwh': SOC_min * Cn_B if Cn_B > 0 else 0,
-        'battery_min_power_kw': np.sum(Pb_min) if 'Pb_min' in locals() else 0
-    }
-
-    # Store reliability metrics
-    results['reliability_metrics'] = {
-        'loss_of_power_supply_probability': round(100 * LPSP, 2),
-        'renewable_energy_fraction': round(100 * RE, 2)
-    }
-
-    # Store cash flow data for analysis
-    results['cash_flow_data'] = {
-        'years': years if 'years' in locals() else list(range(n + 1)),
-        'initial_investment': -I_Cost,
-        'replacement_costs': safe_convert(R_Cost) if 'R_Cost' in locals() else [],
-        'maintenance_operating_costs': safe_convert(MO_Cost) if 'MO_Cost' in locals() else [],
-        'fuel_costs': safe_convert(C_Fu) if 'C_Fu' in locals() else [],
-        'salvage_values': safe_convert(Salvage) if 'Salvage' in locals() else [],
-        'grid_costs': safe_convert(Grid_Cost) if 'Grid_Cost' in locals() else [],
-        'avoided_costs': safe_convert(avoided_costs) if 'avoided_costs' in locals() else [],
-        'cumulative_total_cost': cumulative_total_cost if 'cumulative_total_cost' in locals() else []
-    }
-
-    # Return the comprehensive results dictionary
-    return results
